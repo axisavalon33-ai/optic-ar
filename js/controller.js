@@ -1,7 +1,7 @@
 // =====================================================================
 //  CONTROLLER (tablet)
 // =====================================================================
-import { DB, TIMING, MEDIA, DEFAULT_HOTSPOTS, DEFAULT_CALIBRATION, CALIBRATION_SLIDERS } from "./config.js";
+import { DB, TIMING, MEDIA, VIDEO_BUILT_IN_LANGUAGE, DEFAULT_HOTSPOTS, DEFAULT_CALIBRATION, CALIBRATION_SLIDERS } from "./config.js";
 import { LANGUAGES, T, ADMIN, tr } from "./translations.js";
 import { paintField, PATHWAY_DEFECTS } from "./defects.js";
 
@@ -80,6 +80,10 @@ function initAudio() {
     actx = null; video.volume = TIMING.videoVolume; narration.volume = TIMING.narrationVolume;
   }
 }
+function setVideoVolume(v) {
+  video.muted = v === 0;
+  if (videoGain) videoGain.gain.value = v; else video.volume = v;
+}
 function stopMedia() {
   video.pause(); narration.pause();
   video.onended = video.onerror = null;
@@ -157,10 +161,15 @@ function playIntro(kind) {
   video.onerror = () => { toast(tr(S.lang, "videoMissing")); finish(); };
   video.src = vSrc;
   video.currentTime = 0;
-  narration.src = aSrc;
-  narration.onerror = () => console.warn("Narration missing:", aSrc);
   video.play().catch(e => { console.warn(e); });
-  narration.play().catch(() => {});
+  if (VIDEO_BUILT_IN_LANGUAGE && S.lang === VIDEO_BUILT_IN_LANGUAGE) {
+    setVideoVolume(1);                       // the video already speaks this language
+  } else {
+    setVideoVolume(VIDEO_BUILT_IN_LANGUAGE ? 0 : TIMING.videoVolume); // mute the built-in voice
+    narration.src = aSrc;
+    narration.onerror = () => console.warn("Narration missing:", aSrc);
+    narration.play().catch(() => {});
+  }
 }
 
 function setStill(src) {

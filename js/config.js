@@ -39,6 +39,12 @@ export const TIMING = {
   narrationVolume: 1.0
 };
 
+// Which language is already spoken inside the videos' own soundtrack.
+//   "en"  -> English visitors hear the video's own sound at full volume (no extra file);
+//            Tamil / Sinhala visitors: the video is muted and audio/...-ta.mp3 / -si.mp3 plays instead.
+//   null  -> videos have only music/effects: they play at 60 % with the narration file on top, for every language.
+export const VIDEO_BUILT_IN_LANGUAGE = "en";
+
 // Media files. {lang} is replaced with ta / en / si.
 export const MEDIA = {
   eyeVideo: "videos/eye-intro.mp4",

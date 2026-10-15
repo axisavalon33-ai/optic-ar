@@ -24,7 +24,7 @@ js/viewer.js        headset logic (camera + lens distortion)
 js/fb.js            Firebase connection
 videos/             eye-intro.mp4, pathway.mp4                        (placeholders for now)
 images/             eye-still.jpg, pathway-still.jpg                  (placeholders for now)
-audio/              eye-intro-ta/en/si.mp3, pathway-ta/en/si.mp3      (placeholder beeps for now)
+audio/              eye-intro-ta/si.mp3, pathway-ta/si.mp3            (placeholder beeps for now)
 database.rules.json Firebase security rules to paste in (step 1)
 ```
 
@@ -139,13 +139,25 @@ Positions are saved as percentages, so they fit any screen size.
 Keep the **exact same file names** and upload them into the same folders
 (on GitHub: open the folder → **Add file → Upload files** → **Commit changes**).
 
-- `videos/eye-intro.mp4` and `videos/pathway.mp4` – MP4 (H.264) videos with their own music and sound effects.
+- `videos/eye-intro.mp4` and `videos/pathway.mp4` – MP4 (H.264) videos **with the English narration built in**
+  (plus their music and sound effects).
 - `images/eye-still.jpg` and `images/pathway-still.jpg` – the **last frame** of each video, at the
   **same size**, so the picture lines up perfectly when the video ends.
-- `audio/eye-intro-ta.mp3`, `-en.mp3`, `-si.mp3` and `audio/pathway-ta.mp3`, `-en.mp3`, `-si.mp3` – narration.
+- `audio/eye-intro-ta.mp3`, `audio/eye-intro-si.mp3`, `audio/pathway-ta.mp3`, `audio/pathway-si.mp3` –
+  Tamil and Sinhala narration, the **same length** as the video. Mix the background music into these
+  files if you want music for Tamil and Sinhala visitors.
 
-The video's own sound plays at 60% volume with the narration on top at 100%. You can change this in
-`js/config.js` (`videoVolume`, `narrationVolume`). Files must be under 100 MB each to upload to GitHub.
+How the sound works (set by `VIDEO_BUILT_IN_LANGUAGE` in `js/config.js`):
+
+| Visitor picks | What plays |
+|---|---|
+| English | The video's own sound at full volume. No extra file needed. |
+| தமிழ் | The video is muted; `…-ta.mp3` plays with it. |
+| සිංහල | The video is muted; `…-si.mp3` plays with it. |
+
+If you later make music-only videos, set `VIDEO_BUILT_IN_LANGUAGE` to `null`. Each video will then play at
+60% volume with the narration file on top for every language (you'd add `…-en.mp3` files too).
+Files must be under 100 MB each to upload to GitHub.
 
 After uploading new images, use the hidden edit mode (Step 5) to move the hotspots.
 
