@@ -59,13 +59,13 @@ export const DEFAULT_HOTSPOTS = {
     opticNerve: { x: 82.0, y: 57.4, r: 4.0 }
   },
   pathway: {
-    pOpticNerve: { x: 21.9, y: 61.1, r: 3.0 },
-    pChiasm:     { x: 31.25, y: 48.5, r: 1.8 },
-    pTemporal:   { x: 31.25, y: 57.0, r: 1.8 },
-    pTract:      { x: 38.5, y: 60.2, r: 2.8 },
-    pMeyer:      { x: 45.8, y: 83.3, r: 3.0 },
-    pParietal:   { x: 62.5, y: 63.9, r: 3.0 },
-    pOccipital:  { x: 91.5, y: 59.3, r: 3.8 }
+    pOpticNerve: { x: 39.1, y: 20.9, r: 2.8 },
+    pChiasm:     { x: 49.0, y: 28.9, r: 2.0 },
+    pTemporal:   { x: 45.2, y: 30.5, r: 2.0 },
+    pTract:      { x: 38.6, y: 38.1, r: 2.8 },
+    pMeyer:      { x: 28.2, y: 49.0, r: 3.0 },
+    pParietal:   { x: 32.5, y: 58.2, r: 3.0 },
+    pOccipital:  { x: 42.9, y: 83.4, r: 3.5 }
   }
 };
 
