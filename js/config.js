@@ -1,0 +1,98 @@
+// =====================================================================
+//  SETTINGS FILE
+//  Firebase connection details, timings, default hotspot positions and
+//  default headset calibration. Shared by controller.html and viewer.html.
+// =====================================================================
+
+export const firebaseConfig = {
+  apiKey: "AIzaSyAuC7yFfRlwXBIAe-co-7K21Odiu1wYeRQ",
+  authDomain: "optic-ar-1bf1f.firebaseapp.com",
+  databaseURL: "https://optic-ar-1bf1f-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "optic-ar-1bf1f",
+  storageBucket: "optic-ar-1bf1f.firebasestorage.app",
+  messagingSenderId: "92528346789",
+  appId: "1:92528346789:web:5c29850b341d5d0dfd2f4c",
+  measurementId: "G-PX37C5MX5L"
+};
+
+// Firebase SDK version loaded from Google's CDN.
+export const FIREBASE_SDK = "https://www.gstatic.com/firebasejs/10.12.2";
+
+// Where things are stored inside the Realtime Database.
+export const DB = {
+  command: "exhibit/command",          // {condition, language, timestamp}
+  presence: "exhibit/presence/viewer", // phone heartbeat
+  hotspots: "exhibit/hotspots",        // /eye and /pathway
+  calibLive: "exhibit/calibration/live",
+  calibProfiles: "exhibit/calibration/profiles"
+};
+
+// Timings (seconds)
+export const TIMING = {
+  effectTotal: 20,     // AR effect length; also the controller countdown
+  nameShow: 2,         // condition name shown in the headset
+  fade: 1.5,           // fade in / fade out
+  lesionShow: 2,       // red lesion on the pathway before sending
+  idleHand: 5,         // show tapping hand after this many idle seconds
+  shimmerEvery: 4,     // hotspot shimmer interval
+  videoVolume: 0.6,    // video's own soundtrack
+  narrationVolume: 1.0
+};
+
+// Media files. {lang} is replaced with ta / en / si.
+export const MEDIA = {
+  eyeVideo: "videos/eye-intro.mp4",
+  eyeNarration: "audio/eye-intro-{lang}.mp3",
+  eyeStill: "images/eye-still.jpg",
+  pathVideo: "videos/pathway.mp4",
+  pathNarration: "audio/pathway-{lang}.mp3",
+  pathStill: "images/pathway-still.jpg"
+};
+
+// Hotspot defaults: x, y = centre as % of image width / height,
+// r = radius as % of image width. Edit mode overrides these in Firebase.
+export const DEFAULT_HOTSPOTS = {
+  eye: {
+    lens:       { x: 32.3, y: 50.0, r: 4.5 },
+    retina:     { x: 61.9, y: 19.6, r: 4.0 },
+    opticDisc:  { x: 70.8, y: 56.5, r: 3.0 },
+    opticNerve: { x: 82.0, y: 57.4, r: 4.0 }
+  },
+  pathway: {
+    pOpticNerve: { x: 21.9, y: 61.1, r: 3.0 },
+    pChiasm:     { x: 31.25, y: 48.5, r: 1.8 },
+    pTemporal:   { x: 31.25, y: 57.0, r: 1.8 },
+    pTract:      { x: 38.5, y: 60.2, r: 2.8 },
+    pMeyer:      { x: 45.8, y: 83.3, r: 3.0 },
+    pParietal:   { x: 62.5, y: 63.9, r: 3.0 },
+    pOccipital:  { x: 91.5, y: 59.3, r: 3.8 }
+  }
+};
+
+// Headset calibration defaults (the "Reset to default" values).
+// Units: fractions of the phone screen in landscape (W = width, H = height).
+export const DEFAULT_CALIBRATION = {
+  distortion: 0.25,  // barrel distortion strength (0 = none)
+  zoom: 1.0,         // image size inside each eye
+  ipd: 0.50,         // distance between eye centres, fraction of W
+  vertical: 0.0,     // vertical shift of both eyes, fraction of H
+  eyeSize: 0.92,     // eye shape diameter, fraction of H
+  roundness: 1.0,    // 1 = circle, 0 = square with soft corners
+  noseWidth: 0.12,   // nose cutout width, fraction of W
+  noseHeight: 0.22,  // nose cutout height, fraction of H
+  divider: 0.006,    // black centre divider width, fraction of W
+  testPattern: false
+};
+
+// Slider ranges for calibration mode.
+export const CALIBRATION_SLIDERS = [
+  { key: "distortion", min: 0,    max: 1,    step: 0.01 },
+  { key: "zoom",       min: 0.4,  max: 2.5,  step: 0.01 },
+  { key: "ipd",        min: 0.30, max: 0.70, step: 0.002 },
+  { key: "vertical",   min: -0.25, max: 0.25, step: 0.002 },
+  { key: "eyeSize",    min: 0.4,  max: 1.3,  step: 0.005 },
+  { key: "roundness",  min: 0,    max: 1,    step: 0.01 },
+  { key: "noseWidth",  min: 0,    max: 0.4,  step: 0.002 },
+  { key: "noseHeight", min: 0,    max: 0.6,  step: 0.002 },
+  { key: "divider",    min: 0,    max: 0.06, step: 0.001 }
+];

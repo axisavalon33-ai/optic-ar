@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Eye Exhibit – Headset</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;700&family=Noto+Sans+Tamil:wght@400;700&family=Noto+Sans+Sinhala:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; color: #fff;
+    font-family: "Noto Sans", "Noto Sans Tamil", "Noto Sans Sinhala", sans-serif;
+    user-select: none; -webkit-user-select: none; touch-action: none; }
+  #gl { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+  .eyeText { position: fixed; transform: translate(-50%, -50%); text-align: center; pointer-events: none;
+    text-shadow: 0 0 6px #000, 0 0 12px #000; transition: opacity .6s; white-space: nowrap; }
+  .wait { font-size: 2.1vh; line-height: 1.35; opacity: .85; }
+  .wait span { display: block; }
+  .name { font-size: 4.6vh; font-weight: 700; color: #ffcf7a; opacity: 0; white-space: normal; width: 34vw; }
+  .name.on { opacity: 1; }
+  .err { font-size: 4.4vh; font-weight: 700; color: #fff; background: rgba(170, 20, 20, .92);
+    padding: 2.5vh 2vw; border-radius: 2vh; white-space: normal; width: 34vw; display: none; }
+  .err.on { display: block; }
+  .hidden { opacity: 0 !important; }
+
+  #startScreen { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 4vmin; background: radial-gradient(ellipse at center, #102347, #050c1f); z-index: 10; text-align: center; padding: 4vmin; }
+  #startScreen h1 { margin: 0; font-size: 5vmin; color: #ffb547; font-weight: 700; }
+  #startScreen p { margin: 0; font-size: 3vmin; color: #a9b3c9; max-width: 80vw; }
+  #startBtn { font: inherit; font-size: 8vmin; font-weight: 700; color: #08122a; background: #ffb547; border: 0;
+    border-radius: 999px; padding: 3vmin 12vmin; box-shadow: 0 0 40px rgba(255, 181, 71, .5); }
+  #startBtn:disabled { opacity: .4; }
+  #startStatus { font-size: 3vmin; }
+  #startStatus.bad { color: #ff6b6b; font-weight: 700; font-size: 4vmin; }
+</style>
+</head>
+<body>
+<canvas id="gl"></canvas>
+
+<!-- text shown inside each eye (left / right) -->
+<div class="eyeText wait" id="waitL"></div><div class="eyeText wait" id="waitR"></div>
+<div class="eyeText name" id="nameL"></div><div class="eyeText name" id="nameR"></div>
+<div class="eyeText err" id="errL"></div><div class="eyeText err" id="errR"></div>
+
+<div id="startScreen">
+  <h1>Eye Exhibit – Headset</h1>
+  <p>Tap Start, allow the camera, then place the phone in the headset. No more touching is needed.</p>
+  <button id="startBtn" disabled>Start</button>
+  <div id="startStatus">Connecting…</div>
+</div>
+<script type="module" src="js/viewer.js"></script>
+</body>
+</html>

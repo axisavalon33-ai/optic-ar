@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#08122a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Eye Exhibit – Controller</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@300;400;600;700&family=Noto+Sans+Tamil:wght@400;600;700&family=Noto+Sans+Sinhala:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/controller.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- 1. LANGUAGE SCREEN -->
+  <section id="langScreen" class="screen active">
+    <div class="lang-inner">
+      <div class="emblem" aria-hidden="true">
+        <svg viewBox="0 0 120 70"><path d="M5 35 Q60 -12 115 35 Q60 82 5 35Z" fill="none" stroke="currentColor" stroke-width="3"/><circle cx="60" cy="35" r="17" fill="none" stroke="currentColor" stroke-width="3"/><circle cx="60" cy="35" r="7" fill="currentColor"/></svg>
+      </div>
+      <p class="choose-all" id="chooseAll"></p>
+      <div class="lang-buttons" id="langButtons"></div>
+    </div>
+    <button class="glass pill credits-btn" id="creditsBtn">Credits</button>
+  </section>
+
+  <!-- 2. VIDEO / STILL IMAGE SCREEN -->
+  <section id="stageScreen" class="screen">
+    <div id="stageWrap">
+      <div id="stage">
+        <img id="still" alt="">
+        <video id="video" playsinline webkit-playsinline preload="auto"></video>
+        <div id="hotspots"></div>
+        <div id="lesions"></div>
+        <div id="hand" aria-hidden="true">
+          <div class="ripple"></div>
+          <svg viewBox="0 0 64 64"><path d="M26 6c-3 0-5 2-5 5v24l-4-4c-2-2-5-2-7 0s-2 5 0 7l14 15c3 3 7 5 11 5h6c8 0 14-6 14-14V31c0-3-2-5-5-5s-4 2-4 4v-2c0-3-2-5-5-5s-5 2-5 5v-1c0-3-2-5-5-5-2 0-3 1-4 2V11c0-3-2-5-5-5z" fill="#fff" stroke="#08122a" stroke-width="2.5" stroke-linejoin="round"/></svg>
+        </div>
+        <div id="hint" class="hint"></div>
+      </div>
+    </div>
+
+    <!-- visual field diagram shown during the countdown -->
+    <aside id="fieldPanel" class="glass">
+      <div class="look" id="lookText"></div>
+      <canvas id="fieldCanvas"></canvas>
+      <div class="field-name" id="fieldName"></div>
+      <div class="field-line" id="fieldLine"></div>
+      <div class="countdown"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="44" class="track"/><circle cx="50" cy="50" r="44" class="bar" id="cdBar"/></svg><span id="cdNum">20</span></div>
+    </aside>
+
+    <!-- info card -->
+    <div id="card" class="modal glass">
+      <button class="x" id="cardClose" aria-label="Close">×</button>
+      <h2 id="cardTitle"></h2>
+      <p id="cardLine1"></p>
+      <p id="cardLine2"></p>
+      <button class="glass amber big" id="cardAR"></button>
+    </div>
+
+    <!-- optic nerve choice -->
+    <div id="choice" class="modal glass">
+      <button class="x" id="choiceClose" aria-label="Close">×</button>
+      <h2 id="choiceTitle"></h2>
+      <div class="choice-buttons">
+        <button class="glass big" id="choiceNeuritis"></button>
+        <button class="glass big" id="choiceField"></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. CREDITS -->
+  <section id="creditsScreen" class="screen">
+    <div class="credits glass">
+      <h2 id="creditsTitle"></h2>
+      <div id="creditsBody"></div>
+    </div>
+  </section>
+
+  <!-- always-visible controls -->
+  <nav id="nav">
+    <button class="glass pill" id="backBtn"><span class="ico">‹</span> <span id="backTxt"></span></button>
+    <button class="glass pill" id="homeBtn"><span class="ico">⌂</span> <span id="homeTxt"></span></button>
+  </nav>
+  <div id="status" class="glass pill"><span id="dot"></span><span id="statusTxt"></span></div>
+  <div id="toast"></div>
+
+  <!-- hidden long-press corners -->
+  <div class="corner" id="cornerTL"></div>
+  <div class="corner" id="cornerTR"></div>
+
+  <!-- hidden edit mode toolbar -->
+  <div id="editBar" class="glass">
+    <strong id="editTitle"></strong>
+    <span class="help" id="editHelp"></span>
+    <button class="glass pill" id="editEye"></button>
+    <button class="glass pill" id="editPath"></button>
+    <button class="glass pill" id="editReset"></button>
+    <button class="glass pill amber" id="editSave"></button>
+    <button class="glass pill" id="editDone"></button>
+  </div>
+
+  <!-- hidden calibration panel -->
+  <div id="calibPanel" class="glass">
+    <div class="calib-head"><strong id="calibTitle"></strong><button class="x" id="calibClose">×</button></div>
+    <div id="sliders"></div>
+    <label class="switch-row"><span id="tpLabel"></span><input type="checkbox" id="tpSwitch"><span class="switch"></span></label>
+    <button class="glass pill wide" id="calibReset"></button>
+    <div class="profile-row">
+      <input id="profileName" type="text" autocomplete="off">
+      <button class="glass pill amber" id="profileSave"></button>
+    </div>
+    <div class="profile-row">
+      <select id="profileList"></select>
+      <button class="glass pill" id="profileLoad"></button>
+    </div>
+  </div>
+</div>
+<script type="module" src="js/controller.js"></script>
+</body>
+</html>
