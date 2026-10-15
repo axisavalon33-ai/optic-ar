@@ -4,6 +4,7 @@
 import { DB, TIMING, MEDIA, VIDEO_BUILT_IN_LANGUAGE, DEFAULT_HOTSPOTS, DEFAULT_CALIBRATION, CALIBRATION_SLIDERS } from "./config.js";
 import { LANGUAGES, T, ADMIN, tr } from "./translations.js";
 import { paintField, PATHWAY_DEFECTS } from "./defects.js";
+import { keepFullscreen } from "./fullscreen.js";
 
 const $ = id => document.getElementById(id);
 const app = $("app");
@@ -544,6 +545,7 @@ $("choiceNeuritis").onclick = () => openCard("neuritis");
 $("choiceField").onclick = () => { closeModal(); playIntro("pathway"); };
 document.addEventListener("contextmenu", e => e.preventDefault());
 
+keepFullscreen(); // first tap anywhere makes the tablet full screen
 buildLanguageScreen();
 buildCalibration();
 applyText();

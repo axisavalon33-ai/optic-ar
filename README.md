@@ -179,4 +179,5 @@ The credits screen text is at `creditsBody`.
 | Phone shows "No internet connection" | It reconnects by itself as soon as Wi-Fi or mobile data is back. |
 | Nothing happens in the headset | Open the database in Firebase and check that the rules from Step 1 were published. |
 | Changes to the files don't show | Wait 2 minutes and reload. On the phone, close the tab and open it again. |
+| Not full screen | Open the link in **Chrome** itself, not from inside WhatsApp, Gmail or Messenger (those open a mini-browser that cannot go full screen). Tap the screen once. Best: Chrome ⋮ → **Add to Home screen / Install app**, then open the icon. |
 | Two circles don't line up | Use calibration mode (Step 4) with the test pattern. |

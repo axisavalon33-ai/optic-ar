@@ -5,6 +5,7 @@
 import { DB, TIMING, DEFAULT_CALIBRATION } from "./config.js";
 import { LANGUAGES, T, tr } from "./translations.js";
 import { paintField, filtersAt, ALL_CONDITIONS } from "./defects.js";
+import { isFullscreen, enterFullscreen, keepFullscreen } from "./fullscreen.js";
 
 const $ = id => document.getElementById(id);
 const canvas = $("gl");
@@ -115,20 +116,27 @@ function updateOverlay() {
 // ---------------------------------------------------------------- Start button
 $("startBtn").addEventListener("click", async () => {
   $("startBtn").disabled = true;
-  // fullscreen + landscape (must start inside the tap)
-  try {
-    await document.documentElement.requestFullscreen({ navigationUI: "hide" });
-    await screen.orientation.lock("landscape").catch(() => {});
-  } catch (e) { console.warn("Fullscreen not available", e); }
+  await enterFullscreen();     // works straight away if the camera was allowed before
   requestWakeLock();
-  await startCamera();
+  await startCamera();         // the camera question may take the page out of full screen
   started = true;
   $("startScreen").style.display = "none";
   initGL();
   layoutText();
   updateOverlay();
+  updateFsPrompt();
   requestAnimationFrame(loop);
 });
+
+// If full screen was lost (e.g. by the camera question), ask for one more tap.
+keepFullscreen();
+function updateFsPrompt() {
+  $("fsPrompt").classList.toggle("on", started && !isFullscreen());
+}
+for (const ev of ["fullscreenchange", "webkitfullscreenchange", "resize"]) {
+  document.addEventListener(ev, () => { updateFsPrompt(); if (isFullscreen()) requestWakeLock(); });
+  window.addEventListener(ev, updateFsPrompt);
+}
 
 let wakeLock = null;
 async function requestWakeLock() {

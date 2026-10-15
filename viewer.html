@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#000000">
 <meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest-viewer.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
 <title>Eye Exhibit – Headset</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -33,6 +36,9 @@
     border-radius: 999px; padding: 3vmin 12vmin; box-shadow: 0 0 40px rgba(255, 181, 71, .5); }
   #startBtn:disabled { opacity: .4; }
   #startStatus { font-size: 3vmin; }
+  #fsPrompt { position: fixed; inset: 0; z-index: 20; display: none; align-items: center; justify-content: center;
+    background: rgba(5, 12, 31, .92); color: #ffb547; font-size: 7vmin; font-weight: 700; text-align: center; padding: 5vmin; }
+  #fsPrompt.on { display: flex; }
   #startStatus.bad { color: #ff6b6b; font-weight: 700; font-size: 4vmin; }
 </style>
 </head>
@@ -43,6 +49,8 @@
 <div class="eyeText wait" id="waitL"></div><div class="eyeText wait" id="waitR"></div>
 <div class="eyeText name" id="nameL"></div><div class="eyeText name" id="nameR"></div>
 <div class="eyeText err" id="errL"></div><div class="eyeText err" id="errR"></div>
+
+<div id="fsPrompt">Tap anywhere for full screen</div>
 
 <div id="startScreen">
   <h1>Eye Exhibit – Headset</h1>
