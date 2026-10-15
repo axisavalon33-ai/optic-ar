@@ -59,10 +59,10 @@ export const MEDIA = {
 // r = radius as % of image width. Edit mode overrides these in Firebase.
 export const DEFAULT_HOTSPOTS = {
   eye: {
-    lens:       { x: 30.5, y: 47.9, r: 5.0 },
-    retina:     { x: 60.2, y: 26.6, r: 3.2 },
-    opticDisc:  { x: 68.5, y: 53.2, r: 2.6 },
-    opticNerve: { x: 88.5, y: 57.1, r: 4.0 }
+    lens:       { x: 32.7, y: 50.8, r: 5.0 },
+    retina:     { x: 58.4, y: 29.9, r: 3.2 },
+    opticDisc:  { x: 66.0, y: 56.9, r: 2.6 },
+    opticNerve: { x: 84.0, y: 62.5, r: 4.0 }
   },
   pathway: {
     pOpticNerve: { x: 39.1, y: 20.9, r: 2.8 },
