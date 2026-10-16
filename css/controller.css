@@ -60,15 +60,19 @@ button.big { font-size: clamp(18px, 2.4vw, 26px); font-weight: 600; padding: 18p
 .home-shade { position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity 1s;
   background: radial-gradient(ellipse at center, rgba(5, 12, 31, .45) 0%, rgba(5, 12, 31, .78) 100%); }
 #homeVideo.ready + .home-shade { opacity: 1; }
-.lang-inner { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 4vh; width: 100%; padding: 0 5vw; }
-.emblem { color: var(--amber); width: clamp(90px, 12vw, 150px); filter: drop-shadow(0 0 18px rgba(255, 181, 71, .45)); }
-.choose-all { margin: 0; text-align: center; color: var(--muted); font-size: clamp(16px, 2vw, 22px); line-height: 1.8; }
+/* Home screen sizes follow the SMALLER side of the screen (vmin), so tablets and laptops look alike.
+   To make everything bigger or smaller, change --home-scale (1 = normal, 0.9 = 10% smaller). */
+#langScreen { --home-scale: 1; }
+.lang-inner { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center;
+  gap: calc(3.2vmin * var(--home-scale)); width: 100%; padding: 0 5vw; }
+.emblem { color: var(--amber); width: calc(clamp(64px, 11vmin, 130px) * var(--home-scale)); filter: drop-shadow(0 0 18px rgba(255, 181, 71, .45)); }
+.choose-all { margin: 0; text-align: center; color: var(--muted); font-size: calc(clamp(14px, 2.5vmin, 21px) * var(--home-scale)); line-height: 1.7; }
 .choose-all span { display: block; }
-.lang-buttons { display: flex; gap: 3vw; flex-wrap: wrap; justify-content: center; }
+.lang-buttons { display: flex; gap: calc(3vmin * var(--home-scale)); flex-wrap: wrap; justify-content: center; }
 .lang-btn {
-  min-width: clamp(200px, 24vw, 320px); padding: 5vh 2vw;
-  font-size: clamp(28px, 4vw, 48px); font-weight: 700; letter-spacing: .02em;
-  border-radius: 28px;
+  min-width: calc(clamp(170px, 26vmin, 300px) * var(--home-scale)); padding: calc(3.6vmin * var(--home-scale)) 2vmin;
+  font-size: calc(clamp(24px, 5vmin, 44px) * var(--home-scale)); font-weight: 700; letter-spacing: .02em;
+  border-radius: 24px;
 }
 .lang-btn:nth-child(1) { font-family: "Noto Sans Tamil", sans-serif; }
 .lang-btn:nth-child(3) { font-family: "Noto Sans Sinhala", sans-serif; }
