@@ -73,7 +73,7 @@ button.big { font-size: clamp(18px, 2.4vw, 26px); font-weight: 600; padding: 18p
 .lang-btn:nth-child(1) { font-family: "Noto Sans Tamil", sans-serif; }
 .lang-btn:nth-child(3) { font-family: "Noto Sans Sinhala", sans-serif; }
 .lang-btn:hover, .lang-btn:active { border-color: rgba(255, 181, 71, .8); box-shadow: 0 0 40px rgba(255, 181, 71, .25), inset 0 1px 0 rgba(255,255,255,.15); }
-.credits-btn { z-index: 1; position: absolute; right: 24px; bottom: 22px; font-size: 14px; opacity: .8; }
+.credits-btn { display: none; /* hidden. To show it again, delete "display: none;" */ z-index: 1; position: absolute; right: 24px; bottom: 22px; font-size: 14px; opacity: .8; }
 
 /* ---------- stage (video + still image share exactly the same box) ---------- */
 #stageScreen { background: #000; }
