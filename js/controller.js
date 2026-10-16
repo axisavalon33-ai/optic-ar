@@ -145,32 +145,44 @@ function playIntro(kind) {
   closeModal();
   clearLesions();
   const isEye = kind === "eye";
-  const vSrc = isEye ? MEDIA.eyeVideo : MEDIA.pathVideo;
+  const langSrc = (isEye ? MEDIA.eyeVideoLang : MEDIA.pathVideoLang).replace("{lang}", S.lang);
+  const sharedSrc = isEye ? MEDIA.eyeVideo : MEDIA.pathVideo;
   const aSrc = (isEye ? MEDIA.eyeNarration : MEDIA.pathNarration).replace("{lang}", S.lang);
+  const videoScreen = isEye ? "eyeVideo" : "pathVideo";
   setStill(isEye ? MEDIA.eyeStill : MEDIA.pathStill);
   still.classList.remove("shown");
   video.classList.remove("hidden");
-  setScreen(isEye ? "eyeVideo" : "pathVideo");
+  setScreen(videoScreen);
 
   const finish = () => {
-    if (S.screen !== (isEye ? "eyeVideo" : "pathVideo")) return;
+    if (S.screen !== videoScreen) return;
+    narration.pause();
     still.classList.add("shown");
     video.classList.add("hidden");
     setScreen(isEye ? "eyeStill" : "pathStill");
   };
   video.onended = finish;
-  video.onerror = () => { toast(tr(S.lang, "videoMissing")); finish(); };
-  video.src = vSrc;
-  video.currentTime = 0;
-  video.play().catch(e => { console.warn(e); });
-  if (VIDEO_BUILT_IN_LANGUAGE && S.lang === VIDEO_BUILT_IN_LANGUAGE) {
-    setVideoVolume(1);                       // the video already speaks this language
-  } else {
-    setVideoVolume(VIDEO_BUILT_IN_LANGUAGE ? 0 : TIMING.videoVolume); // mute the built-in voice
-    narration.src = aSrc;
-    narration.onerror = () => console.warn("Narration missing:", aSrc);
-    narration.play().catch(() => {});
-  }
+
+  // 1) the video made for this language, with its own sound
+  setVideoVolume(1);
+  video.onerror = () => {
+    if (S.screen !== videoScreen) return;
+    console.warn("No language video, using shared video:", langSrc);
+    // 2) shared video + separate narration file
+    video.onerror = () => { toast(tr(S.lang, "videoMissing")); finish(); };
+    video.src = sharedSrc;
+    video.play().catch(e => console.warn(e));
+    if (VIDEO_BUILT_IN_LANGUAGE && S.lang === VIDEO_BUILT_IN_LANGUAGE) {
+      setVideoVolume(1);                       // the video already speaks this language
+    } else {
+      setVideoVolume(VIDEO_BUILT_IN_LANGUAGE ? 0 : TIMING.videoVolume); // mute the built-in voice
+      narration.src = aSrc;
+      narration.onerror = () => console.warn("Narration missing:", aSrc);
+      narration.play().catch(() => {});
+    }
+  };
+  video.src = langSrc;
+  video.play().catch(e => console.warn(e));
 }
 
 function setStill(src) {

@@ -61,7 +61,12 @@ export const TIMING = {
 export const VIDEO_BUILT_IN_LANGUAGE = "en";
 
 // Media files. {lang} is replaced with ta / en / si.
+// The app first plays the video made for the chosen language (e.g. videos/eye-intro-ta.mp4)
+// with its own sound. If that file is missing, it falls back to the shared video
+// (videos/eye-intro.mp4) plus the narration file, as described above.
 export const MEDIA = {
+  eyeVideoLang: "videos/eye-intro-{lang}.mp4",
+  pathVideoLang: "videos/pathway-{lang}.mp4",
   eyeVideo: "videos/eye-intro.mp4",
   eyeNarration: "audio/eye-intro-{lang}.mp3",
   eyeStill: "images/eye-still.jpg",

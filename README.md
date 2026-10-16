@@ -147,7 +147,12 @@ Keep the **exact same file names** and upload them into the same folders
   Tamil and Sinhala narration, the **same length** as the video. Mix the background music into these
   files if you want music for Tamil and Sinhala visitors.
 
-How the sound works (set by `VIDEO_BUILT_IN_LANGUAGE` in `js/config.js`):
+**Best option – one video per language** (voice always in sync): upload
+`videos/eye-intro-en.mp4`, `videos/eye-intro-ta.mp4`, `videos/eye-intro-si.mp4` (and the same for `pathway-…`).
+The app plays the video for the chosen language with its own sound. If a language video is missing,
+it falls back to the shared video below.
+
+Shared video fallback (set by `VIDEO_BUILT_IN_LANGUAGE` in `js/config.js`):
 
 | Visitor picks | What plays |
 |---|---|
