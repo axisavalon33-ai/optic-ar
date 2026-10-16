@@ -120,8 +120,18 @@ function applyText() {
 }
 
 // ---------------------------------------------------------------- screens
+// Looping, silent background video on the language screen.
+const homeVideo = $("homeVideo");
+homeVideo.muted = true;
+homeVideo.addEventListener("playing", () => homeVideo.classList.add("ready"));
+homeVideo.addEventListener("error", () => homeVideo.classList.remove("ready"));
+function setHomeVideo(on) {
+  if (on) homeVideo.play().catch(() => {}); else homeVideo.pause();
+}
+
 function setScreen(name) {
   S.screen = name;
+  setHomeVideo(name === "lang");
   const section = name === "lang" ? "langScreen" : name === "credits" ? "creditsScreen" : "stageScreen";
   for (const s of document.querySelectorAll(".screen")) s.classList.toggle("active", s.id === section);
   app.classList.toggle("lang-screen", name === "lang");
