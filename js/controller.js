@@ -1,7 +1,7 @@
 // =====================================================================
 //  CONTROLLER (tablet)
 // =====================================================================
-import { DB, TIMING, MEDIA, VIDEO_BUILT_IN_LANGUAGE, DEFAULT_HOTSPOTS, DEFAULT_CALIBRATION, CALIBRATION_SLIDERS } from "./config.js";
+import { DB, STATION, TIMING, MEDIA, VIDEO_BUILT_IN_LANGUAGE, DEFAULT_HOTSPOTS, DEFAULT_CALIBRATION, CALIBRATION_SLIDERS } from "./config.js";
 import { LANGUAGES, T, ADMIN, tr } from "./translations.js";
 import { paintField, PATHWAY_DEFECTS } from "./defects.js";
 import { keepFullscreen } from "./fullscreen.js";
@@ -59,7 +59,7 @@ function viewerConnected() {
 function updateStatus() {
   const on = !!viewerConnected();
   $("dot").classList.toggle("on", on);
-  $("statusTxt").textContent = tr(S.lang, on ? "headsetOnline" : "headsetOffline");
+  $("statusTxt").textContent = `#${STATION} · ` + tr(S.lang, on ? "headsetOnline" : "headsetOffline");
 }
 
 // ---------------------------------------------------------------- audio
@@ -466,7 +466,7 @@ $("editDone").onclick = () => setEditing(false);
 // ---------------------------------------------------------------- CALIBRATION MODE
 let calibDirty = false, calibSendTimer = null;
 function buildCalibration() {
-  $("calibTitle").textContent = ADMIN.calibTitle;
+  $("calibTitle").textContent = `${ADMIN.calibTitle} – station ${STATION}`;
   $("tpLabel").textContent = ADMIN.testPattern;
   $("calibReset").textContent = ADMIN.resetDefault;
   $("profileName").placeholder = ADMIN.profileName;

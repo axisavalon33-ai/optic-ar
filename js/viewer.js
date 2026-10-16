@@ -2,7 +2,7 @@
 //  VIEWER (phone inside the headset)
 //  Camera -> defect mask & filters -> barrel distortion -> two eyes.
 // =====================================================================
-import { DB, TIMING, DEFAULT_CALIBRATION } from "./config.js";
+import { DB, STATION, TIMING, DEFAULT_CALIBRATION } from "./config.js";
 import { LANGUAGES, T, tr } from "./translations.js";
 import { paintField, filtersAt, ALL_CONDITIONS } from "./defects.js";
 import { isFullscreen, enterFullscreen, keepFullscreen } from "./fullscreen.js";
@@ -19,6 +19,8 @@ let running = null;        // { cond, lang, t0 }
 let lastCmdTs = 0;
 let camOk = false, netOk = false, everConnected = false;
 let video = null, stream = null;
+
+document.querySelector("#startScreen h1").textContent = `Eye Exhibit – Headset · Station ${STATION}`;
 
 // ---------------------------------------------------------------- text
 $("waitL").innerHTML = $("waitR").innerHTML =
@@ -75,7 +77,7 @@ function showError(kind) {
 
   fb.onValue(fb.ref(fb.db, DB.calibLive), s => {
     const v = s.val();
-    if (v) { calib = { ...DEFAULT_CALIBRATION, ...v }; try { localStorage.setItem("calib", JSON.stringify(calib)); } catch (e) {} }
+    if (v) { calib = { ...DEFAULT_CALIBRATION, ...v }; try { localStorage.setItem("calib-" + STATION, JSON.stringify(calib)); } catch (e) {} }
     layoutText();
   });
   fb.onValue(fb.ref(fb.db, DB.command), s => {
@@ -93,7 +95,7 @@ function showError(kind) {
 })();
 
 function loadCachedCalib() {
-  try { return { ...DEFAULT_CALIBRATION, ...JSON.parse(localStorage.getItem("calib") || "{}") }; }
+  try { return { ...DEFAULT_CALIBRATION, ...JSON.parse(localStorage.getItem("calib-" + STATION) || "{}") }; }
   catch (e) { return { ...DEFAULT_CALIBRATION }; }
 }
 

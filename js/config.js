@@ -18,13 +18,28 @@ export const firebaseConfig = {
 // Firebase SDK version loaded from Google's CDN.
 export const FIREBASE_SDK = "https://www.gstatic.com/firebasejs/10.12.2";
 
+// STATION NUMBER – lets several tablet + phone pairs run at the same time.
+// Open  controller.html?station=3  on a tablet and  viewer.html?station=3  on its phone.
+// The device remembers its number, so later the plain link (or home-screen icon) is enough.
+// No number ever given = station 1.
+function readStation() {
+  const clean = v => String(v || "").replace(/[^0-9A-Za-z_-]/g, "").slice(0, 20);
+  let st = clean(new URLSearchParams(location.search).get("station"));
+  try {
+    if (st) localStorage.setItem("station", st);
+    else st = clean(localStorage.getItem("station"));
+  } catch (e) { /* storage blocked */ }
+  return st || "1";
+}
+export const STATION = readStation();
+
 // Where things are stored inside the Realtime Database.
 export const DB = {
-  command: "exhibit/command",          // {condition, language, timestamp}
-  presence: "exhibit/presence/viewer", // phone heartbeat
-  hotspots: "exhibit/hotspots",        // /eye and /pathway
-  calibLive: "exhibit/calibration/live",
-  calibProfiles: "exhibit/calibration/profiles"
+  command: `exhibit/stations/${STATION}/command`,     // {condition, language, timestamp}
+  presence: `exhibit/stations/${STATION}/presence`,   // phone heartbeat
+  calibLive: `exhibit/stations/${STATION}/calibration`, // this station's headset settings
+  hotspots: "exhibit/hotspots",                       // shared by all stations
+  calibProfiles: "exhibit/calibration/profiles"       // shared, so any station can load them
 };
 
 // Timings (seconds)

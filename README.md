@@ -170,6 +170,25 @@ The credits screen text is at `creditsBody`.
 
 ---
 
+## Running several stations at once (for example 6 tablets + 6 phones)
+
+Give each tablet + phone pair the same **station number** by adding `?station=N` to both links once:
+
+| Station | Tablet link | Phone link |
+|---|---|---|
+| 1 | `…/controller.html?station=1` | `…/viewer.html?station=1` |
+| 2 | `…/controller.html?station=2` | `…/viewer.html?station=2` |
+| … | … | … |
+| 6 | `…/controller.html?station=6` | `…/viewer.html?station=6` |
+
+- Each device remembers its number, so after the first visit the plain link or home-screen icon is enough.
+- The tablet shows `#3 · Headset connected`; the phone's start screen shows `Station 3`.
+- Each station has its own calibration. Calibrate one box, **Save profile**, then **Load profile** on the others.
+- Hotspot positions are shared by all stations.
+- To change a device's number, open its link once with the new `?station=` number.
+
+---
+
 ## Troubleshooting
 
 | Problem | What to do |
