@@ -1,0 +1,27 @@
+@import url('fonts/fonts.css');
+:root {
+  --navy: #0b1530;
+  --navy2: #13214a;
+  --navy3: #1d2f63;
+  --white: #ffffff;
+  --muted: #a9b6d8;
+  --red: #ff3b4e;
+  --red-dark: #b3122a;
+  --blue: #2e8bff;
+  --blue-dark: #1450b8;
+  --green: #22c55e;
+  --green-dark: #15803d;
+  --wrong: #ef2b2b;
+  --gold: #ffc83d;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; height: 100%; }
+body {
+  background: var(--navy);
+  color: var(--white);
+  font-family: 'Brain', 'Noto Sans', 'Noto Sans Tamil', 'Noto Sans Sinhala', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+button { font-family: inherit; }
+.hidden { display: none !important; }
+.num { font-variant-numeric: tabular-nums; }

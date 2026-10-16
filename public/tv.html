@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Time is Brain - TV</title>
+<link rel="icon" href="img/logo.svg">
+<link rel="stylesheet" href="common.css">
+<link rel="stylesheet" href="tv.css">
+</head>
+<body>
+<div id="stage">
+
+  <!-- HOME -->
+  <section id="s-home" class="screen">
+    <div class="home-left">
+      <video id="homeVideo" loop muted playsinline preload="auto"></video>
+      <div class="home-shade"></div>
+      <div class="home-title">
+        <img src="img/logo.svg" alt="" class="logo-spin">
+        <div>
+          <h1>Time is Brain</h1>
+          <p id="tagline"></p>
+        </div>
+      </div>
+      <div class="home-join" id="homeJoin"></div>
+    </div>
+    <aside class="board">
+      <h2><span class="trophy">🏆</span> TOP 10</h2>
+      <div class="board-sub" id="boardSub">Fewest neurons lost</div>
+      <div id="board"></div>
+      <div class="board-foot">🚑 1990 Suwa Seriya</div>
+    </aside>
+  </section>
+
+  <!-- STORY VIDEO -->
+  <section id="s-video" class="screen">
+    <video id="story" preload="auto" playsinline></video>
+    <div id="subs"></div>
+    <div id="videoMsg" class="hidden"></div>
+    <div id="testBadge" class="hidden"></div>
+  </section>
+
+  <!-- ROUND TITLE -->
+  <section id="s-intro" class="screen">
+    <img src="img/brain-bg.svg" class="bg-brain" alt="">
+    <div class="intro-box">
+      <div id="introRound" class="intro-round"></div>
+      <div id="introTitle" class="intro-title"></div>
+      <div id="introTitle2" class="intro-title2"></div>
+    </div>
+  </section>
+
+  <!-- QUESTION -->
+  <section id="s-question" class="screen">
+    <img src="img/brain-bg.svg" class="bg-brain" alt="">
+    <header class="qhead">
+      <div id="qRound"></div>
+      <div id="qSecs" class="num"></div>
+      <div id="qNum"></div>
+    </header>
+    <div class="timebar"><div id="timefill"></div></div>
+    <div class="qtext">
+      <div id="qPrimary"></div>
+      <div id="qSecondary"></div>
+    </div>
+    <div id="foundList"></div>
+  </section>
+
+  <!-- EXPLANATION -->
+  <section id="s-explain" class="screen">
+    <img src="img/brain-bg.svg" class="bg-brain" alt="">
+    <header class="qhead">
+      <div id="eTitle"></div>
+      <div id="eHold" class="hold hidden">⏸ HOLD</div>
+      <div id="eNum"></div>
+    </header>
+    <div class="ebody">
+      <div class="ecol">
+        <div id="eAnswers"></div>
+        <div id="eText"></div>
+      </div>
+      <div id="eMedia" class="emedia"></div>
+    </div>
+    <div class="ebar"><div id="eFill"></div></div>
+  </section>
+
+  <!-- RESULTS -->
+  <section id="s-results" class="screen">
+    <canvas id="confetti" width="1920" height="1080"></canvas>
+    <div id="resBanner" class="res-banner"></div>
+    <div id="resPanels" class="res-panels"></div>
+    <div id="resFoot" class="res-foot"></div>
+  </section>
+
+  <!-- Neuron counters -->
+  <div id="counters" class="hidden">
+    <div class="counter red" id="c-red">
+      <div class="c-name" id="cn-red"></div>
+      <div class="c-num num" id="cv-red">0</div>
+      <div class="c-label" id="cl-red"></div>
+      <div class="c-status" id="cs-red"></div>
+    </div>
+    <div class="counter blue" id="c-blue">
+      <div class="c-name" id="cn-blue"></div>
+      <div class="c-num num" id="cv-blue">0</div>
+      <div class="c-label" id="cl-blue"></div>
+      <div class="c-status" id="cs-blue"></div>
+    </div>
+  </div>
+
+  <div id="pausedOverlay" class="hidden"><div>⏸ <span id="pausedText">PAUSED</span></div></div>
+  <div id="conn" class="hidden">⚠ Connection lost — reconnecting…</div>
+  <div id="soundHint" class="hidden">🔇 Click anywhere on this screen to turn the sound on</div>
+</div>
+
+<div id="startOverlay">
+  <div class="start-box">
+    <img src="img/logo.svg" alt="">
+    <h1>Time is Brain — TV screen</h1>
+    <p>1. Drag this window onto the TV.<br>2. Click the big button.</p>
+    <button id="startBtn">▶ Start TV (fullscreen + sound)</button>
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.min.js"></script>
+<script src="common.js"></script>
+<script src="tv.js"></script>
+</body>
+</html>

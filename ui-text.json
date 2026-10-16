@@ -1,0 +1,252 @@
+{
+  "_note": "Words shown on the tablets and TV. Change any text here, then restart the game. Set reviewed to true after checking.",
+  "reviewed": {
+    "ta": false,
+    "si": false
+  },
+  "chooseLanguage": {
+    "en": "Choose your language",
+    "ta": "உங்கள் மொழியைத் தெரிவு செய்யுங்கள்",
+    "si": "ඔබේ භාෂාව තෝරන්න"
+  },
+  "chooseMode": {
+    "en": "How do you want to play?",
+    "ta": "எப்படி விளையாட விரும்புகிறீர்கள்?",
+    "si": "සෙල්ලම් කරන්න කැමති කොහොමද?"
+  },
+  "modeTeam": {
+    "en": "Team vs Team",
+    "ta": "அணி எதிர் அணி",
+    "si": "කණ්ඩායම එදිරිව කණ්ඩායම"
+  },
+  "modeTeamSub": {
+    "en": "Play against the other tablet",
+    "ta": "மற்ற டப்லெட்டுடன் போட்டியிடுங்கள்",
+    "si": "අනෙක් ටැබ් එකට එරෙහිව සෙල්ලම් කරන්න"
+  },
+  "modeSolo": {
+    "en": "Solo",
+    "ta": "தனியாக",
+    "si": "තනියම"
+  },
+  "modeSoloSub": {
+    "en": "Play on your own",
+    "ta": "நீங்கள் மட்டும் விளையாடுங்கள்",
+    "si": "ඔබ විතරක් සෙල්ලම් කරන්න"
+  },
+  "enterName": {
+    "en": "Type your name",
+    "ta": "உங்கள் பெயரை எழுதுங்கள்",
+    "si": "ඔබේ නම ටයිප් කරන්න"
+  },
+  "skip": {
+    "en": "Skip",
+    "ta": "தவிர்",
+    "si": "මඟ හරින්න"
+  },
+  "ok": {
+    "en": "OK",
+    "ta": "சரி",
+    "si": "හරි"
+  },
+  "back": {
+    "en": "Back",
+    "ta": "பின்",
+    "si": "ආපසු"
+  },
+  "ready": {
+    "en": "READY!",
+    "ta": "தயார்!",
+    "si": "සූදානම්!"
+  },
+  "pressReady": {
+    "en": "Press READY to start",
+    "ta": "தொடங்க தயார் பொத்தானை அழுத்துங்கள்",
+    "si": "පටන් ගන්න සූදානම් ඔබන්න"
+  },
+  "waitingOther": {
+    "en": "Waiting for the other team…",
+    "ta": "மற்ற அணிக்காகக் காத்திருக்கிறோம்…",
+    "si": "අනෙක් කණ්ඩායම එනකම් ඉන්නවා…"
+  },
+  "starting": {
+    "en": "Starting…",
+    "ta": "தொடங்குகிறது…",
+    "si": "පටන් ගන්නවා…"
+  },
+  "watchTv": {
+    "en": "Watch the TV",
+    "ta": "TV யைப் பாருங்கள்",
+    "si": "TV එක බලන්න"
+  },
+  "lookTv": {
+    "en": "Look at the TV",
+    "ta": "TV யைப் பாருங்கள்",
+    "si": "TV එක දිහා බලන්න"
+  },
+  "readQuestion": {
+    "en": "Read the question…",
+    "ta": "கேள்வியை வாசியுங்கள்…",
+    "si": "ප්‍රශ්නය කියවන්න…"
+  },
+  "selectAll": {
+    "en": "Tap ALL the correct answers",
+    "ta": "சரியான எல்லா விடைகளையும் தொடுங்கள்",
+    "si": "හරි උත්තර ඔක්කොම ඔබන්න"
+  },
+  "done": {
+    "en": "Done! Waiting…",
+    "ta": "முடிந்தது! காத்திருங்கள்…",
+    "si": "ඉවරයි! ඉන්න…"
+  },
+  "timeUp": {
+    "en": "Time's up!",
+    "ta": "நேரம் முடிந்தது!",
+    "si": "වෙලාව ඉවරයි!"
+  },
+  "wrong": {
+    "en": "Wrong!",
+    "ta": "பிழை!",
+    "si": "වැරදියි!"
+  },
+  "neuronsLost": {
+    "en": "neurons lost",
+    "ta": "இழந்த மூளைக் கலங்கள்",
+    "si": "නැති වූ මොළ සෛල"
+  },
+  "wrongTaps": {
+    "en": "wrong taps",
+    "ta": "பிழையான தொடுகைகள்",
+    "si": "වැරදි ඔබීම්"
+  },
+  "paused": {
+    "en": "Paused",
+    "ta": "இடைநிறுத்தப்பட்டது",
+    "si": "නවත්වා ඇත"
+  },
+  "gameBusy": {
+    "en": "A game is being played. Please wait.",
+    "ta": "ஒரு விளையாட்டு நடந்துகொண்டிருக்கிறது. தயவுசெய்து காத்திருங்கள்.",
+    "si": "සෙල්ලමක් යනවා. කරුණාකර ඉන්න."
+  },
+  "thanks": {
+    "en": "Thank you for playing!",
+    "ta": "விளையாடியதற்கு நன்றி!",
+    "si": "සෙල්ලම් කළාට ස්තූතියි!"
+  },
+  "fullscreen": {
+    "en": "Go fullscreen",
+    "ta": "முழுத் திரை",
+    "si": "සම්පූර්ණ තිරය"
+  },
+  "reconnecting": {
+    "en": "Reconnecting…",
+    "ta": "மீண்டும் இணைக்கிறது…",
+    "si": "නැවත සම්බන්ධ වෙනවා…"
+  },
+  "winner": {
+    "en": "WINNER",
+    "ta": "வெற்றியாளர்",
+    "si": "ජයග්‍රාහකයා"
+  },
+  "wins": {
+    "en": "wins!",
+    "ta": "வெற்றி!",
+    "si": "දිනුම්!"
+  },
+  "draw": {
+    "en": "It's a draw!",
+    "ta": "சமநிலை!",
+    "si": "සම ලකුණු!"
+  },
+  "wellDone": {
+    "en": "Well done!",
+    "ta": "நன்றாகச் செய்தீர்கள்!",
+    "si": "ශාබාශ්!"
+  },
+  "redTeam": {
+    "en": "Red Team",
+    "ta": "சிவப்பு அணி",
+    "si": "රතු කණ්ඩායම"
+  },
+  "blueTeam": {
+    "en": "Blue Team",
+    "ta": "நீல அணி",
+    "si": "නිල් කණ්ඩායම"
+  },
+  "youAre": {
+    "en": "You are",
+    "ta": "நீங்கள்",
+    "si": "ඔබ"
+  },
+  "correctAnswers": {
+    "en": "Correct answers",
+    "ta": "சரியான விடைகள்",
+    "si": "හරි උත්තර"
+  },
+  "round": {
+    "en": "Round",
+    "ta": "சுற்று",
+    "si": "වටය"
+  },
+  "round1": {
+    "en": "At home",
+    "ta": "வீட்டில்",
+    "si": "ගෙදරදී"
+  },
+  "round2": {
+    "en": "At the hospital",
+    "ta": "ஆஸ்பத்திரியில்",
+    "si": "ඉස්පිරිතාලෙදී"
+  },
+  "round3": {
+    "en": "After the stroke",
+    "ta": "பாரிசவாதத்திற்குப் பின்",
+    "si": "ස්ට්‍රෝක් එකෙන් පස්සේ"
+  },
+  "question": {
+    "en": "Question",
+    "ta": "கேள்வி",
+    "si": "ප්‍රශ්නය"
+  },
+  "topScores": {
+    "en": "Top 10 — fewest neurons lost",
+    "ta": "முதல் 10 — குறைந்த மூளைக் கலங்கள் இழப்பு",
+    "si": "හොඳම 10 — අඩුවෙන්ම මොළ සෛල නැති කළ අය"
+  },
+  "noScores": {
+    "en": "No scores yet. Be the first!",
+    "ta": "இன்னும் புள்ளிகள் இல்லை. முதலாவதாக நீங்கள் வாருங்கள்!",
+    "si": "තාම ලකුණු නෑ. පළවෙනියා වෙන්න!"
+  },
+  "playNow": {
+    "en": "Play now on the tablets!",
+    "ta": "டப்லெட்டில் இப்போதே விளையாடுங்கள்!",
+    "si": "දැන්ම ටැබ් එකෙන් සෙල්ලම් කරන්න!"
+  },
+  "tagline": {
+    "en": "Every minute, about 1.9 million brain cells die in a stroke.",
+    "ta": "பாரிசவாதத்தின்போது ஒவ்வொரு நிமிடமும் சுமார் 19 இலட்சம் மூளைக் கலங்கள் இறக்கின்றன.",
+    "si": "ස්ට්‍රෝක් එකකදී හැම විනාඩියකම මොළ සෛල මිලියන 1.9ක් විතර මැරෙනවා."
+  },
+  "timeIsBrain": {
+    "en": "Time is Brain",
+    "ta": "நேரமே மூளை",
+    "si": "කාලය මොළයයි"
+  },
+  "missed": {
+    "en": "Missed",
+    "ta": "தவறவிட்டவை",
+    "si": "මඟ හැරුණු"
+  },
+  "callAmbulance": {
+    "en": "Stroke? Call 1990 Suwa Seriya",
+    "ta": "பாரிசவாதமா? 1990 சுவசெரிய அழையுங்கள்",
+    "si": "ස්ට්‍රෝක්ද? 1990 සුව සැරියට කතා කරන්න"
+  },
+  "waitHost": {
+    "en": "Please wait…",
+    "ta": "தயவுசெய்து காத்திருங்கள்…",
+    "si": "කරුණාකර ඉන්න…"
+  }
+}

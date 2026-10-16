@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0b1530">
+<title>Time is Brain</title>
+<link rel="icon" href="img/logo.svg">
+<link rel="stylesheet" href="common.css">
+<link rel="stylesheet" href="tab.css">
+</head>
+<body>
+<div id="app">
+  <header id="bar">
+    <div id="barTeam"></div>
+    <div id="barName"></div>
+    <button id="fsBtn" class="fs">⛶ <span id="fsText">Go fullscreen</span></button>
+  </header>
+
+  <main>
+    <!-- pick team (only if the address has no ?team=) -->
+    <section id="v-team" class="view">
+      <h1>Which tablet is this?</h1>
+      <div class="row2">
+        <button class="big redbtn" data-team="red">RED</button>
+        <button class="big bluebtn" data-team="blue">BLUE</button>
+      </div>
+    </section>
+
+    <!-- language -->
+    <section id="v-lang" class="view">
+      <img src="img/logo.svg" class="logo" alt="">
+      <h1 class="tri">உங்கள் மொழியைத் தெரிவு செய்யுங்கள்<br>ඔබේ භාෂාව තෝරන්න<br>Choose your language</h1>
+      <div class="stack">
+        <button class="big langbtn" data-lang="ta">தமிழ்</button>
+        <button class="big langbtn" data-lang="si">සිංහල</button>
+        <button class="big langbtn" data-lang="en">English</button>
+      </div>
+    </section>
+
+    <!-- mode -->
+    <section id="v-mode" class="view">
+      <h1 data-t="chooseMode"></h1>
+      <div class="row2">
+        <button class="big mode" data-mode="team"><span class="ico">👥</span><span data-t="modeTeam"></span><small data-t="modeTeamSub"></small></button>
+        <button class="big mode" data-mode="solo"><span class="ico">🙋</span><span data-t="modeSolo"></span><small data-t="modeSoloSub"></small></button>
+      </div>
+      <button class="back" data-t="back"></button>
+    </section>
+
+    <!-- name -->
+    <section id="v-name" class="view">
+      <h2 data-t="enterName"></h2>
+      <div id="nameBox"><span id="nameText"></span><span class="caret"></span></div>
+      <div id="kbd"></div>
+      <div class="row3">
+        <button class="back" data-t="back"></button>
+        <button id="skipBtn" class="mid grey" data-t="skip"></button>
+        <button id="okBtn" class="mid green" data-t="ok"></button>
+      </div>
+    </section>
+
+    <!-- ready -->
+    <section id="v-ready" class="view">
+      <div class="hello" id="readyHello"></div>
+      <div id="readyWrap">
+        <p class="hint" data-t="pressReady"></p>
+        <button id="readyBtn" class="huge green" data-t="ready"></button>
+      </div>
+      <div id="waitWrap" class="hidden">
+        <div class="spinner"></div>
+        <p class="hint" data-t="waitingOther"></p>
+        <button id="soloInstead" class="mid grey"></button>
+      </div>
+      <button class="back" data-t="back"></button>
+    </section>
+
+    <!-- game busy (this tablet is not playing) -->
+    <section id="v-busy" class="view">
+      <img src="img/logo.svg" class="logo" alt="">
+      <h1 class="tri" id="busyText"></h1>
+    </section>
+
+    <!-- watch the TV -->
+    <section id="v-watch" class="view">
+      <div class="tvicon">📺</div>
+      <h1 id="watchText"></h1>
+      <p id="watchSub" class="hint"></p>
+    </section>
+
+    <!-- question -->
+    <section id="v-question" class="view">
+      <div class="qtop">
+        <div id="qInfo"></div>
+        <div id="qTime" class="num"></div>
+      </div>
+      <div class="qbar"><div id="qFill"></div></div>
+      <div id="qText"></div>
+      <div id="qHint"></div>
+      <div id="opts"></div>
+      <div id="myCounter" class="num"></div>
+      <div id="doneBanner" class="hidden"></div>
+      <div id="freeze" class="hidden"><div><div class="x">✗</div><div id="freezeText"></div><div id="freezeNum" class="num"></div></div></div>
+    </section>
+
+    <!-- results -->
+    <section id="v-results" class="view">
+      <div id="resTitle"></div>
+      <div id="resBox"></div>
+      <p id="resThanks"></p>
+    </section>
+  </main>
+
+  <div id="paused" class="hidden"><div>⏸ <span id="pausedText">Paused</span></div></div>
+  <div id="offline" class="hidden"><div><div class="spinner"></div><span id="offText">Reconnecting…</span></div></div>
+</div>
+<script src="/socket.io/socket.io.min.js"></script>
+<script src="common.js"></script>
+<script src="tab.js"></script>
+</body>
+</html>

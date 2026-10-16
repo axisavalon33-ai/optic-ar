@@ -1,0 +1,791 @@
+[
+  {
+    "id": 1,
+    "round": 1,
+    "text": {
+      "en": "Which symptoms did he have? Select all.",
+      "ta": "அவருக்கு என்ன அறிகுறிகள் இருந்தன? எல்லாவற்றையும் தெரிவு செய்யுங்கள்.",
+      "si": "එයාට තිබුණේ මොන රෝග ලක්ෂණද? ඔක්කොම තෝරන්න.",
+      "reviewed": false
+    },
+    "options": [
+      {
+        "text": {
+          "en": "Face drooping on one side",
+          "ta": "முகம் ஒரு பக்கமாகக் கோணுதல்",
+          "si": "මූණේ එක පැත්තක් එල්ලා වැටීම",
+          "reviewed": false
+        },
+        "correct": true
+      },
+      {
+        "text": {
+          "en": "Slurred speech",
+          "ta": "கதை குழறுதல்",
+          "si": "කතාව පැටලීම",
+          "reviewed": false
+        },
+        "correct": true
+      },
+      {
+        "text": {
+          "en": "Weakness of arm",
+          "ta": "கை பலவீனம்",
+          "si": "අතේ දුර්වලකම",
+          "reviewed": false
+        },
+        "correct": true
+      },
+      {
+        "text": {
+          "en": "Chest pain",
+          "ta": "நெஞ்சு வலி",
+          "si": "පපුවේ වේදනාව",
+          "reviewed": false
+        },
+        "correct": false
+      },
+      {
+        "text": {
+          "en": "High fever",
+          "ta": "கடும் காய்ச்சல்",
+          "si": "අධික උණ",
+          "reviewed": false
+        },
+        "correct": false
+      }
+    ],
+    "explanation": {
+      "en": "Face, arm and speech problems are the classic signs of stroke. Chest pain points more to the heart.",
+      "ta": "முகம், கை, கதை ஆகியவற்றில் ஏற்படும் பிரச்சினைகளே பாரிசவாதத்தின் முக்கிய அறிகுறிகள். நெஞ்சு வலி பெரும்பாலும் இதயப் பிரச்சினையைக் குறிக்கும்.",
+      "si": "මූණ, අත, කතාව කියන මේවායේ ප්‍රශ්න තමයි ස්ට්‍රෝක් එකක ප්‍රධාන ලක්ෂණ. පපුවේ වේදනාව වැඩිපුර හදවතේ ප්‍රශ්නයක් පෙන්නනවා.",
+      "reviewed": false
+    },
+    "media": "",
+    "explanationSeconds": null
+  },
+  {
+    "id": 2,
+    "round": 1,
+    "text": {
+      "en": "What is happening in his body?",
+      "ta": "அவருடைய உடலில் என்ன நடக்கிறது?",
+      "si": "එයාගේ ඇඟේ මොකද වෙන්නේ?",
+      "reviewed": false
+    },
+    "options": [
+      {
+        "text": {
+          "en": "A blood vessel to the brain is blocked",
+          "ta": "மூளைக்குச் செல்லும் ஒரு இரத்த நாளம் அடைபட்டுள்ளது",
+          "si": "මොළයට යන ලේ නහරයක් හිරවෙලා",
+          "reviewed": false
+        },
+        "correct": true
+      },
+      {
+        "text": {
+          "en": "A blood vessel in the brain may have burst",
+          "ta": "மூளையில் உள்ள ஒரு இரத்த நாளம் வெடித்திருக்கலாம்",
+          "si": "මොළයේ ලේ නහරයක් පුපුරලා වෙන්න පුළුවන්",
+          "reviewed": false
+        },
+        "correct": true
+      },
+      {
+        "text": {
+          "en": "Brain cells are dying from lack of oxygen",
+          "ta": "ஒட்சிசன் இல்லாமல் மூளைக் கலங்கள் இறக்கின்றன",
+          "si": "ඔක්සිජන් නැතිව මොළයේ සෛල මැරෙනවා",
+          "reviewed": false
+        },
+        "correct": true
+      },
+      {
+        "text": {
+          "en": "His heart has stopped",
+          "ta": "அவருடைய இதயம் நின்றுவிட்டது",
+          "si": "එයාගේ හදවත නැවතිලා",
+          "reviewed": false
+        },
+        "correct": false
+      },
+      {
+        "text": {
+          "en": "He has food poisoning",
+          "ta": "அவருக்கு உணவு நஞ்சாகியுள்ளது",
+          "si": "එයාට කෑම විෂ වෙලා",
+          "reviewed": false
+        },
+        "correct": false
+      }
+    ],
+    "explanation": {
+      "en": "A stroke is a brain attack — a clot or a bleed. About 1.9 million brain cells die every minute.",
+      "ta": "பாரிசவாதம் என்பது ஒரு மூளைத் தாக்குதல் — இரத்தக் கட்டி அல்லது இரத்தக் கசிவு. ஒவ்வொரு நிமிடமும் சுமார் 19 இலட்சம் மூளைக் கலங்கள் இறக்கின்றன.",
+      "si": "ස්ට්‍රෝක් එකක් (ආඝාතයක්) කියන්නේ මොළයට එන ප්‍රහාරයක් — ලේ කැටියක් හරි ලේ ගැලීමක් හරි. හැම විනාඩියකම මොළයේ සෛල මිලියන 1.9ක් විතර මැරෙනවා.",
+      "reviewed": false
+    },
+    "media": "",
+    "explanationSeconds": null
+  },
+  {
+    "id": 3,
+    "round": 1,
+    "text": {
+      "en": "How can you check if it is a stroke?",
+      "ta": "இது பாரிசவாதமா என்று எப்படிப் பரிசோதிக்கலாம்?",
+      "si": "මේක ස්ට්‍රෝක් එකක්ද කියලා බලන්නේ කොහොමද?",
+      "reviewed": false
+    },
+    "options": [
+      {
+        "text": {
+          "en": "Ask him to smile",
+          "ta": "சிரிக்கச் சொல்லுங்கள்",
+          "si": "හිනාවෙන්න කියන්න",
+          "reviewed": false
+        },
+        "correct": true
+      },
+      {
+        "text": {
+          "en": "Ask him to raise both arms",
+          "ta": "இரண்டு கைகளையும் உயர்த்தச் சொல்லுங்கள்",
+          "si": "අත් දෙකම උස්සන්න කියන්න",
+          "reviewed": false
+        },
+        "correct": true
+      },
+      {
+        "text": {
+          "en": "Ask him to repeat a simple sentence",
+          "ta": "ஒரு சிறிய வசனத்தைத் திருப்பிச் சொல்லச் சொல்லுங்கள்",
+          "si": "සරල වාක්‍යයක් ආයෙත් කියන්න කියන්න",
+          "reviewed": false
+        },
+        "correct": true
+      },
+      {
+        "text": {
+          "en": "Check his temperature",
+          "ta": "உடல் வெப்பநிலையைப் பாருங்கள்",
+          "si": "උෂ්ණත්වය බලන්න",
+          "reviewed": false
+        },
+        "correct": false
+      },
+      {
+        "text": {
+          "en": "Wait an hour to see",
+          "ta": "ஒரு மணி நேரம் பொறுத்திருந்து பாருங்கள்",
+          "si": "පැයක් ඉඳලා බලන්න",
+          "reviewed": false
+        },
+        "correct": false
+      }
+    ],
+    "explanation": {
+      "en": "Use BE-FAST: Balance, Eyes, Face, Arm, Speech, Time. One sign is enough to act.",
+      "ta": "BE-FAST ஐ நினைவில் வையுங்கள்: சமநிலை (Balance), கண்கள் (Eyes), முகம் (Face), கை (Arm), கதை (Speech), நேரம் (Time). ஒரு அறிகுறி இருந்தாலே உடனே செயற்படுங்கள்.",
+      "si": "BE-FAST මතක තියාගන්න: සමබරතාව (Balance), ඇස් (Eyes), මූණ (Face), අත (Arm), කතාව (Speech), වෙලාව (Time). එක ලක්ෂණයක් තිබුණත් ඉක්මනට ක්‍රියා කරන්න.",
+      "reviewed": false
+    },
+    "media": "",
+    "explanationSeconds": null
+  },
+  {
+    "id": 4,
+    "round": 1,
+    "text": {
+      "en": "What should you do first?",
+      "ta": "முதலில் என்ன செய்ய வேண்டும்?",
+      "si": "මුලින්ම කරන්න ඕනේ මොකක්ද?",
+      "reviewed": false
+    },
+    "options": [
+      {
+        "text": {
+          "en": "Call 1990 Suwa Seriya ambulance",
+          "ta": "1990 சுவசெரிய அம்புலன்ஸை அழையுங்கள்",
+          "si": "1990 සුව සැරිය ඇම්බියුලන්ස් එකට කතා කරන්න",
+          "reviewed": false
+        },
+        "correct": true
+      },
+      {
+        "text": {
+          "en": "Note the time symptoms started",
+          "ta": "அறிகுறிகள் தொடங்கிய நேரத்தைக் குறித்துக்கொள்ளுங்கள்",
+          "si": "රෝග ලක්ෂණ පටන් ගත්ත වෙලාව සටහන් කරගන්න",
+          "reviewed": false
+        },
+        "correct": true
+      },
+      {
+        "text": {
+          "en": "Stay with him and keep him safe",
+          "ta": "அவருடன் இருந்து அவரைப் பாதுகாப்பாக வைத்திருங்கள்",
+          "si": "එයා ළඟ ඉඳලා එයාව ආරක්ෂිතව තියාගන්න",
+          "reviewed": false
+        },
+        "correct": true
+      },
+      {
+        "text": {
+          "en": "Take him to a traditional healer",
+          "ta": "நாட்டு வைத்தியரிடம் கொண்டு செல்லுங்கள்",
+          "si": "වෙද මහත්තයෙක් ළඟට අරන් යන්න",
+          "reviewed": false
+        },
+        "correct": false
+      },
+      {
+        "text": {
+          "en": "Let him sleep it off",
+          "ta": "தூங்கினால் சரியாகிவிடும் என்று விட்டுவிடுங்கள்",
+          "si": "නිදාගත්තම හරියයි කියලා නිදාගන්න අරින්න",
+          "reviewed": false
+        },
+        "correct": false
+      }
+    ],
+    "explanation": {
+      "en": "The ambulance starts care on the way. The time symptoms started decides the treatment.",
+      "ta": "அம்புலன்ஸ் வழியிலேயே சிகிச்சையைத் தொடங்கும். அறிகுறிகள் தொடங்கிய நேரமே சிகிச்சையைத் தீர்மானிக்கும்.",
+      "si": "ඇම්බියුලන්ස් එකේදීම ප්‍රතිකාර පටන් ගන්නවා. රෝග ලක්ෂණ පටන් ගත්ත වෙලාව අනුව තමයි ප්‍රතිකාරය තීරණය වෙන්නේ.",
+      "reviewed": false
+    },
+    "media": "",
+    "explanationSeconds": null
+  },
+  {
+    "id": 5,
+    "round": 1,
+    "text": {
+      "en": "Which of these are HARMFUL?",
+      "ta": "இவற்றில் எவை தீங்கானவை?",
+      "si": "මේවායින් හානිකර මොනවද?",
+      "reviewed": false
+    },
+    "options": [
+      {
+        "text": {
+          "en": "Giving water or food",
+          "ta": "தண்ணீர் அல்லது உணவு கொடுத்தல்",
+          "si": "වතුර හරි කෑම හරි දීම",
+          "reviewed": false
+        },
+        "correct": true
+      },
+      {
+        "text": {
+          "en": "Giving tablets, even aspirin",
+          "ta": "குளிசைகள் கொடுத்தல், அஸ்பிரின் கூட",
+          "si": "පෙති දීම, ඇස්ප්‍රින් වුණත්",
+          "reviewed": false
+        },
+        "correct": true
+      },
+      {
+        "text": {
+          "en": "Pricking his fingers",
+          "ta": "விரல்களில் குத்துதல்",
+          "si": "ඇඟිලිවලට ඇනීම",
+          "reviewed": false
+        },
+        "correct": true
+      },
+      {
+        "text": {
+          "en": "Laying him on his side if drowsy",
+          "ta": "தூக்கக் கலக்கமாக இருந்தால் ஒரு பக்கமாகப் படுக்க வைத்தல்",
+          "si": "නිදිමත නම් ඇලයට හාන්සි කරවීම",
+          "reviewed": false
+        },
+        "correct": false
+      },
+      {
+        "text": {
+          "en": "Loosening tight clothing",
+          "ta": "இறுக்கமான உடைகளைத் தளர்த்துதல்",
+          "si": "තද ඇඳුම් ලිහිල් කිරීම",
+          "reviewed": false
+        },
+        "correct": false
+      }
+    ],
+    "explanation": {
+      "en": "Swallowing may be weak, aspirin can worsen a bleed, and finger pricking wastes precious time.",
+      "ta": "விழுங்கும் சக்தி குறைந்திருக்கலாம், அஸ்பிரின் இரத்தக் கசிவை மோசமாக்கலாம், விரல்களில் குத்துவது பெறுமதியான நேரத்தை வீணாக்கும்.",
+      "si": "ගිලීම දුර්වල වෙලා තියෙන්න පුළුවන්, ඇස්ප්‍රින් නිසා ලේ ගැලීම නරක අතට හැරෙන්න පුළුවන්, ඇඟිලිවලට ඇනීමෙන් වටිනා වෙලාව නාස්ති වෙනවා.",
+      "reviewed": false
+    },
+    "media": "",
+    "explanationSeconds": null
+  },
+  {
+    "id": 6,
+    "round": 1,
+    "text": {
+      "en": "His symptoms disappear after 10 minutes. What is true?",
+      "ta": "10 நிமிடங்களில் அவருடைய அறிகுறிகள் மறைந்துவிட்டன. எது உண்மை?",
+      "si": "විනාඩි 10කින් එයාගේ රෝග ලක්ෂණ නැති වුණා. ඇත්ත මොකක්ද?",
+      "reviewed": false
+    },
+    "options": [
+      {
+        "text": {
+          "en": "It could be a mini-stroke (TIA)",
+          "ta": "இது ஒரு சிறிய பாரிசவாதமாக (TIA) இருக்கலாம்",
+          "si": "මේක පොඩි ස්ට්‍රෝක් එකක් (TIA) වෙන්න පුළුවන්",
+          "reviewed": false
+        },
+        "correct": true
+      },
+      {
+        "text": {
+          "en": "He still needs hospital immediately",
+          "ta": "அவரை இப்போதும் உடனடியாக ஆஸ்பத்திரிக்குக் கொண்டு செல்ல வேண்டும்",
+          "si": "තාමත් එයාව ඉක්මනටම ඉස්පිරිතාලෙට ගෙනියන්න ඕනේ",
+          "reviewed": false
+        },
+        "correct": true
+      },
+      {
+        "text": {
+          "en": "A full stroke may follow soon",
+          "ta": "விரைவில் முழுமையான பாரிசவாதம் வரலாம்",
+          "si": "ළඟදීම ලොකු ස්ට්‍රෝක් එකක් එන්න පුළුවන්",
+          "reviewed": false
+        },
+        "correct": true
+      },
+      {
+        "text": {
+          "en": "He is fine, no need to go",
+          "ta": "அவர் நலமாக இருக்கிறார், போகத் தேவையில்லை",
+          "si": "එයාට දැන් හොඳයි, යන්න ඕනේ නෑ",
+          "reviewed": false
+        },
+        "correct": false
+      },
+      {
+        "text": {
+          "en": "Just give a painkiller",
+          "ta": "வலி நிவாரணி மட்டும் கொடுங்கள்",
+          "si": "වේදනා නාශකයක් විතරක් දෙන්න",
+          "reviewed": false
+        },
+        "correct": false
+      }
+    ],
+    "explanation": {
+      "en": "A TIA is a warning sign. Treat it as an emergency.",
+      "ta": "TIA ஒரு எச்சரிக்கை அறிகுறி. அதை அவசர நிலையாகக் கருதுங்கள்.",
+      "si": "TIA එකක් කියන්නේ අනතුරු ඇඟවීමක්. ඒක හදිසි අවස්ථාවක් විදිහට සලකන්න.",
+      "reviewed": false
+    },
+    "media": "",
+    "explanationSeconds": null
+  },
+  {
+    "id": 7,
+    "round": 2,
+    "text": {
+      "en": "Which tests may doctors do?",
+      "ta": "டொக்டர்கள் என்ன பரிசோதனைகளைச் செய்யலாம்?",
+      "si": "දොස්තරලා කරන්න පුළුවන් පරීක්ෂණ මොනවද?",
+      "reviewed": false
+    },
+    "options": [
+      {
+        "text": {
+          "en": "CT scan of the brain",
+          "ta": "மூளையின் CT ஸ்கேன்",
+          "si": "මොළයේ CT ස්කෑන් එක",
+          "reviewed": false
+        },
+        "correct": true
+      },
+      {
+        "text": {
+          "en": "MRI of the brain",
+          "ta": "மூளையின் MRI ஸ்கேன்",
+          "si": "මොළයේ MRI ස්කෑන් එක",
+          "reviewed": false
+        },
+        "correct": true
+      },
+      {
+        "text": {
+          "en": "Blood sugar check",
+          "ta": "இரத்தத்தில் சீனி அளவு பரிசோதனை",
+          "si": "ලේවල සීනි පරීක්ෂාව",
+          "reviewed": false
+        },
+        "correct": true
+      },
+      {
+        "text": {
+          "en": "Chest X-ray only",
+          "ta": "நெஞ்சு X-ray மட்டும்",
+          "si": "පපුවේ X-ray එක විතරක්",
+          "reviewed": false
+        },
+        "correct": false
+      },
+      {
+        "text": {
+          "en": "Ultrasound of the abdomen",
+          "ta": "வயிற்றின் அல்ட்ராசவுண்ட் ஸ்கேன்",
+          "si": "බඩේ අල්ට්‍රාසවුන්ඩ් ස්කෑන් එක",
+          "reviewed": false
+        },
+        "correct": false
+      }
+    ],
+    "explanation": {
+      "en": "A CT scan shows whether it is a clot or a bleed. Clot-busting treatment works only for clots, within about 4.5 hours. Low blood sugar can look like a stroke.",
+      "ta": "இரத்தக் கட்டியா இரத்தக் கசிவா என்பதை CT ஸ்கேன் காட்டும். கட்டியைக் கரைக்கும் சிகிச்சை கட்டிகளுக்கு மட்டுமே, சுமார் 4.5 மணி நேரத்துக்குள் பலன் தரும். சீனி அளவு குறைவதும் பாரிசவாதம் போலத் தோன்றலாம்.",
+      "si": "CT ස්කෑන් එකෙන් පේනවා ලේ කැටියක්ද ලේ ගැලීමක්ද කියලා. ලේ කැටිය දියකරන ප්‍රතිකාරය වැඩ කරන්නේ ලේ කැටිවලට විතරයි, ඒකත් පැය 4.5ක් විතර ඇතුළත. ලේවල සීනි අඩු වුණාමත් ස්ට්‍රෝක් එකක් වගේ පේන්න පුළුවන්.",
+      "reviewed": false
+    },
+    "media": "",
+    "explanationSeconds": null
+  },
+  {
+    "id": 8,
+    "round": 3,
+    "text": {
+      "en": "Which are risk factors for stroke?",
+      "ta": "பாரிசவாதத்துக்கான ஆபத்துக் காரணிகள் எவை?",
+      "si": "ස්ට්‍රෝක් එකක අවදානම වැඩි කරන දේවල් මොනවද?",
+      "reviewed": false
+    },
+    "options": [
+      {
+        "text": {
+          "en": "High blood pressure",
+          "ta": "உயர் இரத்த அழுத்தம் (பிரஷர்)",
+          "si": "අධික රුධිර පීඩනය (ප්‍රෙෂර්)",
+          "reviewed": false
+        },
+        "correct": true
+      },
+      {
+        "text": {
+          "en": "Diabetes",
+          "ta": "நீரிழிவு (சீனி வியாதி)",
+          "si": "දියවැඩියාව (සීනි)",
+          "reviewed": false
+        },
+        "correct": true
+      },
+      {
+        "text": {
+          "en": "Smoking",
+          "ta": "புகைப்பிடித்தல்",
+          "si": "දුම් බීම",
+          "reviewed": false
+        },
+        "correct": true
+      },
+      {
+        "text": {
+          "en": "High cholesterol",
+          "ta": "அதிக கொலஸ்ட்ரோல்",
+          "si": "අධික කොලෙස්ටරෝල්",
+          "reviewed": false
+        },
+        "correct": true
+      },
+      {
+        "text": {
+          "en": "Eating rice",
+          "ta": "சோறு சாப்பிடுதல்",
+          "si": "බත් කෑම",
+          "reviewed": false
+        },
+        "correct": false
+      },
+      {
+        "text": {
+          "en": "Cold weather",
+          "ta": "குளிர் காலநிலை",
+          "si": "සීතල කාලගුණය",
+          "reviewed": false
+        },
+        "correct": false
+      }
+    ],
+    "explanation": {
+      "en": "High blood pressure is the biggest risk. An irregular heartbeat and alcohol also add risk.",
+      "ta": "உயர் இரத்த அழுத்தமே மிகப் பெரிய ஆபத்து. ஒழுங்கற்ற இதயத் துடிப்பும் மதுபானமும் ஆபத்தை அதிகரிக்கும்.",
+      "si": "ලොකුම අවදානම අධික රුධිර පීඩනය. අක්‍රමවත් හෘද ස්පන්දනය සහ මත්පැනත් අවදානම වැඩි කරනවා.",
+      "reviewed": false
+    },
+    "media": "",
+    "explanationSeconds": null
+  },
+  {
+    "id": 9,
+    "round": 3,
+    "text": {
+      "en": "Which are MYTHS?",
+      "ta": "இவற்றில் எவை தவறான நம்பிக்கைகள்?",
+      "si": "මේවායින් මිථ්‍යා මත මොනවද?",
+      "reviewed": false
+    },
+    "options": [
+      {
+        "text": {
+          "en": "Stroke only happens to old people",
+          "ta": "பாரிசவாதம் வயதானவர்களுக்கு மட்டுமே வரும்",
+          "si": "ස්ට්‍රෝක් හැදෙන්නේ වයසක අයට විතරයි",
+          "reviewed": false
+        },
+        "correct": true
+      },
+      {
+        "text": {
+          "en": "Stroke only happens to obese people",
+          "ta": "பாரிசவாதம் உடல் பருமனானவர்களுக்கு மட்டுமே வரும்",
+          "si": "ස්ට්‍රෝක් හැදෙන්නේ මහත අයට විතරයි",
+          "reviewed": false
+        },
+        "correct": true
+      },
+      {
+        "text": {
+          "en": "Nothing can be done once a stroke starts",
+          "ta": "பாரிசவாதம் தொடங்கிவிட்டால் ஒன்றும் செய்ய முடியாது",
+          "si": "ස්ට්‍රෝක් එකක් පටන් ගත්තම කරන්න දෙයක් නෑ",
+          "reviewed": false
+        },
+        "correct": true
+      },
+      {
+        "text": {
+          "en": "Young people can get a stroke",
+          "ta": "இளைஞர்களுக்கும் பாரிசவாதம் வரலாம்",
+          "si": "තරුණ අයටත් ස්ට්‍රෝක් හැදෙන්න පුළුවන්",
+          "reviewed": false
+        },
+        "correct": false
+      },
+      {
+        "text": {
+          "en": "Many strokes can be prevented",
+          "ta": "பல பாரிசவாதங்களைத் தடுக்க முடியும்",
+          "si": "ගොඩක් ස්ට්‍රෝක් වළක්වගන්න පුළුවන්",
+          "reviewed": false
+        },
+        "correct": false
+      }
+    ],
+    "explanation": {
+      "en": "Stroke can happen at any age or body size, and fast treatment works.",
+      "ta": "எந்த வயதிலும், எந்த உடல் அளவிலும் பாரிசவாதம் வரலாம். விரைவான சிகிச்சை பலன் தரும்.",
+      "si": "ඕනෑම වයසක, ඕනෑම ඇඟේ ප්‍රමාණයක කෙනෙකුට ස්ට්‍රෝක් හැදෙන්න පුළුවන්. ඉක්මන් ප්‍රතිකාර වැඩ කරනවා.",
+      "reviewed": false
+    },
+    "media": "",
+    "explanationSeconds": null
+  },
+  {
+    "id": 10,
+    "round": 3,
+    "text": {
+      "en": "What can a stroke leave behind?",
+      "ta": "பாரிசவாதம் எதை விட்டுச் செல்லலாம்?",
+      "si": "ස්ට්‍රෝක් එකකින් පස්සේ ඉතුරු වෙන්න පුළුවන් දේවල් මොනවද?",
+      "reviewed": false
+    },
+    "options": [
+      {
+        "text": {
+          "en": "Weakness of one side",
+          "ta": "உடலின் ஒரு பக்கம் பலவீனம்",
+          "si": "ඇඟේ එක පැත්තක දුර්වලකම",
+          "reviewed": false
+        },
+        "correct": true
+      },
+      {
+        "text": {
+          "en": "Speech or swallowing problems",
+          "ta": "கதைப்பதில் அல்லது விழுங்குவதில் சிரமம்",
+          "si": "කතා කරන්න හරි ගිලින්න හරි අමාරුව",
+          "reviewed": false
+        },
+        "correct": true
+      },
+      {
+        "text": {
+          "en": "Memory problems",
+          "ta": "ஞாபக மறதி",
+          "si": "මතක ප්‍රශ්න",
+          "reviewed": false
+        },
+        "correct": true
+      },
+      {
+        "text": {
+          "en": "Depression or mood changes",
+          "ta": "மனச்சோர்வு அல்லது மனநிலை மாற்றங்கள்",
+          "si": "මානසික අවපීඩනය හරි මනෝභාව වෙනස්වීම්",
+          "reviewed": false
+        },
+        "correct": true
+      },
+      {
+        "text": {
+          "en": "Stronger eyesight",
+          "ta": "கண் பார்வை கூர்மையாதல்",
+          "si": "ඇස් පෙනීම වැඩි වීම",
+          "reviewed": false
+        },
+        "correct": false
+      }
+    ],
+    "explanation": {
+      "en": "The effects depend on which part of the brain was damaged.",
+      "ta": "மூளையின் எந்தப் பகுதி பாதிக்கப்பட்டது என்பதைப் பொறுத்து விளைவுகள் மாறும்.",
+      "si": "බලපෑම රඳා පවතින්නේ මොළයේ හානි වුණේ මොන කොටසටද කියන එක මත.",
+      "reviewed": false
+    },
+    "media": "",
+    "explanationSeconds": null
+  },
+  {
+    "id": 11,
+    "round": 3,
+    "text": {
+      "en": "After a stroke, the patient may need…",
+      "ta": "பாரிசவாதத்தின் பின் நோயாளிக்குத் தேவைப்படலாம்…",
+      "si": "ස්ට්‍රෝක් එකකින් පස්සේ රෝගියාට ඕනේ වෙන්න පුළුවන්…",
+      "reviewed": false
+    },
+    "options": [
+      {
+        "text": {
+          "en": "Physiotherapy",
+          "ta": "இயன்மருத்துவம் (பிசியோதெரபி)",
+          "si": "භෞත චිකිත්සාව (ෆිසියෝතෙරපි)",
+          "reviewed": false
+        },
+        "correct": true
+      },
+      {
+        "text": {
+          "en": "Speech therapy",
+          "ta": "பேச்சுப் பயிற்சி சிகிச்சை",
+          "si": "කථන චිකිත්සාව",
+          "reviewed": false
+        },
+        "correct": true
+      },
+      {
+        "text": {
+          "en": "Regular medicines and follow-up",
+          "ta": "தொடர்ச்சியான மருந்துகளும் கிளினிக் பரிசோதனைகளும்",
+          "si": "දිගටම බෙහෙත් සහ නිතර ක්ලිනික් යාම",
+          "reviewed": false
+        },
+        "correct": true
+      },
+      {
+        "text": {
+          "en": "Family support",
+          "ta": "குடும்பத்தின் ஆதரவு",
+          "si": "පවුලේ අයගේ සහයෝගය",
+          "reviewed": false
+        },
+        "correct": true
+      },
+      {
+        "text": {
+          "en": "Only bed rest for life",
+          "ta": "வாழ்நாள் முழுவதும் படுக்கையில் ஓய்வு மட்டும்",
+          "si": "ජීවිත කාලෙම ඇඳේ විවේක ගැනීම විතරක්",
+          "reviewed": false
+        },
+        "correct": false
+      }
+    ],
+    "explanation": {
+      "en": "Rehabilitation retrains the brain, and family support matters a lot.",
+      "ta": "புனர்வாழ்வுப் பயிற்சிகள் மூளையை மீண்டும் பழக்குகின்றன. குடும்பத்தின் ஆதரவு மிகவும் முக்கியம்.",
+      "si": "පුනරුත්ථාපනයෙන් මොළය ආයෙත් පුහුණු කරනවා. පවුලේ සහයෝගය ගොඩක් වැදගත්.",
+      "reviewed": false
+    },
+    "media": "",
+    "explanationSeconds": null
+  },
+  {
+    "id": 12,
+    "round": 3,
+    "text": {
+      "en": "How can you prevent a stroke?",
+      "ta": "பாரிசவாதத்தை எப்படித் தடுக்கலாம்?",
+      "si": "ස්ට්‍රෝක් එකක් වළක්වගන්නේ කොහොමද?",
+      "reviewed": false
+    },
+    "options": [
+      {
+        "text": {
+          "en": "Check BP and sugar regularly",
+          "ta": "பிரஷரையும் சீனியையும் தொடர்ந்து பரிசோதியுங்கள்",
+          "si": "ප්‍රෙෂර් සහ සීනි නිතර බලන්න",
+          "reviewed": false
+        },
+        "correct": true
+      },
+      {
+        "text": {
+          "en": "Exercise most days",
+          "ta": "பெரும்பாலான நாட்களில் உடற்பயிற்சி செய்யுங்கள்",
+          "si": "ගොඩක් දවස්වල ව්‍යායාම කරන්න",
+          "reviewed": false
+        },
+        "correct": true
+      },
+      {
+        "text": {
+          "en": "Reduce salt and oily food",
+          "ta": "உப்பையும் எண்ணெய் உணவையும் குறையுங்கள்",
+          "si": "ලුණු සහ තෙල් කෑම අඩු කරන්න",
+          "reviewed": false
+        },
+        "correct": true
+      },
+      {
+        "text": {
+          "en": "Stop smoking and limit alcohol",
+          "ta": "புகைப்பிடிப்பதை நிறுத்தி, மதுபானத்தைக் குறையுங்கள்",
+          "si": "දුම් බීම නවත්වලා, මත්පැන් අඩු කරන්න",
+          "reviewed": false
+        },
+        "correct": true
+      },
+      {
+        "text": {
+          "en": "Stop BP tablets when you feel fine",
+          "ta": "சுகமாக இருக்கும்போது பிரஷர் குளிசைகளை நிறுத்துங்கள்",
+          "si": "හොඳ වගේ දැනෙනකොට ප්‍රෙෂර් පෙති නවත්වන්න",
+          "reviewed": false
+        },
+        "correct": false
+      }
+    ],
+    "explanation": {
+      "en": "Most strokes can be prevented with simple daily habits.",
+      "ta": "எளிய தினசரிப் பழக்கங்கள் மூலம் பெரும்பாலான பாரிசவாதங்களைத் தடுக்கலாம்.",
+      "si": "සරල දෛනික පුරුදුවලින් ගොඩක් ස්ට්‍රෝක් වළක්වගන්න පුළුවන්.",
+      "reviewed": false
+    },
+    "media": "",
+    "explanationSeconds": null
+  }
+]

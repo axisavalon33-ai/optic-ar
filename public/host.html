@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Time is Brain - Host</title>
+<link rel="icon" href="img/logo.svg">
+<link rel="stylesheet" href="common.css">
+<link rel="stylesheet" href="host.css">
+</head>
+<body>
+
+<div id="login">
+  <form id="loginForm" class="card">
+    <img src="img/logo.svg" alt="">
+    <h1>Host control panel</h1>
+    <p>Enter the PIN</p>
+    <input id="pin" type="password" inputmode="numeric" autocomplete="off" autofocus>
+    <button type="submit" class="btn green">Open</button>
+    <div id="loginErr" class="err"></div>
+  </form>
+</div>
+
+<div id="panel" class="hidden">
+  <header>
+    <img src="img/logo.svg" alt="">
+    <h1>Time is Brain — Host</h1>
+    <div id="phase" class="phase"></div>
+    <div id="conn" class="dot"></div>
+  </header>
+
+  <div class="grid">
+    <!-- Controls -->
+    <section class="card">
+      <h2>Game controls</h2>
+      <div class="btns">
+        <button class="btn green" data-cmd="start" title="Start now with the tablets that are ready">▶ Start</button>
+        <button class="btn gold" data-cmd="pause" id="pauseBtn">⏸ Pause everything</button>
+        <button class="btn blue" data-cmd="next" title="Go to the next step">⏭ Next</button>
+        <button class="btn" data-cmd="hold" id="holdBtn" title="Keep the explanation on the TV">✋ Hold</button>
+        <button class="btn" data-cmd="skip">⤼ Skip question</button>
+        <button class="btn" data-cmd="replay">↺ Replay video</button>
+        <button class="btn red" data-cmd="reset" data-confirm="Stop this game and go back to the home screen?">✖ Reset game</button>
+      </div>
+      <div class="rowline">
+        <label>TV subtitle language:
+          <select id="subLang"><option value="ta">தமிழ் Tamil</option><option value="si">සිංහල Sinhala</option><option value="en">English</option></select>
+        </label>
+        <button class="btn small" data-cmd="homeSound" id="homeSoundBtn">🔇 Home video sound</button>
+      </div>
+      <div id="live" class="live"></div>
+    </section>
+
+    <!-- Tablets -->
+    <section class="card">
+      <h2>Tablets</h2>
+      <div class="tabs">
+        <div class="tabcard red" id="tc-red"></div>
+        <div class="tabcard blue" id="tc-blue"></div>
+      </div>
+      <div class="tvline" id="tvLine"></div>
+    </section>
+
+    <!-- Addresses -->
+    <section class="card">
+      <h2>Addresses to type</h2>
+      <div id="urls"></div>
+    </section>
+
+    <!-- Files check -->
+    <section class="card">
+      <h2>Files check</h2>
+      <div id="files"></div>
+      <button class="btn small" data-cmd="reloadFiles">⟳ Reload questions &amp; texts from disk</button>
+    </section>
+
+    <!-- Settings -->
+    <section class="card wide">
+      <h2>Settings <small>(saved in settings.json)</small></h2>
+      <form id="settingsForm" class="settings">
+        <label>Neurons lost per second <input name="neuronsPerSecond" type="number" step="1" min="0"></label>
+        <label>Wrong tap penalty (neurons) <input name="wrongTapPenalty" type="number" step="1" min="0"></label>
+        <label>Wrong tap freeze (seconds) <input name="wrongTapFreezeSeconds" type="number" step="0.5" min="0"></label>
+        <label>Question time limit (seconds) <input name="questionTimeLimitSeconds" type="number" step="1" min="5"></label>
+        <label>Reading time before tapping (seconds) <input name="readLockSeconds" type="number" step="0.5" min="0"></label>
+        <label>Explanation time (seconds) <input name="explanationSeconds" type="number" step="1" min="1"></label>
+        <label>Results screen time (seconds) <input name="resultsScreenSeconds" type="number" step="1" min="3"></label>
+        <label>Story video file <input name="videoFile" type="text"></label>
+        <label>Home video file <input name="homeVideoFile" type="text"></label>
+        <label>Default subtitle language
+          <select name="defaultSubtitleLanguage"><option value="ta">Tamil</option><option value="si">Sinhala</option><option value="en">English</option></select>
+        </label>
+        <label>Round 1 pause (seconds in video)
+          <span class="with-btn"><input name="pauses.round1" type="number" step="0.1" min="0"><button type="button" class="btn small" data-test="round1">▶ Test</button></span>
+        </label>
+        <label>Round 2 pause (seconds in video)
+          <span class="with-btn"><input name="pauses.round2" type="number" step="0.1" min="0"><button type="button" class="btn small" data-test="round2">▶ Test</button></span>
+        </label>
+        <label>Host PIN <input name="hostPin" type="text" inputmode="numeric"></label>
+        <label>Port (needs restart) <input name="port" type="number" step="1" min="1"></label>
+        <div class="formbtns">
+          <button type="submit" class="btn green">💾 Save settings</button>
+          <span class="note">"Test" plays the story video on the TV from 5 seconds before that pause point.</span>
+        </div>
+      </form>
+    </section>
+
+    <!-- Scoreboard -->
+    <section class="card">
+      <h2>Scoreboard</h2>
+      <div id="scores"></div>
+      <div class="btns">
+        <button class="btn red small" data-cmd="clearScores" data-confirm="Delete ALL scores from the scoreboard? This cannot be undone.">🗑 Clear scoreboard</button>
+        <button class="btn small" data-cmd="resetGuest" data-confirm="Start guest names again from Guest 001?">↺ Reset guest counter</button>
+      </div>
+      <div id="guestInfo" class="note"></div>
+    </section>
+
+    <!-- Problems -->
+    <section class="card">
+      <h2>Problems log</h2>
+      <div id="errors" class="note"></div>
+    </section>
+  </div>
+</div>
+<div id="toast" class="hidden"></div>
+
+<script src="/socket.io/socket.io.min.js"></script>
+<script src="common.js"></script>
+<script src="host.js"></script>
+</body>
+</html>

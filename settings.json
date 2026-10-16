@@ -1,0 +1,19 @@
+{
+  "hostPin": "1990",
+  "port": 3000,
+  "neuronsPerSecond": 32000,
+  "wrongTapPenalty": 500000,
+  "wrongTapFreezeSeconds": 2,
+  "questionTimeLimitSeconds": 45,
+  "readLockSeconds": 3,
+  "explanationSeconds": 10,
+  "resultsScreenSeconds": 20,
+  "videoFile": "stroke.mp4",
+  "homeVideoFile": "srilanka.mp4",
+  "pauses": {
+    "round1": 16.4,
+    "round2": 81.5
+  },
+  "defaultSubtitleLanguage": "ta",
+  "homeVideoSound": false
+}
