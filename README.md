@@ -10,7 +10,8 @@ Every second of thinking costs brain cells ("neurons"), so the player who loses 
 
 1. Copy this whole folder to the laptop, for example to `C:\TimeIsBrain`.
 2. Put your media files into the `media` folder:
-   `stroke.mp4`, `srilanka.mp4`, `stroke_en.vtt`, `stroke_ta.vtt`, `stroke_si.vtt`
+   `stroke.mp4`, `stroke_en.vtt`, `stroke_ta.vtt`, `stroke_si.vtt`
+   (The TV home screen shows the **slideshow**, so `srilanka.mp4` is not needed.)
 3. Double-click **`start.bat`**.
    - The first time, it installs the game (about 1 minute, **needs internet**).
    - **Windows Firewall** may ask "Allow Node.js?". Tick **BOTH** boxes (Private **and** Public) and press **Allow**.
@@ -83,6 +84,7 @@ New timings start from the next game.
 | `resultsScreenSeconds` | How long the results screen stays on (20) |
 | `pauses.round1`, `pauses.round2` | Where the story video stops (in seconds). Use **▶ Test** on the host page to check them |
 | `defaultSubtitleLanguage` | `ta`, `si` or `en` |
+| `homeScreen` | `slides` = the slideshow on the TV home screen (normal). `video` = play `homeVideoFile` (srilanka.mp4) instead |
 | `hostPin` | The PIN for the host page |
 
 **Notepad tips:** keep the quotes `" "` and the commas `,` exactly as they are.
@@ -131,6 +133,8 @@ Picture types: jpg, png, webp, gif. Video types: mp4, webm.
 ## 7. The slideshow (slides.html)
 
 13 colourful information slides in English, Tamil and Sinhala. They work offline.
+The **TV home screen** shows the "home" slides automatically (left side), changing language every round:
+English → Tamil → Sinhala. To show the old srilanka.mp4 video instead, set **Home screen shows → Video** on the host page.
 **Always open them with `&kiosk=1`** — that hides the small grey test label in the top-right corner.
 
 | Address | What it plays |

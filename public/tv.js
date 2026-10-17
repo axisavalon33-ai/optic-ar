@@ -192,8 +192,19 @@
   }, 1000);
 
   function syncHomeVideo() {
-    if (!S) return;
-    if (S.phase === 'HOME' && TB.config && TB.config.homeVideoFile) {
+    if (!S || !TB.config) return;
+    const useSlides = TB.config.homeScreen !== 'video';
+    document.querySelector('.home-left').classList.toggle('slides', useSlides);
+    const frame = $('homeSlides');
+    frame.classList.toggle('hidden', !useSlides);
+    if (useSlides) {
+      // Home set of the slideshow, test label hidden (kiosk), language changes every loop
+      if (!frame.getAttribute('src')) frame.src = '/slides.html?set=home&lang=en&kiosk=1&rotate=1';
+      if (!homeVideo.paused) homeVideo.pause();
+      return;
+    }
+    if (frame.getAttribute('src')) frame.removeAttribute('src');
+    if (S.phase === 'HOME' && TB.config.homeVideoFile) {
       homeVideo.muted = !(S.homeSound && unlocked);
       if (homeVideo.paused) homeVideo.play().catch(() => { homeVideo.muted = true; homeVideo.play().catch(() => {}); });
     } else if (!homeVideo.paused) homeVideo.pause();
@@ -262,6 +273,7 @@
       let st = x.connected ? (x.ready ? `✓ ${TB.esc(x.name)} is ready` : (x.step === 'lang' ? 'free — come and play!' : 'getting ready…')) : 'tablet offline';
       return `<div class="pill ${team}">${nm}: ${st}</div>`;
     };
+    $('stripPills').innerHTML = pill('red') + pill('blue');
     $('homeJoin').innerHTML = `<div class="play">👉 Play now on the tablets!</div><div class="pills">${pill('red')}${pill('blue')}</div>`;
   }
 

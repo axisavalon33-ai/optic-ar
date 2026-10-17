@@ -86,7 +86,10 @@
         <label>Explanation time (seconds) <input name="explanationSeconds" type="number" step="1" min="1"></label>
         <label>Results screen time (seconds) <input name="resultsScreenSeconds" type="number" step="1" min="3"></label>
         <label>Story video file <input name="videoFile" type="text"></label>
-        <label>Home video file <input name="homeVideoFile" type="text"></label>
+        <label>Home screen shows
+          <select name="homeScreen"><option value="slides">Slideshow (slides.html)</option><option value="video">Video (home video file)</option></select>
+        </label>
+        <label>Home video file (only if "Video") <input name="homeVideoFile" type="text"></label>
         <label>Default subtitle language
           <select name="defaultSubtitleLanguage"><option value="ta">Tamil</option><option value="si">Sinhala</option><option value="en">English</option></select>
         </label>

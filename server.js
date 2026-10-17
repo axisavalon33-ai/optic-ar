@@ -93,6 +93,7 @@ const DEFAULT_SETTINGS = {
   resultsScreenSeconds: 20,
   videoFile: 'stroke.mp4',
   homeVideoFile: 'srilanka.mp4',
+  homeScreen: 'slides',
   pauses: { round1: 16.4, round2: 81.5 },
   defaultSubtitleLanguage: 'ta',
   homeVideoSound: false
@@ -134,6 +135,7 @@ function sanitizeSettings(input) {
   };
   if (out.pauses.round2 <= out.pauses.round1) out.pauses.round2 = out.pauses.round1 + 1;
   out.defaultSubtitleLanguage = LANGS.includes(src.defaultSubtitleLanguage) ? src.defaultSubtitleLanguage : DEFAULT_SETTINGS.defaultSubtitleLanguage;
+  out.homeScreen = src.homeScreen === 'video' ? 'video' : 'slides';
   out.homeVideoSound = typeof src.homeVideoSound === 'boolean' ? src.homeVideoSound : DEFAULT_SETTINGS.homeVideoSound;
   return out;
 }
@@ -694,6 +696,7 @@ function clientConfig() {
     ui: uiText,
     videoFile: mediaExists(settings.videoFile) ? settings.videoFile : null,
     homeVideoFile: mediaExists(settings.homeVideoFile) ? settings.homeVideoFile : null,
+    homeScreen: settings.homeScreen,
     subtitles: subs,
     pauses: settings.pauses,
     preload: lastGoodQuestions.filter(q => q.media).map(q => ({ file: q.media, type: q.mediaType }))
@@ -782,7 +785,9 @@ function scheduleHostInfo() {
 async function hostInfo() {
   const files = {};
   const base = path.basename(settings.videoFile, path.extname(settings.videoFile));
-  for (const f of [settings.videoFile, settings.homeVideoFile, `${base}_en.vtt`, `${base}_ta.vtt`, `${base}_si.vtt`]) files[f] = mediaExists(f);
+  const needed = [settings.videoFile, `${base}_en.vtt`, `${base}_ta.vtt`, `${base}_si.vtt`];
+  if (settings.homeScreen === 'video') needed.splice(1, 0, settings.homeVideoFile);
+  for (const f of needed) files[f] = mediaExists(f);
   return {
     settings,
     urls: await urlInfo(),

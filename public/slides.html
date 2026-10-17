@@ -122,7 +122,7 @@
         </div>
         <div class="flex justify-between w-screen px-12 items-center text-slate-300 text-xl font-medium">
             <span id="footer-source" class="tracking-wide">Source: National Stroke Association of Sri Lanka</span>
-            <div class="flex space-x-6 text-slate-400 text-lg">
+            <div id="key-hints" class="flex space-x-6 text-slate-400 text-lg">
                 <span>[Arrow Keys / Swipe to Navigate]</span>
                 <span>[Press 'L' to Change Language]</span>
                 <span>[Press 'S' to Change Set]</span>
@@ -495,7 +495,9 @@
         const progressDotsEl = document.getElementById('progress-dots');
         const footerSource = document.getElementById('footer-source');
         const testLabel = document.getElementById('test-label');
-        if (kioskMode) testLabel.style.display = 'none';
+        if (kioskMode) { testLabel.style.display = 'none'; document.getElementById('key-hints').style.display = 'none'; }
+        // &rotate=1: change language (en → ta → si) every time the set starts again (used on the TV home screen)
+        const rotateLang = urlParams.get('rotate') === '1';
 
         function renderSlideHTML(slideData, langDict) {
             const sourceText = langDict[slideData.source] || langDict.sourceNSASL;
@@ -732,6 +734,7 @@
                     }
                 }
                 index = 0;
+                if (rotateLang) currentLang = currentLang === 'en' ? 'ta' : currentLang === 'ta' ? 'si' : 'en';
             }
             currentSlideIdx = index;
             const dataIdx = activeIndices[currentSlideIdx];
