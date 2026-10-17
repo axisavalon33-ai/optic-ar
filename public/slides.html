@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stroke Awareness Exhibition Slides - Sri Lanka</title>
+    <!-- Tailwind CSS for styling: local copy first (works offline at the exhibition).
+         If the local file is missing (e.g. in an online preview), the Tailwind CDN is used instead. -->
+    <script>
+        function twUseCdn() {
+            if (window.__twCdn) return; window.__twCdn = true;
+            var s = document.createElement('script'); s.src = 'https://cdn.tailwindcss.com'; document.head.appendChild(s);
+        }
+        function twCheck() {
+            var p = document.createElement('div'); p.className = 'hidden'; document.documentElement.appendChild(p);
+            var ok = getComputedStyle(p).display === 'none'; p.remove();
+            if (!ok) twUseCdn();
+        }
+    </script>
+    <link rel="stylesheet" href="vendor/slides-tailwind.css" onload="twCheck()" onerror="twUseCdn()">
+    <!-- Local fonts (offline) -->
+    <link rel="stylesheet" href="fonts/fonts.css">
+    <!-- Google Fonts for Noto Sans, Noto Sans Tamil, and Noto Sans Sinhala -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Sinhala:wght@400;700&family=Noto+Sans+Tamil:wght@400;700&family=Noto+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Brain', 'Noto Sans', 'Noto Sans Sinhala', 'Noto Sans Tamil', sans-serif;
+            background-color: #0b132b;
+            color: #ffffff;
+            overflow: hidden;
+            user-select: none;
+        }
+        .slide-container {
+            display: none;
+        }
+        .slide-container.active {
+            display: flex;
+        }
+        @keyframes pulse-glow {
+            0%, 100% { transform: scale(1); filter: drop-shadow(0 0 15px rgba(239, 68, 68, 0.8)); }
+            50% { transform: scale(1.05); filter: drop-shadow(0 0 35px rgba(239, 68, 68, 1)); }
+        }
+        .animate-brain {
+            animation: pulse-glow 3s infinite ease-in-out;
+        }
+        @keyframes float-slow {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        .animate-float {
+            animation: float-slow 4s infinite ease-in-out;
+        }
+        @keyframes tick-spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .animate-tick {
+            animation: tick-spin 60s linear infinite;
+        }
+        @keyframes pulse-clot {
+            0%, 100% { transform: scale(1); opacity: 0.9; }
+            50% { transform: scale(1.1); opacity: 1; }
+        }
+        .animate-clot {
+            animation: pulse-clot 2s infinite ease-in-out;
+            transform-box: fill-box;
+            transform-origin: center;
+        }
+        @keyframes blood-flow {
+            to { stroke-dashoffset: -40; }
+        }
+        .animate-flow {
+            animation: blood-flow 1.2s linear infinite;
+        }
+        @keyframes burst-spread {
+            0% { transform: scale(0.4); opacity: 0.2; }
+            70% { opacity: 0.9; }
+            100% { transform: scale(1.15); opacity: 0; }
+        }
+        .animate-burst {
+            animation: burst-spread 2.2s infinite ease-out;
+            transform-box: fill-box;
+            transform-origin: center;
+        }
+        /* Small testing label (hidden with &kiosk=1) */
+        #test-label {
+            position: fixed; top: 6px; right: 10px; z-index: 100;
+            font: 600 14px/1.2 monospace; color: #e2e8f0;
+            background: rgba(0, 0, 0, 0.65); padding: 4px 10px; border-radius: 8px;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="w-screen h-screen flex flex-col justify-between bg-[#0b132b] text-white m-0 p-0">
+
+    <!-- Testing label, e.g. "debrief · ta · 11/13" (hidden when the URL has &kiosk=1) -->
+    <div id="test-label"></div>
+
+    <!-- Header bar -->
+    <header class="w-screen px-12 py-6 flex justify-between items-center border-b border-slate-700/50 bg-[#1c2541]/50 backdrop-blur">
+        <div class="flex items-center space-x-6">
+            <div class="w-5 h-5 rounded-full bg-red-500 animate-ping"></div>
+            <span class="text-2xl font-extrabold tracking-wider text-amber-400 uppercase" id="header-set-title">EXHIBITION SLIDES</span>
+        </div>
+        <div class="flex items-center space-x-8 text-2xl">
+            <span id="lang-indicator" class="bg-teal-600/30 text-teal-300 px-4 py-1.5 rounded-full font-bold border border-teal-500/40">EN</span>
+            <span id="slide-counter" class="text-slate-300 font-semibold">1 / 13</span>
+        </div>
+    </header>
+
+    <!-- Main Slide Content Wrapper -->
+    <main id="slides-wrapper" class="flex-1 relative w-screen h-full overflow-hidden flex items-center justify-center p-12">
+        <!-- Slides will be injected here via JavaScript -->
+    </main>
+
+    <!-- Footer bar -->
+    <footer class="w-screen px-12 py-6 flex flex-col items-center justify-center border-t border-slate-700/50 bg-[#1c2541]/80 space-y-3">
+        <div id="progress-dots" class="flex space-x-3 mb-1">
+            <!-- Progress dots injected dynamically -->
+        </div>
+        <div class="flex justify-between w-screen px-12 items-center text-slate-300 text-xl font-medium">
+            <span id="footer-source" class="tracking-wide">Source: National Stroke Association of Sri Lanka</span>
+            <div class="flex space-x-6 text-slate-400 text-lg">
+                <span>[Arrow Keys / Swipe to Navigate]</span>
+                <span>[Press 'L' to Change Language]</span>
+                <span>[Press 'S' to Change Set]</span>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Official dictionary definitions for EN, TA, SI from NSASL & WHO Sri Lanka
+        const translations = {
+            en: {
+                sourceNSASL: "Source: National Stroke Association of Sri Lanka",
+                sourceWHO: "Source: WHO Sri Lanka / Ministry of Health",
+                slides: [
+                    {
+                        type: "intro-1",
+                        title: "STROKE — A BRAIN ATTACK",
+                        subtitle: "Every minute counts",
+                        desc: "Stroke is an emergency and it happens when the blood supply to a part of the brain is suddenly interrupted. This stops the brain from receiving oxygen and that part gets damaged."
+                    },
+                    {
+                        type: "counter",
+                        number: "60,000",
+                        label: "Stroke admissions to Sri Lankan state hospitals every year",
+                        source: "sourceWHO"
+                    },
+                    {
+                        type: "counter-time",
+                        number: "1",
+                        unit: "every 9 minutes",
+                        label: "Someone in Sri Lanka is admitted with a stroke",
+                        source: "sourceWHO"
+                    },
+                    {
+                        type: "stats-dual",
+                        stat1Num: "#2",
+                        stat1Text: "Cause of death globally and in Sri Lanka",
+                        stat2Num: "#1",
+                        stat2Text: "Cause of adult disability",
+                        source: "sourceNSASL"
+                    },
+                    {
+                        type: "anatomy-visual",
+                        title: "What is a Stroke? (Types)",
+                        subtitle: "Blood supply cut off: Clot (Ischaemic) or Burst (Haemorrhagic)",
+                        ischaemicTitle: "Ischaemic Stroke (Clot - 85%)",
+                        ischaemicDesc: "A blood clot forms and blocks a blood vessel in the brain, depriving neurons of oxygen and nutrients.",
+                        haemorrhagicTitle: "Haemorrhagic Stroke (Burst)",
+                        haemorrhagicDesc: "A weakened blood vessel bursts inside the brain tissue, causing dangerous localized bleeding and pressure.",
+                        source: "sourceNSASL"
+                    },
+                    {
+                        type: "cells-counter",
+                        number: "1.9 Million",
+                        label: "Brain cells die every minute during a stroke. Quick treatment saves lives!",
+                        cta: "Can you save him? Watch carefully…",
+                        source: "sourceNSASL"
+                    },
+                    {
+                        type: "prevention",
+                        number: "80%",
+                        title: "Up to 80% of strokes can be prevented",
+                        desc: "Healthy lifestyle choices, quitting smoking, exercising regularly, and managing blood pressure protect your brain.",
+                        source: "sourceNSASL"
+                    },
+                    {
+                        type: "risks-exhibition",
+                        title: "Know Your Risk Factors",
+                        subtitle: "Modifiable vs Non-Modifiable Risks",
+                        modifiable: ["High Blood Pressure", "High Cholesterol", "Diabetes", "Irregular Heartbeat (AF)", "Smoking & Alcohol", "Obesity & Inactivity"],
+                        nonModifiable: ["Age above 65 years", "Family history of stroke", "Previous stroke or TIA"],
+                        modHeading: "Modifiable Risks (Can Control)",
+                        nonModHeading: "Non-Modifiable Risks",
+                        source: "sourceNSASL"
+                    },
+                    {
+                        type: "cta-game",
+                        title: "Think you can save a life? Play now!",
+                        subtitle: "Test your knowledge in our interactive stroke quiz exhibition game.",
+                        source: "sourceNSASL"
+                    },
+                    {
+                        type: "fast",
+                        title: "FAST Warning Signs",
+                        items: [
+                            { letter: "F", name: "FACE", desc: "Is the mouth drooping?" },
+                            { letter: "A", name: "ARMS", desc: "Can both arms be lifted?" },
+                            { letter: "S", name: "SPEECH", desc: "Is speech slurred? Can they understand you?" },
+                            { letter: "T", name: "TIME", desc: "Waste no time. Go to hospital immediately." }
+                        ],
+                        source: "sourceNSASL"
+                    },
+                    {
+                        type: "signs-other",
+                        title: "Other Sudden Warning Signs",
+                        items: [
+                            { icon: "⚡", text: "Sudden severe headache for no reason" },
+                            { icon: "👁️", text: "Sudden change or loss in vision" },
+                            { icon: "🚶", text: "Sudden difficulty walking, dizziness, or loss of balance" },
+                            { icon: "💧", text: "Sudden difficulty swallowing" }
+                        ],
+                        source: "sourceNSASL"
+                    },
+                    {
+                        type: "tia",
+                        title: "Mini-Stroke (Transient Ischaemic Attack - TIA)",
+                        desc: "Symptoms that go away completely within 24 hours still need IMMEDIATE hospital attention. TIA is a major warning signal for an impending major stroke.",
+                        source: "sourceNSASL"
+                    },
+                    {
+                        type: "emergency",
+                        phone: "1990",
+                        title: "Call 1990 Suwa Seriya or Rush to Hospital",
+                        desc: "Note the exact time symptoms started. Effective treatments exist to reverse damage if reached early!",
+                        source: "sourceNSASL"
+                    }
+                ]
+            },
+            ta: {
+                sourceNSASL: "ஆதாரம்: தேசிய பாரிசவாதக் கழகம், இலங்கை",
+                sourceWHO: "ஆதாரம்: உலக சுகாதார அமைப்பு இலங்கை / சுகாதார அமைச்சு",
+                slides: [
+                    {
+                        type: "intro-1",
+                        title: "பாரிசவாதம் — மூளைத் தாக்குதல்",
+                        subtitle: "ஒவ்வொரு நிமிடமும் விலைமதிப்பற்றது",
+                        desc: "பாரிசவாதம் உடனடியாக கையாளப்பட வேண்டிய அவசர நோய் நிலையாகும். இது மூளையின் ஒரு பகுதியில் இரத்தோட்டம் தடைப்படுவதால் ஏற்படுகின்றது."
+                    },
+                    {
+                        type: "counter",
+                        number: "60,000",
+                        label: "இலங்கை அரச வைத்தியசாலைகளில் ஆண்டுதோறும் அனுமதிக்கப்படும் பாரிசவாத நோயாளர்கள்",
+                        source: "sourceWHO"
+                    },
+                    {
+                        type: "counter-time",
+                        number: "1",
+                        unit: "ஒவ்வொரு 9 நிமிடங்களுக்கும்",
+                        label: "இலங்கையில் ஒருவருக்கு பாரிசவாதம் ஏற்பட்டு அனுமதிக்கப்படுகிறார்",
+                        source: "sourceWHO"
+                    },
+                    {
+                        type: "stats-dual",
+                        stat1Num: "#2",
+                        stat1Text: "இறப்பிற்கான 2 வது முக்கிய காரணம்",
+                        stat2Num: "#1",
+                        stat2Text: "அங்கவீனத்திற்கான முதன்மையான காரணம்",
+                        source: "sourceNSASL"
+                    },
+                    {
+                        type: "anatomy-visual",
+                        title: "பாரிசவாதம் என்றால் என்ன? (வகைகள்)",
+                        subtitle: "இரத்தோட்டத் தடை (Clot) அல்லது இரத்தக் கசிவு (Burst)",
+                        ischaemicTitle: "இரத்தோட்டத் தடையால் ஏற்படும் பாரிசவாதம்",
+                        ischaemicDesc: "மூளையத் திசு அழிவே மிகப் பொதுவானது. இரத்தக் கட்டியானது குருதிக்கலனை அடைப்பதால் ஏற்படும்.",
+                        haemorrhagicTitle: "இரத்தக் கசிவால் ஏற்படும் பாரிசவாதம்",
+                        haemorrhagicDesc: "மூளைக்குள் குருதிக்கலனொன்று வெடிப்பதால் ஏற்படும் இரத்தக் கசிவின் மூலம் இது ஏற்படுகின்றது.",
+                        source: "sourceNSASL"
+                    },
+                    {
+                        type: "cells-counter",
+                        number: "1.9 மில்லியன்",
+                        label: "ஒவ்வொரு நிமிடமும் மூளை செல்கள் அழிகின்றன. விரைவான மருத்துவம் உயிர் காக்கும்!",
+                        cta: "உங்களால் காப்பாற்ற முடியுமா? கவனியுங்கள்…",
+                        source: "sourceNSASL"
+                    },
+                    {
+                        type: "prevention",
+                        number: "80%",
+                        title: "80% வரை பாரிசவாதத்தைத் தடுக்கலாம்",
+                        desc: "ஆரோக்கியமான வாழ்க்கை முறை, புகைத்தலை நிறுத்துதல், சீரான உடற்பயிற்சி மற்றும் குருதியழுத்தக் கட்டுப்பாடு உங்களைப் பாதுகாக்கும்.",
+                        source: "sourceNSASL"
+                    },
+                    {
+                        type: "risks-exhibition",
+                        title: "ஆபத்துக் காரணிகளை அறிந்துகொள்ளுங்கள்",
+                        subtitle: "மாற்றியமைக்கக்கூடிய மற்றும் மாற்ற முடியாத காரணிகள்",
+                        modifiable: ["உயர் குருதியழுத்தம்", "உயர் கொலஸ்திரோல்", "நீரிழிவு", "ஒழுங்கற்ற இதயத்துடிப்பு", "புகைத்தல் மற்றும் மதுபானம்", "உடற்பருமன் & உடற்பயிற்சியின்மை"],
+                        nonModifiable: ["65 வயதிற்கு மேற்பட்டவர்", "பாரிசவாத குடும்ப வரலாறு", "முன்னைய பாரிசவாதம் அல்லது TIA"],
+                        modHeading: "மாற்றக்கூடிய காரணிகள் (கட்டுப்படுத்தலாம்)",
+                        nonModHeading: "மாற்ற முடியாத காரணிகள்",
+                        source: "sourceNSASL"
+                    },
+                    {
+                        type: "cta-game",
+                        title: "உங்களால் உயிர் காப்பாற்ற முடியுமா? விளையாடுங்கள்!",
+                        subtitle: "எங்கள் கண்காட்சி வினாடி வினா விளையாட்டில் உங்கள் அறிவை சோதிக்கவும்.",
+                        source: "sourceNSASL"
+                    },
+                    {
+                        type: "fast",
+                        title: "FAST எச்சரிக்கை அறிகுறிகள்",
+                        items: [
+                            { letter: "F", name: "முகம்", desc: "முகம் ஒருபாதி செயலிழக்கிறதா?" },
+                            { letter: "A", name: "கை", desc: "இரு கைகளையும் உயர்த்த முடியுமா?" },
+                            { letter: "S", name: "பேச்சு", desc: "பேச்சு குழறல் உள்ளதா? புரிய வைக்க முடிகிறதா?" },
+                            { letter: "T", name: "நேரம்", desc: "நேரத்தை வீணாக்காமல் உடனடியாக ஆஸ்பத்திரி செல்லவும்." }
+                        ],
+                        source: "sourceNSASL"
+                    },
+                    {
+                        type: "signs-other",
+                        title: "மற்றைய திடீர் எச்சரிக்கை அறிகுறிகள்",
+                        items: [
+                            { icon: "⚡", text: "திடீர் தீவிர தலைவலி" },
+                            { icon: "👁️", text: "திடீரென ஏற்படும் பார்வைக் குறைபாடு / மாற்றம்" },
+                            { icon: "🚶", text: "திடீரென நடக்க கடினமாதல், தலைச்சுற்று, சமநிலை பிறழ்வு" },
+                            { icon: "💧", text: "திடீரென விழுங்க முடியாத நிலை" }
+                        ],
+                        source: "sourceNSASL"
+                    },
+                    {
+                        type: "tia",
+                        title: "தற்காலிக இரத்தோட்டத் தடைத் தாக்கம் (TIA / குறும் பாரிசவாதம்)",
+                        desc: "அறிகுறிகள் 24 மணி நேரத்திற்குள் மறைந்தாலும் உடனடியாக ஆஸ்பத்திரி செல்ல வேண்டும். இது எதிர்கால பெரிய பாரிசவாதத்தின் எச்சரிக்கையாகும்.",
+                        source: "sourceNSASL"
+                    },
+                    {
+                        type: "emergency",
+                        phone: "1990",
+                        title: "1990 சுவசெரியை அழைக்கவும் அல்லது ஆஸ்பத்திரி செல்லவும்",
+                        desc: "அறிகுறிகள் தொடங்கிய நேரத்தைக் குறித்துக்கொண்டு உடனடியாக அருகில் உள்ள ஆஸ்பத்திரிக்குச் செல்லவும்.",
+                        source: "sourceNSASL"
+                    }
+                ]
+            },
+            si: {
+                sourceNSASL: "මූලාශ්‍රය: ශ්‍රී ලංකා ජාතික ආඝාත සංගමය",
+                sourceWHO: "මූලාශ්‍රය: ලෝක සෞඛ්‍ය සංවිධානය ශ්‍රී ලංකා / සෞඛ්‍ය අමාත්‍යාංශය",
+                slides: [
+                    {
+                        type: "intro-1",
+                        title: "ආඝාතය — මොළයේ ප්‍රහාරයක්",
+                        subtitle: "සෑම මිනිත්තුවක්ම ඉතා වටී",
+                        desc: "ආඝාතය යනු හදිසියේ ඇතිවන රෝග තත්ත්වයකි. මොළයේ එක් ප්‍රදේශයකට රුධිර සැපයුම අඩාල වීම නිසා ඔක්සිජන් නොලැබී ස්නායු සෛල මිය යයි."
+                    },
+                    {
+                        type: "counter",
+                        number: "60,000",
+                        label: "ශ්‍රී ලංකාවේ රජයේ රෝහල් වෙත වාර්ෂිකව ඇතුළත් වන ආඝාත රෝගීන්",
+                        source: "sourceWHO"
+                    },
+                    {
+                        type: "counter-time",
+                        number: "1",
+                        unit: "සෑම මිනිත්තු 9 කටම වරක්",
+                        label: "ශ්‍රී ලංකාවේ අයෙකු ආඝාතය වැළඳී රෝහල්ගත වේ",
+                        source: "sourceWHO"
+                    },
+                    {
+                        type: "stats-dual",
+                        stat1Num: "#2",
+                        stat1Text: "මරණවලට දෙවන හේතුව",
+                        stat2Num: "#1",
+                        stat2Text: "ආබාධිතයන් වන ප්‍රධාන හේතුව",
+                        source: "sourceNSASL"
+                    },
+                    {
+                        type: "anatomy-visual",
+                        title: "ආඝාතය යනු කුමක්ද? (වර්ග)",
+                        subtitle: "රුධිර නාල අවහිර වීම (Clot) හෝ පිපිරී යාම (Burst)",
+                        ischaemicTitle: "රුධිර නාල අවහිර වීමෙන් (Ischaemic)",
+                        ischaemicDesc: "ලේ කැටියක් නිසා ලේ නහරයක් අවහිර වීමෙන් මොළයේ සෛල මිය යයි. (බොහෝ විට 85% ක්)",
+                        haemorrhagicTitle: "රුධිර නාල පිපිරී යෑමෙන් (Haemorrhagic)",
+                        haemorrhagicDesc: "මොළය තුළ ලේ නහරයක් පිපිරීමෙන් ලේ ගැලීම සිදුවේ. ඉතා අවදානම් සහගතය.",
+                        source: "sourceNSASL"
+                    },
+                    {
+                        type: "cells-counter",
+                        number: "මිලියන 1.9",
+                        label: "ආඝාතයකදී සෑම මිනිත්තුවකටම මොළයේ සෛල මිලියන 1.9 ක් මිය යයි. ඉක්මන් ප්‍රතිකාර ජීවිත බේරයි!",
+                        cta: "ඔබට ඔහු බේරාගත හැකිද? හොඳින් බලන්න…",
+                        source: "sourceNSASL"
+                    },
+                    {
+                        type: "prevention",
+                        number: "80%",
+                        title: "ආඝාත වලින් 80%ක් පමණ වළක්වා ගත හැක",
+                        desc: "සෞඛ්‍ය සම්පන්න ජීවන රටාවක්, දුම්පානයෙන් වැළකීම, ව්‍යායාම සහ රුධිර පීඩනය පාලනය කිරීම මඟින් ආරක්ෂා වන්න.",
+                        source: "sourceNSASL"
+                    },
+                    {
+                        type: "risks-exhibition",
+                        title: "ඔබේ අවදානම් සාධක දැනගන්න",
+                        subtitle: "වෙනස් කළ හැකි සහ වෙනස් කළ නොහැකි සාධක",
+                        modifiable: ["අධික රුධිර පීඩනය", "අධික කොලෙස්ටරෝල්", "දියවැඩියාව", "අක්‍රමවත් හෘද ස්පන්දනය", "දුම්පානය හා මත්පැන්", "තරබාරුකම හා ව්‍යායාම මද බව"],
+                        nonModifiable: ["වයස අවු. 65 ට වැඩි වීම", "පවුලේ ආඝාත ඉතිහාසය", "මීට පෙර ආඝාතය හෝ TIA"],
+                        modHeading: "වෙනස් කළ හැකි සාධක (පාලනය කළ හැකි)",
+                        nonModHeading: "වෙනස් කළ නොහැකි සාධක",
+                        source: "sourceNSASL"
+                    },
+                    {
+                        type: "cta-game",
+                        title: "ජීවිතයක් බේරා ගැනීමට ඔබට පුළුවන්ද? දැන්ම ක්‍රීඩා කරන්න!",
+                        subtitle: "අපගේ ප්‍රදර්ශන ප්‍රශ්න විචාරාත්මක ක්‍රීඩාවෙන් ඔබේ දැනුම පරීක්ෂා කරන්න.",
+                        source: "sourceNSASL"
+                    },
+                    {
+                        type: "fast",
+                        title: "FAST අනතුරු ඇඟවීමේ ලක්ෂණ",
+                        items: [
+                            { letter: "F", name: "FACE", desc: "මුහුණේ පැත්තක් පණ නැති වීම / කට ඇද වීම" },
+                            { letter: "A", name: "ARMS", desc: "එක් අතක හෝ කකුලක පණ නැති වී ඇත්ද?" },
+                            { letter: "S", name: "SPEECH", desc: "කථාවේ වෙනසක් හෝ පැටලීමක් ඇත්ද?" },
+                            { letter: "T", name: "TIME", desc: "පමා නොවන්න. වහාම රෝහලට රැගෙන යන්න." }
+                        ],
+                        source: "sourceNSASL"
+                    },
+                    {
+                        type: "signs-other",
+                        title: "වෙනත් හදිසි අනතුරු ඇඟවීමේ ලක්ෂණ",
+                        items: [
+                            { icon: "⚡", text: "හදිසි තද හිසරදය" },
+                            { icon: "👁️", text: "පෙනීමේ වෙනස්කම් / අන්ධ වීම" },
+                            { icon: "🚶", text: "ඇවිදීමේ අපහසුතාව, කැරකැවිල්ල, සමතුලිතතාව බිඳවැටීම" },
+                            { icon: "💧", text: "ගිලීමේ අපහසුව" }
+                        ],
+                        source: "sourceNSASL"
+                    },
+                    {
+                        type: "tia",
+                        title: "පුංචි ආඝාතය (Transient Ischaemic Attack - TIA)",
+                        desc: "මිනිත්තු කිහිපයකින් සුව වුවද වහාම රෝහල්ගත වන්න. මෙය මහා ආඝාතයක ප්‍රබල පෙර නිමිත්තකි.",
+                        source: "sourceNSASL"
+                    },
+                    {
+                        type: "emergency",
+                        phone: "1990",
+                        title: "1990 සුව සැරිය අමතන්න හෝ රෝහලට යන්න",
+                        desc: "රෝග ලක්ෂණ ආරම්භ වූ වේලාව සටහන් කරගන්න. නිසි ප්‍රතිකාර මඟින් ආබාධ වළක්වා ගත හැක.",
+                        source: "sourceNSASL"
+                    }
+                ]
+            }
+        };
+
+        const urlParams = new URLSearchParams(window.location.search);
+        let currentLang = urlParams.get('lang') || 'en';
+        if (!translations[currentLang]) currentLang = 'en';
+
+        // No ?set= in the URL = PREVIEW MODE: play all 13 slides in order
+        let currentSetKey = urlParams.get('set') || 'all';
+        const kioskMode = urlParams.get('kiosk') === '1';
+
+        const setIndices = {
+            all: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+            intro: [0, 1, 2, 3, 4, 5],
+            home: [1, 2, 3, 6, 7, 8],
+            debrief: [9, 10, 11, 12]
+        };
+        const setOrder = ['all', 'intro', 'home', 'debrief'];
+        if (!setIndices[currentSetKey]) currentSetKey = 'all';
+
+        let activeIndices = setIndices[currentSetKey] || setIndices['intro'];
+        let currentSlideIdx = 0;
+        let slideTimer = null;
+        
+        const slideDurations = {
+            all: 7000,
+            intro: 7000,
+            home: 9000,
+            debrief: 9000
+        };
+        let durationPerSlide = slideDurations[currentSetKey] || 7000;
+
+        const wrapper = document.getElementById('slides-wrapper');
+        const counterEl = document.getElementById('slide-counter');
+        const langIndicator = document.getElementById('lang-indicator');
+        const headerTitle = document.getElementById('header-set-title');
+        const progressDotsEl = document.getElementById('progress-dots');
+        const footerSource = document.getElementById('footer-source');
+        const testLabel = document.getElementById('test-label');
+        if (kioskMode) testLabel.style.display = 'none';
+
+        function renderSlideHTML(slideData, langDict) {
+            const sourceText = langDict[slideData.source] || langDict.sourceNSASL;
+            footerSource.textContent = sourceText;
+
+            switch(slideData.type) {
+                case 'intro-1':
+                    return `
+                        <div class="slide-container active flex flex-col items-center justify-center text-center space-y-8 w-full max-w-7xl animate-float">
+                            <div class="relative w-44 h-44 flex items-center justify-center">
+                                <svg class="w-full h-full text-red-500 animate-brain" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+                                </svg>
+                                <svg class="absolute w-28 h-28 text-amber-400 animate-tick" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <polyline points="12 6 12 12 16 14"></polyline>
+                                </svg>
+                            </div>
+                            <h1 class="text-6xl md:text-8xl font-black tracking-tight text-red-500 drop-shadow-2xl">${slideData.title}</h1>
+                            <h2 class="text-4xl md:text-5xl font-bold text-amber-400">${slideData.subtitle}</h2>
+                            <p class="text-3xl md:text-4xl text-slate-200 max-w-5xl leading-relaxed">${slideData.desc}</p>
+                        </div>
+                    `;
+                case 'counter':
+                    return `
+                        <div class="slide-container active flex flex-col items-center justify-center text-center space-y-8 w-full max-w-7xl">
+                            <div class="text-[140px] md:text-[190px] font-black text-amber-400 tracking-tighter drop-shadow-2xl" id="count-up-num">0</div>
+                            <h2 class="text-4xl md:text-6xl font-extrabold text-slate-100 max-w-6xl leading-snug">${slideData.label}</h2>
+                        </div>
+                    `;
+                case 'counter-time':
+                    return `
+                        <div class="slide-container active flex flex-col items-center justify-center text-center space-y-8 w-full max-w-7xl">
+                            <div class="text-5xl md:text-7xl font-extrabold text-teal-400 tracking-wide bg-teal-950/60 px-8 py-3 rounded-full border border-teal-500/40">${slideData.unit}</div>
+                            <div class="text-[130px] md:text-[170px] font-black text-red-500 tracking-tight drop-shadow-2xl">${slideData.number}</div>
+                            <h2 class="text-4xl md:text-6xl font-bold text-slate-100 max-w-6xl leading-snug">${slideData.label}</h2>
+                        </div>
+                    `;
+                case 'stats-dual':
+                    return `
+                        <div class="slide-container active flex flex-col items-center justify-center text-center space-y-12 w-full max-w-7xl">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-10 w-full">
+                                <div class="bg-slate-800/90 border-4 border-red-500/60 p-12 rounded-3xl shadow-2xl flex flex-col items-center justify-center space-y-6">
+                                    <span class="text-[130px] md:text-[160px] font-black text-red-500 leading-none">${slideData.stat1Num}</span>
+                                    <p class="text-3xl md:text-4xl font-bold text-slate-100 text-center">${slideData.stat1Text}</p>
+                                </div>
+                                <div class="bg-slate-800/90 border-4 border-amber-500/60 p-12 rounded-3xl shadow-2xl flex flex-col items-center justify-center space-y-6">
+                                    <span class="text-[130px] md:text-[160px] font-black text-amber-400 leading-none">${slideData.stat2Num}</span>
+                                    <p class="text-3xl md:text-4xl font-bold text-slate-100 text-center">${slideData.stat2Text}</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                case 'anatomy-visual':
+                    return `
+                        <div class="slide-container active flex flex-col items-center justify-center text-center space-y-6 w-full max-w-7xl">
+                            <h1 class="text-4xl md:text-6xl font-extrabold text-amber-400">${slideData.title}</h1>
+                            <p class="text-2xl md:text-3xl text-slate-300 max-w-4xl">${slideData.subtitle}</p>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full mt-2">
+                                <!-- Ischaemic Stroke AI Image Card -->
+                                <div class="bg-slate-900/90 border-2 border-red-500/50 p-6 rounded-3xl flex flex-col items-center text-left space-y-4 shadow-xl">
+                                    <div class="w-full flex justify-center bg-slate-950 p-3 rounded-2xl border border-slate-800 overflow-hidden">
+                                        <svg viewBox="0 0 480 220" class="rounded-xl w-full h-[220px] border border-red-500/30" role="img" aria-label="Ischaemic stroke: a clot blocks a brain artery">
+                                            <rect width="480" height="220" fill="#311010"/>
+                                            <path d="M0 110 C120 70 200 150 300 110 S440 80 480 100" fill="none" stroke="#7f1d1d" stroke-width="64" stroke-linecap="round"/>
+                                            <path d="M0 110 C120 70 200 150 300 110 S440 80 480 100" fill="none" stroke="#b91c1c" stroke-width="44" stroke-linecap="round"/>
+                                            <path d="M0 110 C120 70 200 150 260 118" fill="none" stroke="#fca5a5" stroke-width="6" stroke-dasharray="14 26" class="animate-flow"/>
+                                            <g class="animate-clot"><circle cx="282" cy="113" r="30" fill="#450a0a"/><circle cx="268" cy="102" r="14" fill="#7f1d1d"/><circle cx="296" cy="124" r="11" fill="#7f1d1d"/></g>
+                                            <path d="M318 108 C380 90 430 82 480 100" fill="none" stroke="#5b1717" stroke-width="30" stroke-linecap="round" opacity="0.8"/>
+                                            <text x="282" y="190" text-anchor="middle" fill="#f87171" font-size="22" font-weight="800">CLOT ✕</text>
+                                        </svg>
+                                    </div>
+                                    <h3 class="text-3xl font-bold text-red-400">${slideData.ischaemicTitle}</h3>
+                                    <p class="text-xl md:text-2xl text-slate-300 leading-relaxed">${slideData.ischaemicDesc}</p>
+                                </div>
+                                <!-- Haemorrhagic Stroke AI Image Card -->
+                                <div class="bg-slate-900/90 border-2 border-amber-500/50 p-6 rounded-3xl flex flex-col items-center text-left space-y-4 shadow-xl">
+                                    <div class="w-full flex justify-center bg-slate-950 p-3 rounded-2xl border border-slate-800 overflow-hidden">
+                                        <svg viewBox="0 0 480 220" class="rounded-xl w-full h-[220px] border border-amber-500/30" role="img" aria-label="Haemorrhagic stroke: a blood vessel bursts">
+                                            <rect width="480" height="220" fill="#33220f"/>
+                                            <path d="M0 120 C100 80 180 150 240 112" fill="none" stroke="#b91c1c" stroke-width="40" stroke-linecap="round"/>
+                                            <path d="M262 104 C330 70 410 140 480 100" fill="none" stroke="#b91c1c" stroke-width="40" stroke-linecap="round"/>
+                                            <path d="M0 120 C100 80 180 150 232 116" fill="none" stroke="#fca5a5" stroke-width="5" stroke-dasharray="14 26" class="animate-flow"/>
+                                            <circle cx="251" cy="108" r="70" fill="#dc2626" class="animate-burst"/>
+                                            <g fill="#ef4444"><circle cx="251" cy="108" r="22"/><circle cx="228" cy="80" r="9"/><circle cx="282" cy="86" r="11"/><circle cx="276" cy="140" r="8"/><circle cx="222" cy="138" r="7"/></g>
+                                            <text x="251" y="200" text-anchor="middle" fill="#fbbf24" font-size="22" font-weight="800">BURST ✸</text>
+                                        </svg>
+                                    </div>
+                                    <h3 class="text-3xl font-bold text-amber-400">${slideData.haemorrhagicTitle}</h3>
+                                    <p class="text-xl md:text-2xl text-slate-300 leading-relaxed">${slideData.haemorrhagicDesc}</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                case 'cells-counter':
+                    return `
+                        <div class="slide-container active flex flex-col items-center justify-center text-center space-y-8 w-full max-w-7xl">
+                            <div class="text-[90px] md:text-[130px] font-black text-red-500 tracking-tight animate-bounce">${slideData.number}</div>
+                            <h2 class="text-3xl md:text-5xl font-extrabold text-slate-100 max-w-6xl leading-snug">${slideData.label}</h2>
+                            <div class="bg-teal-600/30 border-2 border-teal-400 px-10 py-5 rounded-full text-3xl md:text-4xl font-bold text-teal-300 animate-pulse">${slideData.cta}</div>
+                        </div>
+                    `;
+                case 'prevention':
+                    return `
+                        <div class="slide-container active flex flex-col items-center justify-center text-center space-y-8 w-full max-w-7xl">
+                            <div class="text-[120px] md:text-[160px] font-black text-teal-400 tracking-tight">${slideData.number}</div>
+                            <h1 class="text-5xl md:text-7xl font-black text-amber-400">${slideData.title}</h1>
+                            <p class="text-3xl md:text-4xl text-slate-200 max-w-6xl leading-relaxed">${slideData.desc}</p>
+                        </div>
+                    `;
+                case 'risks-exhibition':
+                    return `
+                        <div class="slide-container active flex flex-col items-center justify-center text-center space-y-6 w-full max-w-7xl">
+                            <h1 class="text-4xl md:text-6xl font-black text-red-500">${slideData.title}</h1>
+                            <p class="text-2xl md:text-3xl text-amber-400 font-semibold">${slideData.subtitle}</p>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full mt-2">
+                                <div class="bg-slate-900/90 border-2 border-red-500/40 p-8 rounded-3xl text-left space-y-4 shadow-xl">
+                                    <h3 class="text-3xl font-bold text-red-400 flex items-center space-x-3">
+                                        <span>⚠️</span> <span>${slideData.modHeading || 'Modifiable Risks (Can Control)'}</span>
+                                    </h3>
+                                    <div class="grid grid-cols-1 gap-3">
+                                        ${slideData.modifiable.map(item => `
+                                            <div class="flex items-center space-x-3 bg-slate-800/80 p-3 rounded-2xl border border-slate-700">
+                                                <span class="w-3 h-3 rounded-full bg-red-500"></span>
+                                                <span class="text-xl md:text-2xl font-bold text-slate-100">${item}</span>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                                <div class="bg-slate-900/90 border-2 border-amber-500/40 p-8 rounded-3xl text-left space-y-4 shadow-xl">
+                                    <h3 class="text-3xl font-bold text-amber-400 flex items-center space-x-3">
+                                        <span>🛡️</span> <span>${slideData.nonModHeading || 'Non-Modifiable Risks'}</span>
+                                    </h3>
+                                    <div class="grid grid-cols-1 gap-3">
+                                        ${slideData.nonModifiable.map(item => `
+                                            <div class="flex items-center space-x-3 bg-slate-800/80 p-3 rounded-2xl border border-slate-700">
+                                                <span class="w-3 h-3 rounded-full bg-amber-400"></span>
+                                                <span class="text-xl md:text-2xl font-bold text-slate-100">${item}</span>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                case 'cta-game':
+                    return `
+                        <div class="slide-container active flex flex-col items-center justify-center text-center space-y-10 w-full max-w-7xl">
+                            <div class="w-36 h-36 bg-red-600 rounded-full flex items-center justify-center text-7xl shadow-2xl animate-bounce">🎮</div>
+                            <h1 class="text-5xl md:text-7xl font-black text-amber-400 max-w-6xl leading-tight">${slideData.title}</h1>
+                            <p class="text-3xl md:text-4xl text-slate-200 max-w-5xl">${slideData.subtitle}</p>
+                        </div>
+                    `;
+                case 'fast':
+                    return `
+                        <div class="slide-container active flex flex-col items-center justify-center text-center space-y-8 w-full max-w-7xl">
+                            <h1 class="text-5xl md:text-7xl font-black text-red-500 tracking-wider">${slideData.title}</h1>
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full">
+                                ${slideData.items.map((item) => `
+                                    <div class="bg-slate-900/90 border-2 border-red-500/50 p-6 rounded-3xl flex flex-col items-center text-center space-y-4 shadow-2xl">
+                                        <div class="w-24 h-24 bg-red-600 rounded-2xl flex items-center justify-center text-6xl font-black text-white shadow-lg">${item.letter}</div>
+                                        <h3 class="text-3xl font-extrabold text-amber-400">${item.name}</h3>
+                                        <p class="text-xl md:text-2xl text-slate-200 leading-normal">${item.desc}</p>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                case 'signs-other':
+                    return `
+                        <div class="slide-container active flex flex-col items-center justify-center text-center space-y-8 w-full max-w-7xl">
+                            <h1 class="text-5xl md:text-7xl font-black text-amber-400">${slideData.title}</h1>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-6xl">
+                                ${slideData.items.map((item) => `
+                                    <div class="bg-slate-900/90 border border-slate-700 p-8 rounded-3xl flex items-center space-x-6 shadow-xl">
+                                        <div class="w-16 h-16 bg-red-500/20 text-red-400 rounded-2xl flex items-center justify-center text-4xl flex-shrink-0">${item.icon}</div>
+                                        <span class="text-2xl md:text-3xl font-bold text-slate-100 text-left">${item.text}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                case 'tia':
+                    return `
+                        <div class="slide-container active flex flex-col items-center justify-center text-center space-y-8 w-full max-w-7xl">
+                            <div class="w-32 h-32 bg-amber-500/20 border-4 border-amber-400 rounded-full flex items-center justify-center text-7xl shadow-2xl animate-pulse">⏳</div>
+                            <h1 class="text-5xl md:text-7xl font-black text-amber-400">${slideData.title}</h1>
+                            <p class="text-3xl md:text-4xl text-slate-200 max-w-6xl leading-relaxed">${slideData.desc}</p>
+                        </div>
+                    `;
+                case 'emergency':
+                    return `
+                        <div class="slide-container active flex flex-col items-center justify-center text-center space-y-8 w-full max-w-7xl">
+                            <div class="bg-red-600 text-white px-14 py-8 rounded-3xl shadow-2xl flex items-center space-x-8 animate-pulse">
+                                <span class="text-7xl">📞</span>
+                                <span class="text-7xl md:text-9xl font-black tracking-wider">${slideData.phone}</span>
+                            </div>
+                            <h1 class="text-4xl md:text-6xl font-black text-amber-400">${slideData.title}</h1>
+                            <p class="text-3xl md:text-4xl text-slate-200 max-w-6xl leading-relaxed">${slideData.desc}</p>
+                        </div>
+                    `;
+                default:
+                    return `<div class="text-4xl">Slide content loading...</div>`;
+            }
+        }
+
+        function updateProgressDots() {
+            progressDotsEl.innerHTML = '';
+            activeIndices.forEach((_, idx) => {
+                const dot = document.createElement('div');
+                dot.className = `h-3.5 rounded-full transition-all duration-300 ${idx === currentSlideIdx ? 'w-12 bg-amber-400' : 'w-3.5 bg-slate-600'}`;
+                progressDotsEl.appendChild(dot);
+            });
+            counterEl.textContent = `${currentSlideIdx + 1} / ${activeIndices.length}`;
+            langIndicator.textContent = currentLang.toUpperCase();
+            headerTitle.textContent = `SET: ${currentSetKey.toUpperCase()}`;
+            const total = translations.en.slides.length;
+            testLabel.textContent = `${currentSetKey} · ${currentLang} · ${activeIndices[currentSlideIdx] + 1}/${total}`;
+        }
+
+        function switchSet() {
+            currentSetKey = setOrder[(setOrder.indexOf(currentSetKey) + 1) % setOrder.length];
+            activeIndices = setIndices[currentSetKey];
+            durationPerSlide = slideDurations[currentSetKey] || 7000;
+            displaySlide(0);
+        }
+
+        function displaySlide(index) {
+            if (index < 0) index = activeIndices.length - 1;
+            if (index >= activeIndices.length) {
+                if (currentSetKey === 'intro' || currentSetKey === 'debrief') {
+                    if (window.parent && window.parent !== window) {
+                        window.parent.postMessage("slides-finished", "*");
+                    }
+                }
+                index = 0;
+            }
+            currentSlideIdx = index;
+            const dataIdx = activeIndices[currentSlideIdx];
+            const langDict = translations[currentLang] || translations.en;
+            const slideData = langDict.slides[dataIdx];
+
+            wrapper.innerHTML = renderSlideHTML(slideData, langDict);
+            updateProgressDots();
+
+            if (slideData.type === 'counter') {
+                animateCounter(0, 60000, 2500);
+            }
+
+            if (slideTimer) clearTimeout(slideTimer);
+            slideTimer = setTimeout(() => {
+                displaySlide(currentSlideIdx + 1);
+            }, durationPerSlide);
+        }
+
+        function animateCounter(start, end, duration) {
+            const el = document.getElementById('count-up-num');
+            if (!el) return;
+            let startTime = null;
+            function step(timestamp) {
+                if (!startTime) startTime = timestamp;
+                let progress = Math.min((timestamp - startTime) / duration, 1);
+                let current = Math.floor(progress * (end - start) + start);
+                el.textContent = current.toLocaleString();
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                }
+            }
+            window.requestAnimationFrame(step);
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                displaySlide(currentSlideIdx + 1);
+            } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                displaySlide(currentSlideIdx - 1);
+            } else if (e.key === 's' || e.key === 'S') {
+                switchSet();
+            } else if (e.key === 'l' || e.key === 'L') {
+                if (currentLang === 'en') currentLang = 'ta';
+                else if (currentLang === 'ta') currentLang = 'si';
+                else currentLang = 'en';
+                displaySlide(currentSlideIdx);
+            }
+        });
+
+        window.addEventListener('message', (event) => {
+            const data = event.data;
+            if (!data) return;
+            if (data.cmd === 'setLang' && translations[data.lang]) {
+                currentLang = data.lang;
+                displaySlide(currentSlideIdx);
+            } else if (data.cmd === 'skip') {
+                displaySlide(currentSlideIdx + 1);
+            }
+        });
+
+        window.onload = function() {
+            displaySlide(0);
+        };
+    </script>
+</body>
+</html>

@@ -128,12 +128,32 @@ Put a picture or a short video in the `media` folder, named after the question n
 That's all — the game finds them by itself. (Or type any file name in `"media"` in `questions.json`.)
 Picture types: jpg, png, webp, gif. Video types: mp4, webm.
 
-## 7. Moving the game to another laptop
+## 7. The slideshow (slides.html)
+
+13 colourful information slides in English, Tamil and Sinhala. They work offline.
+**Always open them with `&kiosk=1`** — that hides the small grey test label in the top-right corner.
+
+| Address | What it plays |
+|---|---|
+| `localhost:3000/slides.html?set=intro&lang=ta&kiosk=1` | Intro: slides 1–6 |
+| `localhost:3000/slides.html?set=home&lang=ta&kiosk=1` | Home screen: slides 2, 3, 4, 7, 8, 9 |
+| `localhost:3000/slides.html?set=debrief&lang=ta&kiosk=1` | After the game: slides 10–13 |
+| `localhost:3000/slides.html?kiosk=1` | No `set` = all 13 slides (for checking) |
+
+`lang` can be `en`, `ta` or `si`.
+
+**Keys for testing:** **S** = change set (all → intro → home → debrief), **L** = change language (en → ta → si),
+**← →** = previous / next slide. Without `&kiosk=1` a small label shows where you are, e.g. `debrief · ta · 11/13`.
+
+If you change the slide styling (the class names), the offline style file `public/vendor/slides-tailwind.css`
+must be rebuilt — ask Claude to do it.
+
+## 8. Moving the game to another laptop
 
 Copy the whole folder (including `node_modules`) to the other laptop. It needs Node.js installed.
 Double-click `start.bat`. No internet needed.
 
-## 8. Problems?
+## 9. Problems?
 
 | Problem | Fix |
 |---|---|
@@ -147,7 +167,7 @@ Double-click `start.bat`. No internet needed.
 
 Errors are written to `logs/error.log`. Scores are in `data/scores.json`.
 
-## 9. Backing up the code to GitHub (private)
+## 10. Backing up the code to GitHub (private)
 
 The code (not the media, not the scores) is stored in git. The `.gitignore` file keeps
 `media/`, `data/`, `logs/` and `node_modules/` out of GitHub, so big videos are never uploaded.
@@ -165,7 +185,7 @@ scroll to "Danger Zone" → "Change visibility" → Private.
 **Back up the media separately** (they are too big for GitHub): copy the `media` folder to a USB stick
 or Google Drive. Back up `data/scores.json` too if you want to keep the scores.
 
-## 10. Files in this folder
+## 11. Files in this folder
 
 | File | What it is |
 |---|---|
@@ -174,6 +194,7 @@ or Google Drive. Back up `data/scores.json` too if you want to keep the scores.
 | `settings.json` | Game settings |
 | `questions.json` | Questions, answers and explanations in 3 languages |
 | `ui-text.json` | Words on the buttons and screens in 3 languages |
+| `public/slides.html` | The information slideshow |
 | `media/` | Videos, subtitles and explanation pictures |
 | `data/` | Scores and the guest counter (made by the game) |
 | `logs/` | Error log and game log |
