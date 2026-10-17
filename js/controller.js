@@ -123,8 +123,8 @@ function applyText() {
 // Looping, silent background video on the language screen.
 const homeVideo = $("homeVideo");
 homeVideo.muted = true;
-homeVideo.addEventListener("playing", () => homeVideo.classList.add("ready"));
-homeVideo.addEventListener("error", () => homeVideo.classList.remove("ready"));
+homeVideo.addEventListener("playing", () => { homeVideo.classList.add("ready"); $("langScreen").classList.add("has-video"); });
+homeVideo.addEventListener("error", () => { homeVideo.classList.remove("ready"); $("langScreen").classList.remove("has-video"); });
 function setHomeVideo(on) {
   if (on) homeVideo.play().catch(() => {}); else homeVideo.pause();
 }
