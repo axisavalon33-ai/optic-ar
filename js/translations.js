@@ -33,6 +33,16 @@ export const T = {
     opticNeuritisBtn: "Optic neuritis",
     visualFieldBtn: "Visual field defects",
     videoMissing: "Video not found – showing the picture instead",
+    // 3D selection inside the headset
+    putOnHeadset: "Put on the headset",
+    lookToSelect: "Look at a part to select it",
+    fingerToSelect: "Hold your finger on a part",
+    handLost: "Hand not found – look at a part to select it",
+    recentre: "Recentre",
+    lookingAt: "Looking at",
+    selectedLabel: "Selected",
+    exploring: "The visitor is exploring inside the headset",
+    retinaMacula: "Retina (macula)",
 
     // Hotspot names
     hotspots: {
@@ -106,6 +116,16 @@ export const T = {
     opticNeuritisBtn: "பார்வை நரம்பு அழற்சி",
     visualFieldBtn: "பார்வைப் புலக் குறைபாடுகள்",
     videoMissing: "காணொளி கிடைக்கவில்லை – படம் காட்டப்படுகிறது",
+    // 3D selection inside the headset
+    putOnHeadset: "ஹெட்செட்டை அணியுங்கள்",
+    lookToSelect: "ஒரு பகுதியைத் தேர்ந்தெடுக்க அதைப் பாருங்கள்",
+    fingerToSelect: "ஒரு பகுதியின் மீது உங்கள் விரலை வைத்திருங்கள்",
+    handLost: "கை தெரியவில்லை – ஒரு பகுதியைப் பார்த்துத் தேர்ந்தெடுங்கள்",
+    recentre: "மீண்டும் மையப்படுத்து",
+    lookingAt: "பார்ப்பது",
+    selectedLabel: "தேர்ந்தெடுத்தது",
+    exploring: "பார்வையாளர் ஹெட்செட்டினுள் ஆராய்கிறார்",
+    retinaMacula: "விழித்திரை (மாகுலா)",
 
     hotspots: {
       lens: "வில்லை", retina: "விழித்திரை", opticDisc: "பார்வை வட்டு", opticNerve: "பார்வை நரம்பு",
@@ -177,6 +197,16 @@ export const T = {
     opticNeuritisBtn: "දෘෂ්ටි ස්නායු ප්‍රදාහය",
     visualFieldBtn: "දෘෂ්ටි ක්ෂේත්‍ර දෝෂ",
     videoMissing: "වීඩියෝව හමු නොවීය – පින්තූරය පෙන්වයි",
+    // 3D selection inside the headset
+    putOnHeadset: "හෙඩ්සෙට් එක පළඳින්න",
+    lookToSelect: "කොටසක් තේරීමට එය දෙස බලන්න",
+    fingerToSelect: "කොටසක් මත ඔබේ ඇඟිල්ල තබා සිටින්න",
+    handLost: "අත හමු නොවීය – කොටසක් දෙස බලා තෝරන්න",
+    recentre: "නැවත මැදට ගන්න",
+    lookingAt: "බලන්නේ",
+    selectedLabel: "තෝරාගත්තේ",
+    exploring: "නරඹන්නා හෙඩ්සෙට් එක තුළ ගවේෂණය කරයි",
+    retinaMacula: "දෘෂ්ටිවිතානය (මැකියුලාව)",
 
     hotspots: {
       lens: "කාචය", retina: "දෘෂ්ටිවිතානය", opticDisc: "දෘෂ්ටි තැටිය", opticNerve: "දෘෂ්ටි ස්නායුව",
@@ -253,8 +283,24 @@ export const ADMIN = {
     roundness: "Roundness of eye shape",
     noseWidth: "Nose cutout width",
     noseHeight: "Nose cutout height",
-    divider: "Divider width"
-  }
+    divider: "Divider width",
+    holdTime: "Hold time (seconds)",
+    modelDistance: "Model distance (metres)",
+    modelSize: "Model size",
+    cameraFov: "Camera field of view (degrees)"
+  },
+  section3d: "3D selection in the headset",
+  selectionTitle: "Selection",
+  selTablet: "Tablet",
+  selHeadset: "Headset",
+  methodTitle: "Selection method",
+  mGaze: "Look and hold",
+  mHand: "Hand touch",
+  mBoth: "Both",
+  operator: "Operator",
+  recentreBtn: "Recentre model",
+  eyeHomeBtn: "Headset back to the eye",
+  triggerTitle: "Run an effect now"
 };
 
 // Look up text; falls back to English if a translation is missing.

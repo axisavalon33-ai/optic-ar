@@ -1,16 +1,21 @@
 // =====================================================================
 //  VIEWER (phone inside the headset)
-//  Camera -> defect mask & filters -> barrel distortion -> two eyes.
+//  Camera -> defect mask & filters -> 3D model layer -> barrel distortion -> two eyes.
 // =====================================================================
-import { DB, STATION, TIMING, DEFAULT_CALIBRATION } from "./config.js";
+import * as THREE from "three";
+import { DB, STATION, TIMING, DEFAULT_CALIBRATION, HAND_HOLD_TIME } from "./config.js";
 import { LANGUAGES, T, tr } from "./translations.js";
 import { paintField, filtersAt, ALL_CONDITIONS } from "./defects.js";
 import { isFullscreen, enterFullscreen, keepFullscreen } from "./fullscreen.js";
+import { ARScene } from "./ar-scene.js";
+import { HandTracker } from "./hands.js";
 
 const $ = id => document.getElementById(id);
 const canvas = $("gl");
 const MASK_EXTENT = 1.5;   // mask texture covers field coords -1.5 … +1.5
 const MASK_SIZE = 256;     // pixels per eye in the mask texture
+const OV_EXTENT = 1.45;    // 3D layer covers field coords -1.45 … +1.45 (whole rounded eye shape)
+const OV_SIZE = 640;       // pixels per eye for the 3D layer
 
 let fb = null;
 let calib = loadCachedCalib();
@@ -19,6 +24,7 @@ let running = null;        // { cond, lang, t0 }
 let lastCmdTs = 0;
 let camOk = false, netOk = false, everConnected = false;
 let video = null, stream = null;
+let exploreLang = "en";
 
 document.querySelector("#startScreen h1").textContent = `Eye Exhibit – Headset · Station ${STATION}`;
 
@@ -44,6 +50,7 @@ function showError(kind) {
 }
 
 // ---------------------------------------------------------------- Firebase
+let pushStatus = () => {};
 (async () => {
   try {
     fb = await import("./fb.js");
@@ -75,21 +82,30 @@ function showError(kind) {
   setInterval(beat, 5000);
   window.addEventListener("online", beat);
 
+  // what the visitor is doing in the 3D view -> tablet mirror (throttled)
+  const exploreRef = fb.ref(fb.db, DB.explore);
+  let pending = null, timer = null;
+  pushStatus = s => {
+    pending = s;
+    if (timer) return;
+    timer = setTimeout(() => { timer = null; fb.set(exploreRef, { ...pending, ts: fb.serverTimestamp() }).catch(() => {}); }, 150);
+  };
+  fb.onDisconnect(exploreRef).remove();
+
   fb.onValue(fb.ref(fb.db, DB.calibLive), s => {
     const v = s.val();
     if (v) { calib = { ...DEFAULT_CALIBRATION, ...v }; try { localStorage.setItem("calib-" + STATION, JSON.stringify(calib)); } catch (e) {} }
-    layoutText();
+    applySettings();
   });
   fb.onValue(fb.ref(fb.db, DB.command), s => {
     const v = s.val();
-    if (!v || !v.condition || !v.timestamp) return;
+    if (!v || !v.timestamp) return;
     if (v.timestamp === lastCmdTs) return;
     const age = fb.serverNow() - v.timestamp;
     lastCmdTs = v.timestamp;
     if (age > 10000) return;            // old command left over in the database
-    if (!started || running) return;     // ignore while another one is running
-    if (!ALL_CONDITIONS.includes(v.condition)) return;
-    startEffect(v.condition, v.language || "en");
+    if (!started) return;
+    handleCommand(v);
     beat();
   });
 })();
@@ -99,10 +115,28 @@ function loadCachedCalib() {
   catch (e) { return { ...DEFAULT_CALIBRATION }; }
 }
 
+// ---------------------------------------------------------------- commands from the tablet
+function handleCommand(v) {
+  if (v.language) exploreLang = v.language;
+  if (v.mode === "explore") { if (ar) { ar.start(exploreLang); handBlocked = false; exploreT0 = performance.now(); } updateOverlay(); return; }
+  if (v.mode === "idle") { if (ar) ar.stop(); updateOverlay(); return; }
+  if (v.action === "recentre") { if (ar) ar.recentre(); return; }
+  if (v.action === "eyeHome") {
+    if (ar) { if (ar.active) ar.goEye(); else { ar.start(exploreLang); exploreT0 = performance.now(); } }
+    updateOverlay(); return;
+  }
+  if (v.condition && ALL_CONDITIONS.includes(v.condition)) {
+    if (ar && ar.active) ar.runCondition(v.condition);     // model fades out, then the effect
+    else if (!running) startEffect(v.condition, v.language || "en");
+  }
+}
+
 // ---------------------------------------------------------------- effects
 let nameTimer = null;
+let effectStartMs = 0;
 function startEffect(cond, lang) {
   running = { cond, lang, t0: performance.now() };
+  effectStartMs = fb ? fb.serverNow() : Date.now();
   const name = tr(lang, `conditions.${cond}.name`);
   for (const id of ["nameL", "nameR"]) { $(id).textContent = name; $(id).lang = lang; $(id).classList.add("on"); }
   clearTimeout(nameTimer);
@@ -110,7 +144,7 @@ function startEffect(cond, lang) {
   updateOverlay();
 }
 function updateOverlay() {
-  const waiting = started && !running && !errState;
+  const waiting = started && !running && !errState && !(ar && ar.active);
   $("waitL").classList.toggle("hidden", !waiting);
   $("waitR").classList.toggle("hidden", !waiting);
 }
@@ -120,10 +154,12 @@ $("startBtn").addEventListener("click", async () => {
   $("startBtn").disabled = true;
   await enterFullscreen();     // works straight away if the camera was allowed before
   requestWakeLock();
+  // iPhone/iPad ask for motion-sensor permission; Android does not
+  try { if (window.DeviceOrientationEvent && DeviceOrientationEvent.requestPermission) await DeviceOrientationEvent.requestPermission(); } catch (e) {}
   await startCamera();         // the camera question may take the page out of full screen
   started = true;
   $("startScreen").style.display = "none";
-  initGL();
+  await initRenderer();
   layoutText();
   updateOverlay();
   updateFsPrompt();
@@ -181,16 +217,17 @@ async function startCamera() {
 let camRetry = null;
 function retryCamera() { clearTimeout(camRetry); camRetry = setTimeout(() => { if (!camOk) startCamera(); }, 4000); }
 
-// ---------------------------------------------------------------- WebGL
+// ---------------------------------------------------------------- final (screen) shader
 const VERT = `
-attribute vec2 aPos;
-void main() { gl_Position = vec4(aPos, 0.0, 1.0); }`;
+void main() { gl_Position = vec4(position.xy, 0.0, 1.0); }`;
 
 const FRAG = `
-precision highp float;
 uniform vec2 uRes;
 uniform sampler2D uCam;  uniform float uCamAspect; uniform float uHasCam;
 uniform sampler2D uMask; uniform float uMaskExtent;
+uniform sampler2D uOvL;  uniform sampler2D uOvR; uniform float uOvExtent; uniform float uOvAlpha;
+uniform vec4 uRet;       // on, gaze progress, hovering, reticle x-offset per eye
+uniform vec4 uTip;       // fingertip x, y (field coords), on, progress
 uniform float uK, uZoom, uIpd, uVert, uEye, uRound, uDiv, uTest;
 uniform vec2 uNose;
 uniform vec4 uFxA0, uFxB0, uFxA1, uFxB1; // A: blur, contrast, tint, glare   B: desat, redDesat, dim, warp
@@ -212,6 +249,16 @@ vec3 testPattern(vec2 m) {
   return col;
 }
 float lum(vec3 c) { return dot(c, vec3(0.299, 0.587, 0.114)); }
+// progress ring around a point: returns (dot, ring track, filled ring)
+vec3 ringAt(vec2 p, float rDot, float rRing, float progress) {
+  float rr = length(p);
+  float d = 1.0 - smoothstep(rDot, rDot + 0.004, rr);
+  float track = 1.0 - smoothstep(0.003, 0.006, abs(rr - rRing));
+  float a = atan(p.x, p.y);
+  if (a < 0.0) a += 6.2831853;
+  float filled = track * step(a / 6.2831853, progress) * step(0.001, progress);
+  return vec3(d, track, filled);
+}
 
 void main() {
   vec2 f = gl_FragCoord.xy;
@@ -239,7 +286,7 @@ void main() {
   float cut = min(smoothstep(-1.0, 1.0, dv), smoothstep(-0.02, 0.02, nose));
 
   // barrel distortion (Cardboard style). m = undistorted field coordinate,
-  // radius 1 = edge of the eye circle. Masks are applied in m-space, i.e. before distortion.
+  // radius 1 = edge of the eye circle. Masks and the 3D layer are applied in m-space, i.e. before distortion.
   float r2 = dot(p, p);
   float k1 = uK, k2 = uK * 0.5;
   vec2 m = p * (1.0 + k1 * r2 + k2 * r2 * r2) / (1.0 + k1 + k2);
@@ -291,11 +338,41 @@ void main() {
   float dark = texture2D(uMask, vec2((eye + mu.x) * 0.5, mu.y)).a;
   col = mix(col, vec3(0.02), dark);
 
+  // floating 3D model (rendered separately for each eye, premultiplied alpha)
+  if (uOvAlpha > 0.001) {
+    vec2 ou = m / uOvExtent * 0.5 + 0.5;
+    if (ou.x > 0.0 && ou.x < 1.0 && ou.y > 0.0 && ou.y < 1.0) {
+      vec4 a0 = texture2D(uOvL, ou), a1 = texture2D(uOvR, ou);
+      vec4 ov = (eye < 0.5 ? a0 : a1) * uOvAlpha;
+      col = ov.rgb + col * (1.0 - ov.a);
+    }
+  }
+
+  // look-and-hold reticle (shifted per eye so it sits at the depth of the model)
+  if (uRet.x > 0.5) {
+    vec2 rp = m - vec2(eye < 0.5 ? uRet.w : -uRet.w, 0.0);
+    vec3 r = ringAt(rp, 0.011, 0.042, uRet.y);
+    float shadow = 1.0 - smoothstep(0.013, 0.02, length(rp));
+    col = mix(col, vec3(0.0), shadow * 0.55);
+    col = mix(col, vec3(1.0), r.x);
+    col = mix(col, vec3(1.0), r.y * 0.35 * uRet.z);
+    col = mix(col, vec3(1.0, 0.72, 0.28), r.z);
+  }
+  // fingertip dot (hand touch)
+  if (uTip.z > 0.5) {
+    vec2 tp = m - uTip.xy;
+    vec3 r = ringAt(tp, 0.016, 0.05, uTip.w);
+    float glow = exp(-dot(tp, tp) / 0.0016);
+    col += vec3(0.25, 0.85, 1.0) * glow * 0.7;
+    col = mix(col, vec3(0.75, 0.97, 1.0), r.x);
+    col = mix(col, vec3(1.0, 0.72, 0.28), r.z);
+  }
+
   col *= vign * cut;
   gl_FragColor = vec4(clamp(col, 0.0, 1.0), 1.0);
 }`;
 
-let gl, prog, U = {}, camTex, maskTex;
+let renderer, composite, fsScene, fsCam, U, camTex = null, maskTex, rtL, rtR, ar = null;
 const maskCanvas = document.createElement("canvas");
 maskCanvas.width = MASK_SIZE * 2; maskCanvas.height = MASK_SIZE;
 const maskCtx = maskCanvas.getContext("2d");
@@ -303,53 +380,67 @@ const eyeLayer = document.createElement("canvas");
 eyeLayer.width = eyeLayer.height = MASK_SIZE;
 const eyeCtx = eyeLayer.getContext("2d");
 let maskEmpty = false;
+const hands = new HandTracker();
+let handBlocked = false, lowFpsT = 0, fps = 60, exploreT0 = 0;
 
-function initGL() {
-  if (gl) return;
-  gl = canvas.getContext("webgl", { antialias: false, alpha: false, preserveDrawingBuffer: false });
-  if (!gl) { alert("WebGL is not supported on this phone."); return; }
-  const sh = (type, src) => {
-    const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
-    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
-    return s;
-  };
-  prog = gl.createProgram();
-  gl.attachShader(prog, sh(gl.VERTEX_SHADER, VERT));
-  gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, FRAG));
-  gl.linkProgram(prog);
-  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
-  gl.useProgram(prog);
-  const buf = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
-  const loc = gl.getAttribLocation(prog, "aPos");
-  gl.enableVertexAttribArray(loc);
-  gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
-  for (const n of ["uRes", "uCam", "uCamAspect", "uHasCam", "uMask", "uMaskExtent", "uK", "uZoom", "uIpd", "uVert", "uEye",
-    "uRound", "uDiv", "uTest", "uNose", "uFxA0", "uFxB0", "uFxA1", "uFxB1"]) U[n] = gl.getUniformLocation(prog, n);
-  const mkTex = unit => {
-    const t = gl.createTexture();
-    gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, t);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 0, 0]));
-    return t;
-  };
-  camTex = mkTex(0); maskTex = mkTex(1);
-  gl.uniform1i(U.uCam, 0); gl.uniform1i(U.uMask, 1);
-  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-  resize();
+async function initRenderer() {
+  if (renderer) return;
+  THREE.ColorManagement.enabled = false;
+  try {
+    renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: false, powerPreference: "high-performance" });
+  } catch (e) { alert("WebGL is not supported on this phone."); return; }
+  renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.setSize(window.innerWidth, window.innerHeight, false);
+
+  const blank = new THREE.DataTexture(new Uint8Array([0, 0, 0, 255]), 1, 1);
+  blank.needsUpdate = true;
+  maskTex = new THREE.CanvasTexture(maskCanvas);
+  maskTex.minFilter = THREE.LinearFilter; maskTex.generateMipmaps = false;
+  const rtOpts = { samples: renderer.capabilities.isWebGL2 ? 2 : 0 };
+  rtL = new THREE.WebGLRenderTarget(OV_SIZE, OV_SIZE, rtOpts);
+  rtR = new THREE.WebGLRenderTarget(OV_SIZE, OV_SIZE, rtOpts);
+
+  const u = {};
+  for (const [k, v] of Object.entries({
+    uRes: new THREE.Vector2(), uCam: blank, uCamAspect: 1, uHasCam: 0, uMask: maskTex, uMaskExtent: MASK_EXTENT,
+    uOvL: rtL.texture, uOvR: rtR.texture, uOvExtent: OV_EXTENT, uOvAlpha: 0,
+    uRet: new THREE.Vector4(), uTip: new THREE.Vector4(),
+    uK: 0, uZoom: 1, uIpd: 0.5, uVert: 0, uEye: 0.9, uRound: 1, uDiv: 0, uTest: 0, uNose: new THREE.Vector2(),
+    uFxA0: new THREE.Vector4(), uFxB0: new THREE.Vector4(), uFxA1: new THREE.Vector4(), uFxB1: new THREE.Vector4()
+  })) u[k] = { value: v };
+  U = u;
+  composite = new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: FRAG, uniforms: u, depthTest: false, depthWrite: false });
+  fsScene = new THREE.Scene();
+  fsScene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), composite));
+  fsCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+
+  ar = new ARScene(renderer);
+  ar.onCondition = cond => startEffect(cond, exploreLang);
+  ar.onStatus = s => pushStatus({ ...s, method: activeMethod(), lang: exploreLang,
+    effectStart: s.phase === "effect" ? effectStartMs : null, condition: s.condition });
+  try { await ar.init(); } catch (e) { console.error("3D scene failed", e); }
+  if (/[?&]debug/.test(location.search)) window.__ar = ar;   // for testing only
+  applySettings();
 }
 
 function resize() {
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  const w = Math.round(canvas.clientWidth * dpr), h = Math.round(canvas.clientHeight * dpr);
-  if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
-  if (gl) gl.viewport(0, 0, w, h);
+  if (!renderer) return;
+  const w = window.innerWidth, h = window.innerHeight;
+  const size = renderer.getSize(new THREE.Vector2());
+  if (size.x !== w || size.y !== h) renderer.setSize(w, h, false);
 }
 window.addEventListener("resize", () => { resize(); layoutText(); });
+
+// Settings that come from the hidden calibration panel
+function applySettings() {
+  layoutText();
+  if (ar) ar.setSettings(calib, OV_EXTENT);
+  const wantHands = (calib.selectMethod === "hand" || calib.selectMethod === "both") && !handBlocked;
+  if (wantHands && hands.state === "off") hands.start();
+  if (!wantHands && hands.state !== "off") hands.stop();
+}
+function activeMethod() { return calib.selectMethod || "gaze"; }
 
 // Position the HTML text under each lens.
 function layoutText() {
@@ -362,6 +453,7 @@ function layoutText() {
     put("wait" + e, cy + R * 0.62);
     put("name" + e, cy - R * 0.5);
     put("err" + e, cy);
+    put("hint" + e, cy + R * 0.84);
     for (const k of ["name", "err"]) $(k + e).style.width = Math.min(R * 1.6, W * 0.45) + "px";
   });
 }
@@ -381,52 +473,103 @@ function updateMask(t) {
     });
     maskEmpty = false;
   }
-  gl.activeTexture(gl.TEXTURE1);
-  gl.bindTexture(gl.TEXTURE_2D, maskTex);
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, maskCanvas);
+  maskTex.needsUpdate = true;
 }
 
 function setFx(eyeIdx, fx) {
-  gl.uniform4f(U["uFxA" + eyeIdx], fx.blur, fx.contrast, fx.tint, fx.glare);
-  gl.uniform4f(U["uFxB" + eyeIdx], fx.desat, fx.redDesat, fx.dim, fx.warp);
+  U["uFxA" + eyeIdx].value.set(fx.blur, fx.contrast, fx.tint, fx.glare);
+  U["uFxB" + eyeIdx].value.set(fx.desat, fx.redDesat, fx.dim, fx.warp);
 }
 
+let hintText = "";
+function setHint(text) {
+  if (text === hintText) return;
+  hintText = text;
+  for (const id of ["hintL", "hintR"]) { $(id).textContent = text; $(id).lang = exploreLang; $(id).classList.toggle("on", !!text); }
+}
+
+let lastFrame = performance.now();
 function loop() {
   requestAnimationFrame(loop);
-  if (!gl) return;
+  if (!renderer) return;
+  const now = performance.now();
+  const dt = Math.min(0.25, (now - lastFrame) / 1000);
+  lastFrame = now;
+  fps = fps * 0.95 + (1 / Math.max(dt, 0.001)) * 0.05;
   resize();
 
   let t = 0;
   if (running) {
-    t = (performance.now() - running.t0) / 1000;
-    if (t >= TIMING.effectTotal) { running = null; updateOverlay(); }
+    t = (now - running.t0) / 1000;
+    if (t >= TIMING.effectTotal) { running = null; updateOverlay(); if (ar) ar.effectDone(); }
   }
 
   // camera frame
   const hasCam = camOk && video && video.readyState >= 2 && video.videoWidth > 0;
-  if (hasCam) {
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, camTex);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, video);
+  if (hasCam && (!camTex || camTex.image !== video)) {
+    camTex = new THREE.VideoTexture(video);
+    camTex.minFilter = THREE.LinearFilter; camTex.generateMipmaps = false;
+    U.uCam.value = camTex;
   }
   updateMask(t);
+  const aspect = hasCam ? video.videoWidth / video.videoHeight : 1;
 
-  gl.uniform2f(U.uRes, canvas.width, canvas.height);
-  gl.uniform1f(U.uCamAspect, hasCam ? video.videoWidth / video.videoHeight : 1);
-  gl.uniform1f(U.uHasCam, hasCam ? 1 : 0);
-  gl.uniform1f(U.uMaskExtent, MASK_EXTENT);
-  gl.uniform1f(U.uK, calib.distortion);
-  gl.uniform1f(U.uZoom, Math.max(0.1, calib.zoom));
-  gl.uniform1f(U.uIpd, calib.ipd);
-  gl.uniform1f(U.uVert, calib.vertical);
-  gl.uniform1f(U.uEye, calib.eyeSize);
-  gl.uniform1f(U.uRound, calib.roundness);
-  gl.uniform1f(U.uDiv, calib.divider);
-  gl.uniform1f(U.uTest, calib.testPattern ? 1 : 0);
-  gl.uniform2f(U.uNose, calib.noseWidth, calib.noseHeight);
+  // ---- selection pointers (look-and-hold reticle, fingertip)
+  const exploring = ar && ar.active;
+  const method = activeMethod();
+  const wantsHand = method === "hand" || method === "both";
+  let tip = null;
+  if (exploring && wantsHand && !handBlocked && hands.state === "ready") tip = hands.detect(video, now);
+  // fall back to look and hold if the phone is too slow for hand tracking
+  if (exploring && wantsHand && !handBlocked && hands.state === "ready") {
+    lowFpsT = fps < 20 ? lowFpsT + dt : 0;
+    if (lowFpsT > 3) { handBlocked = true; hands.stop(); console.warn("Hand tracking switched off: frame rate too low"); }
+  }
+  const handFailed = hands.state === "failed" || handBlocked;
+  const handMissing = !tip && (now - hands.lastSeen > 2000);
+  const gazeOn = method === "gaze" || method === "both" || (method === "hand" && (handFailed || handMissing || hands.state !== "ready"));
+  const pointers = [];
+  if (gazeOn) pointers.push({ kind: "gaze", ndc: { x: 0, y: 0 }, holdTime: calib.holdTime || 2 });
+  let tipM = null;
+  if (tip) {
+    tipM = { x: (tip.x - 0.5) * 2 * aspect * calib.zoom, y: (0.5 - tip.y) * 2 * calib.zoom };
+    pointers.push({ kind: "hand", ndc: { x: tipM.x / OV_EXTENT, y: tipM.y / OV_EXTENT }, holdTime: HAND_HOLD_TIME });
+  }
+  let sel = { hits: {}, hitDistance: 1 };
+  if (ar) {
+    sel = ar.update(dt, exploring ? pointers : []);
+    ar.render(rtL, rtR);
+  }
+  const browsing = exploring && ar.phase === "browse";
+  const g = sel.hits.gaze, h = sel.hits.hand;
+  U.uRet.value.set(browsing && gazeOn ? 1 : 0, g ? g.progress : 0, g && g.id ? 1 : 0, ar ? ar.reticleOffset(sel.hitDistance) : 0);
+  U.uTip.value.set(tipM ? tipM.x : 0, tipM ? tipM.y : 0, browsing && tipM ? 1 : 0, h ? h.progress : 0);
+  U.uOvAlpha.value = ar ? ar.alpha : 0;
+
+  // small instruction under each lens while exploring
+  let hint = "";
+  if (browsing && !(g && g.id) && !(h && h.id)) {
+    if (wantsHand && tip) hint = tr(exploreLang, "fingerToSelect");
+    else if (method === "hand" && (handFailed || handMissing) && now - exploreT0 > 3000) hint = tr(exploreLang, "handLost");
+    else hint = tr(exploreLang, "lookToSelect");
+  }
+  setHint(hint);
+
+  U.uRes.value.set(canvas.width, canvas.height);
+  U.uCamAspect.value = aspect;
+  U.uHasCam.value = hasCam ? 1 : 0;
+  U.uK.value = calib.distortion;
+  U.uZoom.value = Math.max(0.1, calib.zoom);
+  U.uIpd.value = calib.ipd;
+  U.uVert.value = calib.vertical;
+  U.uEye.value = calib.eyeSize;
+  U.uRound.value = calib.roundness;
+  U.uDiv.value = calib.divider;
+  U.uTest.value = calib.testPattern ? 1 : 0;
+  U.uNose.value.set(calib.noseWidth, calib.noseHeight);
   const none = filtersAt("", "L", 0);
   setFx(0, running ? filtersAt(running.cond, "L", t) : none);
   setFx(1, running ? filtersAt(running.cond, "R", t) : none);
 
-  gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  renderer.render(fsScene, fsCam);
 }

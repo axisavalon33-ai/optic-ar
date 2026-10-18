@@ -257,7 +257,7 @@ button.big { font-size: clamp(18px, 2.4vw, 26px); font-weight: 600; padding: 18p
 
 /* ---------- calibration panel ---------- */
 #calibPanel {
-  position: absolute; top: 12px; right: 12px; bottom: 12px; width: min(420px, 92vw); z-index: 45;
+  position: absolute; top: 12px; right: 12px; bottom: 12px; width: min(420px, 92vw); z-index: 55; /* above the hidden corner so × can be tapped */
   padding: 16px 18px; overflow-y: auto; background: rgba(8, 18, 42, .9);
   transform: translateX(110%); transition: transform .45s;
 }
@@ -281,3 +281,32 @@ input[type=range] { width: 100%; accent-color: var(--amber); height: 28px; }
   background: rgba(255, 255, 255, .08); color: var(--text); border: 1px solid var(--glass-border);
 }
 .profile-row select option { background: var(--navy-1); }
+
+/* ---------- headset selection: mirror screen ---------- */
+#headsetScreen { display: flex; align-items: center; justify-content: center; }
+.hs-wrap { display: flex; gap: 3vmin; align-items: stretch; justify-content: center; width: 100%; padding: 0 4vw; }
+.hs-main { flex: 1 1 0; max-width: 640px; padding: 5vmin 4vmin; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 2vmin; }
+.hs-icon { width: clamp(90px, 16vmin, 160px); color: var(--amber); filter: drop-shadow(0 0 18px rgba(255, 181, 71, .45)); animation: hsFloat 3s ease-in-out infinite; }
+@keyframes hsFloat { 50% { transform: translateY(-6px); } }
+.hs-main h1 { margin: 0; color: var(--amber); font-size: clamp(26px, 5vmin, 46px); }
+.hs-main p { margin: 0; color: var(--muted); font-size: clamp(16px, 2.8vmin, 24px); }
+.hs-status { display: grid; gap: 1.2vmin; margin-top: 2vmin; width: 100%; }
+.hs-status div { display: flex; justify-content: space-between; gap: 2vmin; padding: 1.6vmin 2.4vmin; border-radius: 16px; background: rgba(255,255,255,.06); font-size: clamp(15px, 2.6vmin, 22px); }
+.hs-status span { color: var(--muted); }
+.hs-status b { color: var(--text); text-align: right; }
+#hsField { flex: 0 0 38%; max-width: 480px; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 1.6vmin; padding: 3vmin; text-align: center; background: rgba(8, 18, 42, .78); }
+#headsetScreen.effect #hsField { display: flex; }
+#hsCanvas { width: 100%; aspect-ratio: 2 / 1.12; }
+#opToggle { position: absolute; right: 20px; bottom: 64px; font-size: 13px; padding: 8px 14px; opacity: .7; z-index: 21; }
+#opPanel { position: absolute; right: 20px; bottom: 110px; width: min(520px, 92vw); padding: 14px; z-index: 21; display: none; background: rgba(8, 18, 42, .94); }
+#opPanel.open { display: block; }
+#opConds { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+#opConds button, .op-row button { font-size: 13px; padding: 8px 12px; }
+.op-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* calibration: 3D selection controls */
+.cal-section { margin: 18px 0 8px; padding-top: 12px; border-top: 1px solid var(--glass-border); color: var(--amber); font-weight: 600; font-size: 15px; }
+.seg-row { margin: 10px 0; font-size: 14px; }
+.seg { display: flex; gap: 6px; margin-top: 6px; }
+.seg button { flex: 1; padding: 9px 8px; border-radius: 12px; font-size: 13px; }
+.seg button.on { border-color: var(--amber); background: linear-gradient(135deg, rgba(255, 181, 71, 0.35), rgba(232, 145, 42, 0.2)); }

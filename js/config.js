@@ -38,6 +38,7 @@ export const DB = {
   command: `exhibit/stations/${STATION}/command`,     // {condition, language, timestamp}
   presence: `exhibit/stations/${STATION}/presence`,   // phone heartbeat
   calibLive: `exhibit/stations/${STATION}/calibration`, // this station's headset settings
+  explore: `exhibit/stations/${STATION}/explore`,     // headset -> tablet: what the visitor looks at / selects
   hotspots: "exhibit/hotspots",                       // shared by all stations
   calibProfiles: "exhibit/calibration/profiles"       // shared, so any station can load them
 };
@@ -85,13 +86,13 @@ export const DEFAULT_HOTSPOTS = {
     opticNerve: { x: 84.0, y: 62.5, r: 4.0 }
   },
   pathway: {
-    pOpticNerve: { x: 39.1, y: 20.9, r: 2.8 },
-    pChiasm:     { x: 49.0, y: 28.9, r: 2.0 },
-    pTemporal:   { x: 45.2, y: 30.5, r: 2.0 },
-    pTract:      { x: 38.6, y: 38.1, r: 2.8 },
-    pMeyer:      { x: 28.2, y: 49.0, r: 3.0 },
-    pParietal:   { x: 32.5, y: 58.2, r: 3.0 },
-    pOccipital:  { x: 42.9, y: 83.4, r: 3.5 }
+    pOpticNerve: { x: 43.3, y: 23.6, r: 1.8 },
+    pChiasm:     { x: 49.1, y: 31.9, r: 1.3 },
+    pTemporal:   { x: 46.8, y: 34.1, r: 1.3 },
+    pTract:      { x: 43.1, y: 40.9, r: 1.8 },
+    pMeyer:      { x: 37.1, y: 53.2, r: 2.0 },
+    pParietal:   { x: 39.8, y: 60.6, r: 2.0 },
+    pOccipital:  { x: 45.3, y: 84.7, r: 2.4 }
   }
 };
 
@@ -107,8 +108,25 @@ export const DEFAULT_CALIBRATION = {
   noseWidth: 0.12,   // nose cutout width, fraction of W
   noseHeight: 0.22,  // nose cutout height, fraction of H
   divider: 0.006,    // black centre divider width, fraction of W
-  testPattern: false
+  testPattern: false,
+  // ---- 3D selection inside the headset ----
+  selection: "tablet",   // "tablet" = tap hotspots on the tablet (original) | "headset" = 3D eye in the headset
+  selectMethod: "gaze",  // "gaze" = look and hold | "hand" = hand touch | "both"
+  holdTime: 2,           // seconds to look at a part before it is selected
+  modelDistance: 1.0,    // metres in front of the visitor
+  modelSize: 1.0,        // 1 = normal size
+  cameraFov: 42          // phone camera's vertical field of view in degrees (makes the 3D model sit still in the view)
 };
+
+// Hand-touch selection time (seconds) and the 3D view's eye separation (metres).
+export const HAND_HOLD_TIME = 1.0;
+export const STEREO_IPD = 0.064;
+
+// Optional 3D models. If these files exist they are used instead of the built-in shapes.
+// Name the selectable parts in your 3D program so the names contain:
+//   eye.glb:     lens, retina (or macula), disc, nerve
+//   pathway.glb: nerve, chiasm, temporal, tract, meyer, parietal, occipital
+export const MODELS = { eye: "models/eye.glb", pathway: "models/pathway.glb" };
 
 // Slider ranges for calibration mode.
 export const CALIBRATION_SLIDERS = [
@@ -120,5 +138,9 @@ export const CALIBRATION_SLIDERS = [
   { key: "roundness",  min: 0,    max: 1,    step: 0.01 },
   { key: "noseWidth",  min: 0,    max: 0.4,  step: 0.002 },
   { key: "noseHeight", min: 0,    max: 0.6,  step: 0.002 },
-  { key: "divider",    min: 0,    max: 0.06, step: 0.001 }
+  { key: "divider",    min: 0,    max: 0.06, step: 0.001 },
+  { key: "holdTime",      min: 1,   max: 3,   step: 0.1,  section: "3d" },
+  { key: "modelDistance", min: 0.5, max: 2,   step: 0.05, section: "3d" },
+  { key: "modelSize",     min: 0.5, max: 2,   step: 0.05, section: "3d" },
+  { key: "cameraFov",     min: 25,  max: 75,  step: 1,    section: "3d" }
 ];

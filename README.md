@@ -21,6 +21,9 @@ js/config.js        settings: timings, file names, default hotspot positions, de
 js/defects.js       how each condition looks (shared by the tablet diagram and the headset)
 js/controller.js    tablet logic
 js/viewer.js        headset logic (camera + lens distortion)
+js/ar-scene.js      3D eye / visual pathway for selection inside the headset
+js/hands.js         optional hand-touch tracking (MediaPipe)
+js/vendor/          Three.js 3D library (copy kept in the project)
 js/fb.js            Firebase connection
 videos/             eye-intro.mp4, pathway.mp4                        (placeholders for now)
 images/             eye-still.jpg, pathway-still.jpg                  (placeholders for now)
@@ -191,6 +194,43 @@ Give each tablet + phone pair the same **station number** by adding `?station=N`
 - Each station has its own calibration. Calibrate one box, **Save profile**, then **Load profile** on the others.
 - Hotspot positions are shared by all stations.
 - To change a device's number, open its link once with the new `?station=` number.
+
+---
+
+## 3D selection inside the headset (optional)
+
+Instead of tapping the tablet, visitors can choose eye parts **inside the headset**: a cut-away 3D eye floats about
+1 metre in front of them, and they **look at a part and hold** for 2 seconds (a ring fills around the small white dot).
+
+**Switch it on:** tablet → hold the top-right corner 3 s → *3D selection in the headset* → **Selection: Headset**.
+(Default is **Tablet**, the original flow with hotspots on the tablet.)
+
+| Setting (calibration panel) | Meaning |
+|---|---|
+| Selection | Tablet (original) / Headset (3D eye) |
+| Selection method | Look and hold (default) / Hand touch / Both |
+| Hold time | 1–3 seconds of looking before a part is selected |
+| Model distance | How far away the 3D model floats (metres) |
+| Model size | Bigger / smaller model |
+| Camera field of view | Match this to the phone camera so the model sits still in the view (default 42°) |
+
+**Flow:** language → eye video on the tablet → tablet says *Put on the headset* → in the headset: Lens = Cataract,
+Retina = AMD, Optic disc = Glaucoma, Optic nerve = two floating choices (Optic neuritis / Visual field defects).
+Visual field defects shows a 3D visual pathway with 7 selectable sites. A selected part glows red for 2 s, the model
+fades, the 20-second effect runs, then the model comes back. Floating **Back** / **Home** buttons sit under the model.
+
+**Tablet while the visitor explores:** shows *Looking at* / *Selected* and the visual field diagram during each effect,
+so the queue can follow. The small **Operator** button opens backup controls: run any effect, **Recentre model**
+(puts the model straight ahead), and **Headset back to the eye**.
+
+**Hand touch:** uses the rear camera to find the visitor's index fingertip (a glowing dot); hold it on a part for 1 s.
+If no hand is found, or the phone is too slow (under 20 frames per second), it falls back to look and hold by itself.
+Hand tracking needs internet (it downloads about 10 MB the first time) and is only loaded when switched on.
+
+**Your own 3D models (optional):** put `models/eye.glb` and/or `models/pathway.glb` in a `models` folder.
+Name the parts in your 3D program so the names contain: eye – `lens`, `retina` (or `macula`), `disc`, `nerve`;
+pathway – `nerve`, `chiasm`, `temporal`, `tract`, `meyer`, `parietal`, `occipital`. Without these files the built-in
+shapes are used. Keep models simple (low polygon) so the phone stays smooth.
 
 ---
 

@@ -3,7 +3,7 @@
 // =====================================================================
 import { DB, STATION, TIMING, MEDIA, VIDEO_BUILT_IN_LANGUAGE, DEFAULT_HOTSPOTS, DEFAULT_CALIBRATION, CALIBRATION_SLIDERS } from "./config.js";
 import { LANGUAGES, T, ADMIN, tr } from "./translations.js";
-import { paintField, PATHWAY_DEFECTS } from "./defects.js";
+import { paintField, PATHWAY_DEFECTS, ALL_CONDITIONS } from "./defects.js";
 import { keepFullscreen } from "./fullscreen.js";
 
 const $ = id => document.getElementById(id);
@@ -12,7 +12,7 @@ const app = $("app");
 // ---------------------------------------------------------------- state
 const S = {
   lang: "en",
-  screen: "lang",        // lang | eyeVideo | eyeStill | pathVideo | pathStill | credits
+  screen: "lang",        // lang | eyeVideo | eyeStill | pathVideo | pathStill | headset | credits
   prevScreen: "lang",
   modal: null,           // null | card | choice
   cardCondition: null,
@@ -20,7 +20,8 @@ const S = {
   editing: false,
   hotspots: JSON.parse(JSON.stringify(DEFAULT_HOTSPOTS)),
   calib: { ...DEFAULT_CALIBRATION },
-  fbOk: false, online: false, viewerSeen: 0
+  fbOk: false, online: false, viewerSeen: 0,
+  explore: null          // what the visitor is doing inside the headset (3D selection)
 };
 let fb = null; // Firebase helpers once loaded
 
@@ -46,6 +47,7 @@ let fb = null; // Firebase helpers once loaded
       if (v && !calibDirty) { S.calib = { ...DEFAULT_CALIBRATION, ...v }; syncSliders(); }
     });
     fb.onValue(fb.ref(fb.db, DB.calibProfiles), s => fillProfiles(s.val() || {}));
+    fb.onValue(fb.ref(fb.db, DB.explore), s => { S.explore = s.val(); updateMirror(); });
   } catch (e) {
     console.error("Firebase failed to load", e);
     toast("Firebase could not load – check the internet connection");
@@ -132,7 +134,7 @@ function setHomeVideo(on) {
 function setScreen(name) {
   S.screen = name;
   setHomeVideo(name === "lang");
-  const section = name === "lang" ? "langScreen" : name === "credits" ? "creditsScreen" : "stageScreen";
+  const section = name === "lang" ? "langScreen" : name === "credits" ? "creditsScreen" : name === "headset" ? "headsetScreen" : "stageScreen";
   for (const s of document.querySelectorAll(".screen")) s.classList.toggle("active", s.id === section);
   app.classList.toggle("lang-screen", name === "lang");
   const stillShown = name === "eyeStill" || name === "pathStill";
@@ -167,6 +169,7 @@ function playIntro(kind) {
   const finish = () => {
     if (S.screen !== videoScreen) return;
     narration.pause();
+    if (isEye && headsetSelection()) { startHeadsetSelection(); return; }
     still.classList.add("shown");
     video.classList.add("hidden");
     setScreen(isEye ? "eyeStill" : "pathStill");
@@ -208,13 +211,15 @@ function goBack() {
   if (S.modal) { closeModal(); return; }
   switch (S.screen) {
     case "credits": setScreen(S.prevScreen === "credits" ? "lang" : S.prevScreen); break;
-    case "eyeVideo": case "eyeStill": goHome(); break;
+    case "eyeVideo": case "eyeStill": case "headset": goHome(); break;
     case "pathVideo": case "pathStill": showStillOnly("eye"); break;
   }
 }
 function goHome() {
   if (S.locked) return;
+  if (S.screen === "headset") sendCommand({ mode: "idle" });   // headset goes back to "Please wait"
   stopMedia(); closeModal(); clearLesions();
+  stopMirrorDiagram();
   setScreen("lang");
 }
 function showStillOnly(kind) {
@@ -336,8 +341,7 @@ function sendCondition(cond) {
 
 // Two patient-view visual field circles drawn from the shared defect data.
 const layer = document.createElement("canvas");
-function drawDiagram(cond, t) {
-  const cv = $("fieldCanvas");
+function drawDiagram(cond, t, cv = $("fieldCanvas")) {
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
   const W = Math.round(cv.clientWidth * dpr), H = Math.round(cv.clientHeight * dpr);
   if (!W || !H) return;
@@ -372,6 +376,85 @@ function drawDiagram(cond, t) {
     c.textAlign = "center"; c.textBaseline = "top";
     c.fillText(tr(S.lang, eye === "L" ? "leftEye" : "rightEye"), cx, cy + R + fontPx * 0.5);
   });
+}
+
+// ---------------------------------------------------------------- HEADSET SELECTION (3D eye in the headset)
+function headsetSelection() { return S.calib.selection === "headset"; }
+function sendCommand(extra) {
+  if (!fb) { toast("Firebase not connected"); return; }
+  fb.set(fb.ref(fb.db, DB.command), { language: S.lang, ...extra, timestamp: fb.serverTimestamp() })
+    .catch(e => toast("Could not send: " + e.message));
+}
+function startHeadsetSelection() {
+  stopMedia();
+  video.classList.add("hidden");
+  S.explore = null;
+  setScreen("headset");
+  applyHeadsetText();
+  updateMirror();
+  sendCommand({ mode: "explore" });
+  if (!viewerConnected()) toast(tr(S.lang, "headsetOffline"));
+}
+function applyHeadsetText() {
+  const L = S.lang, m = S.calib.selectMethod;
+  $("hsTitle").textContent = tr(L, "putOnHeadset");
+  $("hsSub").textContent = tr(L, m === "hand" ? "fingerToSelect" : "lookToSelect");
+  $("hsLookLbl").textContent = tr(L, "lookingAt");
+  $("hsSelLbl").textContent = tr(L, "selectedLabel");
+  $("opToggle").textContent = ADMIN.operator;
+  $("opTitle").textContent = ADMIN.triggerTitle;
+  $("opRecentre").textContent = ADMIN.recentreBtn;
+  $("opEyeHome").textContent = ADMIN.eyeHomeBtn;
+  const box = $("opConds");
+  if (!box.childElementCount) {
+    for (const c of ALL_CONDITIONS) {
+      const b = document.createElement("button");
+      b.className = "glass pill admin"; b.dataset.cond = c;
+      b.onclick = () => sendCommand({ condition: c, source: "operator" });
+      box.appendChild(b);
+    }
+  }
+  for (const b of box.children) b.textContent = tr("en", `conditions.${b.dataset.cond}.name`);
+}
+// names the tablet shows for things the visitor looks at in the headset
+const MIRROR_KEY = { lens: "hotspots.lens", retina: "retinaMacula", opticDisc: "hotspots.opticDisc", opticNerve: "hotspots.opticNerve",
+  chNeuritis: "opticNeuritisBtn", chField: "visualFieldBtn", navBack: "back", navHome: "home" };
+function mirrorName(id) {
+  if (!id) return "—";
+  return tr(S.lang, MIRROR_KEY[id] || `hotspots.${id}`);
+}
+let mirrorRaf = 0, mirrorCond = null;
+function updateMirror() {
+  if (S.screen !== "headset") return;
+  const e = S.explore || {};
+  $("hsLook").textContent = mirrorName(e.looking);
+  const selName = e.condition ? tr(S.lang, `conditions.${e.condition}.name`) : mirrorName(e.selected);
+  $("hsSel").textContent = selName;
+  if (e.phase === "effect" && e.condition && e.effectStart) startMirrorDiagram(e.condition, e.effectStart);
+  else if (e.phase !== "effect") stopMirrorDiagram();
+}
+function startMirrorDiagram(cond, startMs) {
+  if (mirrorCond === cond + startMs) return;
+  mirrorCond = cond + startMs;
+  $("hsFieldName").textContent = tr(S.lang, `conditions.${cond}.name`);
+  $("hsFieldLine").textContent = tr(S.lang, `conditions.${cond}.field`);
+  $("headsetScreen").classList.add("effect");
+  const total = TIMING.effectTotal;
+  cancelAnimationFrame(mirrorRaf);
+  const frame = () => {
+    const t = Math.max(0, (fb.serverNow() - startMs) / 1000);
+    drawDiagram(cond, Math.min(t, total), $("hsCanvas"));
+    const left = Math.max(0, total - t);
+    $("hsCdNum").textContent = Math.ceil(left);
+    $("hsCdBar").style.strokeDashoffset = (276.5 * (1 - left / total)).toFixed(1);
+    if (t < total + 0.5) mirrorRaf = requestAnimationFrame(frame); else stopMirrorDiagram();
+  };
+  mirrorRaf = requestAnimationFrame(frame);
+}
+function stopMirrorDiagram() {
+  cancelAnimationFrame(mirrorRaf);
+  mirrorCond = null;
+  $("headsetScreen").classList.remove("effect");
 }
 
 // ---------------------------------------------------------------- idle hand + hint
@@ -494,8 +577,8 @@ function buildCalibration() {
   $("profileName").placeholder = ADMIN.profileName;
   $("profileSave").textContent = ADMIN.saveProfile;
   $("profileLoad").textContent = ADMIN.loadProfile;
-  const box = $("sliders");
   for (const s of CALIBRATION_SLIDERS) {
+    const box = s.section === "3d" ? $("sliders3d") : $("sliders");
     const row = document.createElement("div");
     row.className = "slider-row";
     row.innerHTML = `<div class="top"><span>${ADMIN.sliders[s.key]}</span><b id="v_${s.key}"></b></div>
@@ -503,12 +586,30 @@ function buildCalibration() {
     box.appendChild(row);
     row.querySelector("input").addEventListener("input", e => {
       S.calib[s.key] = parseFloat(e.target.value);
-      $("v_" + s.key).textContent = S.calib[s.key].toFixed(3);
+      $("v_" + s.key).textContent = fmt(s, S.calib[s.key]);
       pushCalib();
     });
   }
+  // 3D selection: Tablet / Headset and the selection method
+  const sel = $("sel3d");
+  sel.innerHTML = `<div class="cal-section">${ADMIN.section3d}</div>`;
+  const seg = (key, title, options) => {
+    const row = document.createElement("div");
+    row.className = "seg-row";
+    row.innerHTML = `<span>${title}</span><div class="seg"></div>`;
+    for (const [value, label] of options) {
+      const b = document.createElement("button");
+      b.className = "glass admin"; b.textContent = label; b.dataset.key = key; b.dataset.value = value;
+      b.onclick = () => { S.calib[key] = value; syncSliders(); pushCalib(); };
+      row.querySelector(".seg").appendChild(b);
+    }
+    sel.appendChild(row);
+  };
+  seg("selection", ADMIN.selectionTitle, [["tablet", ADMIN.selTablet], ["headset", ADMIN.selHeadset]]);
+  seg("selectMethod", ADMIN.methodTitle, [["gaze", ADMIN.mGaze], ["hand", ADMIN.mHand], ["both", ADMIN.mBoth]]);
   $("tpSwitch").addEventListener("change", e => { S.calib.testPattern = e.target.checked; pushCalib(); });
-  $("calibReset").onclick = () => { S.calib = { ...DEFAULT_CALIBRATION }; syncSliders(); pushCalib(); };
+  const keepMode = () => ({ selection: S.calib.selection, selectMethod: S.calib.selectMethod });
+  $("calibReset").onclick = () => { S.calib = { ...DEFAULT_CALIBRATION, ...keepMode() }; syncSliders(); pushCalib(); };
   $("calibClose").onclick = () => $("calibPanel").classList.remove("open");
   $("profileSave").onclick = () => {
     const name = $("profileName").value.trim().replace(/[.#$\[\]\/]/g, "-");
@@ -520,7 +621,7 @@ function buildCalibration() {
   $("profileLoad").onclick = () => {
     const p = profiles[$("profileList").value];
     if (!p) return;
-    S.calib = { ...DEFAULT_CALIBRATION, ...p, testPattern: S.calib.testPattern };
+    S.calib = { ...DEFAULT_CALIBRATION, ...p, testPattern: S.calib.testPattern, ...keepMode() };
     $("profileName").value = $("profileList").value;
     syncSliders(); pushCalib();
   };
@@ -536,9 +637,11 @@ function syncSliders() {
   for (const s of CALIBRATION_SLIDERS) {
     const v = S.calib[s.key];
     $("s_" + s.key).value = v;
-    $("v_" + s.key).textContent = Number(v).toFixed(3);
+    $("v_" + s.key).textContent = fmt(s, v);
   }
   $("tpSwitch").checked = !!S.calib.testPattern;
+  for (const b of document.querySelectorAll("#sel3d .seg button")) b.classList.toggle("on", S.calib[b.dataset.key] === b.dataset.value);
+  if (S.screen === "headset") applyHeadsetText();
 }
 function pushCalib() {
   calibDirty = true;
@@ -548,6 +651,7 @@ function pushCalib() {
     else calibDirty = false;
   }, 60);
 }
+function fmt(s, v) { const d = s.step >= 1 ? 0 : s.step >= 0.05 ? 2 : 3; return Number(v).toFixed(d); }
 let profiles = {};
 function fillProfiles(p) {
   profiles = p;
@@ -565,6 +669,9 @@ $("choiceClose").onclick = closeModal;
 $("cardAR").onclick = () => { if (!S.locked && S.cardCondition) sendCondition(S.cardCondition); };
 $("choiceNeuritis").onclick = () => openCard("neuritis");
 $("choiceField").onclick = () => { closeModal(); playIntro("pathway"); };
+$("opToggle").onclick = () => $("opPanel").classList.toggle("open");
+$("opRecentre").onclick = () => sendCommand({ action: "recentre" });
+$("opEyeHome").onclick = () => sendCommand({ action: "eyeHome" });
 document.addEventListener("contextmenu", e => e.preventDefault());
 
 keepFullscreen(); // first tap anywhere makes the tablet full screen
