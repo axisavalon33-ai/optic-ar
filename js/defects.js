@@ -70,8 +70,14 @@ export const CONDITIONS = {
     filters: { both: { warp: 1 } }
   },
   neuritis: {
-    field: eye => eye === "L" ? [{ kind: "dark", type: "disc", r: 0.15, soft: 0.12, a: 0.6 }] : [],
-    filters: { L: { desat: 0.55, redDesat: 0.85, dim: 0.30 } }
+    // One eye (left). The classic picture: blurred, washed-out, dimmer vision with faded colours
+    // (reds look pinkish-brown) and a soft grey smudge in the centre that often stretches towards
+    // the blind spot (temporal side = left in the left eye's view): a "centrocaecal" scotoma.
+    field: eye => eye === "L" ? [
+      { kind: "dark", type: "disc", r: 0.17, soft: 0.2, a: 0.42 },
+      { kind: "dark", type: "disc", cx: -0.2, cy: -0.02, r: 0.1, soft: 0.16, a: 0.3 }
+    ] : [],
+    filters: { L: { blur: 0.007, contrast: 0.3, desat: 0.5, redDesat: 0.9, dim: 0.30, maskBlur: 0.04 } }
   },
 
   // ---------------- Visual pathway lesions (left side of brain) ----------------
@@ -168,10 +174,11 @@ function drawShape(c, sh, rgb, a, E) {
       c.fillStyle = g; big(); break;
     }
     case "disc": {
+      const x = sh.cx || 0, y = sh.cy || 0;
       const r0 = Math.max(0.001, sh.r - sh.soft / 2), r1 = sh.r + sh.soft / 2;
-      const g = c.createRadialGradient(0, 0, 0, 0, 0, r1);
+      const g = c.createRadialGradient(x, y, 0, x, y, r1);
       g.addColorStop(0, rgba(rgb, a)); g.addColorStop(r0 / r1, rgba(rgb, a)); g.addColorStop(1, rgba(rgb, 0));
-      c.fillStyle = g; c.fillRect(-r1, -r1, 2 * r1, 2 * r1);
+      c.fillStyle = g; c.fillRect(x - r1, y - r1, 2 * r1, 2 * r1);
       break;
     }
     case "island": { // dark everywhere except an irregular clear island with very soft, smudgy edges

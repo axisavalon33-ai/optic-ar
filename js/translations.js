@@ -75,7 +75,7 @@ export const T = {
         name: "Optic neuritis",
         line1: "The optic nerve becomes swollen and inflamed, usually in one eye.",
         line2: "Vision in that eye becomes dim and grey, and colours – especially red – look faded.",
-        field: "A grey spot in the centre of the left eye only."
+        field: "Left eye only: blurry and dim, with a grey smudge in the centre and faded colours."
       },
       pOpticNerve: { name: "Left optic nerve damage", field: "The left eye is completely blind." },
       pChiasm: { name: "Bitemporal hemianopia", field: "Both outer halves of vision are lost." },
@@ -156,7 +156,7 @@ export const T = {
         name: "பார்வை நரம்பு அழற்சி",
         line1: "பார்வை நரம்பு வீங்கி அழற்சி அடைகிறது, பொதுவாக ஒரு கண்ணில்.",
         line2: "அந்தக் கண்ணின் பார்வை மங்கி, நிறங்கள் – குறிப்பாகச் சிவப்பு – வெளிறித் தெரியும்.",
-        field: "இடது கண்ணின் மையத்தில் மட்டும் சாம்பல் நிறப் புள்ளி."
+        field: "இடது கண்ணில் மட்டும்: மங்கலான, மந்தமான பார்வை, மையத்தில் சாம்பல் நிற மங்கல், வெளிறிய நிறங்கள்."
       },
       pOpticNerve: { name: "இடது பார்வை நரம்புச் சேதம்", field: "இடது கண் முழுமையாகப் பார்வை இழக்கிறது." },
       pChiasm: { name: "இருபக்க வெளிப் பாதிப் பார்வையிழப்பு", field: "இரு கண்களின் வெளிப் பாதிப் பார்வை இழக்கப்படுகிறது." },
@@ -237,7 +237,7 @@ export const T = {
         name: "දෘෂ්ටි ස්නායු ප්‍රදාහය",
         line1: "සාමාන්‍යයෙන් එක් ඇසක දෘෂ්ටි ස්නායුව ඉදිමී ප්‍රදාහයට පත් වේ.",
         line2: "එම ඇසේ පෙනීම අඳුරු හා අළු පැහැ වී, වර්ණ – විශේෂයෙන් රතු – මැලවී පෙනේ.",
-        field: "වම් ඇසේ මැද පමණක් අළු පැහැති ලපයක්."
+        field: "වම් ඇසේ පමණක්: බොඳ හා අඳුරු පෙනීම, මැද අළු පැහැති පැල්ලමක්, මැලවුණු වර්ණ."
       },
       pOpticNerve: { name: "වම් දෘෂ්ටි ස්නායු හානිය", field: "වම් ඇස සම්පූර්ණයෙන්ම අන්ධ වේ." },
       pChiasm: { name: "ද්විපාර්ශ්වික බාහිර අර්ධ අන්ධතාව", field: "ඇස් දෙකේම පිටත අර්ධ පෙනීම නැති වේ." },
