@@ -69,7 +69,7 @@ export const T = {
         name: "Glaucoma",
         line1: "High pressure in the eye slowly damages the optic nerve.",
         line2: "Side vision is lost first, often without any pain, until only a small centre is left.",
-        field: "The outer vision closes in, leaving a small centre."
+        field: "Blurry, patchy areas eat into the side vision, the nose side first."
       },
       neuritis: {
         name: "Optic neuritis",
@@ -150,7 +150,7 @@ export const T = {
         name: "கண் அழுத்த நோய் (குளுக்கோமா)",
         line1: "கண்ணில் உள்ள அதிக அழுத்தம் பார்வை நரம்பை மெதுவாகச் சேதப்படுத்துகிறது.",
         line2: "வலி இல்லாமல் பக்கப் பார்வை முதலில் குறைந்து, சிறிய மையம் மட்டும் மிஞ்சும்.",
-        field: "வெளிப் பார்வை சுருங்கி, சிறிய மையம் மட்டும் இருக்கும்."
+        field: "பக்கப் பார்வையில் மங்கலான திட்டுகள் தோன்றி, மூக்குப் பக்கம் முதலில் குறைகிறது."
       },
       neuritis: {
         name: "பார்வை நரம்பு அழற்சி",
@@ -231,7 +231,7 @@ export const T = {
         name: "ග්ලුකෝමාව",
         line1: "ඇසේ අධික පීඩනය දෘෂ්ටි ස්නායුවට සෙමින් හානි කරයි.",
         line2: "වේදනාවකින් තොරව පැති පෙනීම මුලින් නැති වී, කුඩා මැද කොටසක් පමණක් ඉතිරි වේ.",
-        field: "පිටත පෙනීම හැකිළී, කුඩා මැද කොටසක් පමණක් ඉතිරි වේ."
+        field: "පැති පෙනීමේ බොඳ පැල්ලම් ඇති වී, නාසය පැත්ත මුලින්ම නැති වේ."
       },
       neuritis: {
         name: "දෘෂ්ටි ස්නායු ප්‍රදාහය",

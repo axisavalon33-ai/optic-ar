@@ -231,6 +231,7 @@ uniform vec4 uTip;       // fingertip x, y (field coords), on, progress
 uniform float uK, uZoom, uIpd, uVert, uEye, uRound, uDiv, uTest;
 uniform vec2 uNose;
 uniform vec4 uFxA0, uFxB0, uFxA1, uFxB1; // A: blur, contrast, tint, glare   B: desat, redDesat, dim, warp
+uniform vec2 uMaskBlur;                    // extra blur inside the dark (affected) areas, per eye
 
 vec3 cam(vec2 c) {
   // c: camera coords, -1..1 covers the camera's height (centre square crop)
@@ -295,16 +296,21 @@ void main() {
   float warp = B.w * (1.0 - smoothstep(0.16, 0.36, length(m)));
   vec2 cc = (m + warp * 0.022 * vec2(sin(m.y * 46.0), sin(m.x * 46.0 + 1.3))) / uZoom;
 
+  // defect mask (looked up first: affected areas are also blurred)
+  vec2 mu = clamp(m / uMaskExtent * 0.5 + 0.5, 0.0, 1.0);
+  float dark = texture2D(uMask, vec2((eye + mu.x) * 0.5, mu.y)).a;
+  float blurR = A.x + (eye < 0.5 ? uMaskBlur.x : uMaskBlur.y) * dark;
+
   vec3 col;
   if (uTest > 0.5 || uHasCam < 0.5) {
     col = testPattern(m);
   } else {
     col = cam(cc);
-    if (A.x > 0.0001) {               // blur
+    if (blurR > 0.0001) {             // blur
       vec3 s = col;
       for (int i = 0; i < 12; i++) {
         float a = float(i) * 2.39996;
-        float rr = A.x * sqrt((float(i) + 0.5) / 12.0);
+        float rr = blurR * sqrt((float(i) + 0.5) / 12.0);
         s += cam(cc + rr * vec2(cos(a), sin(a)));
       }
       col = s / 13.0;
@@ -334,8 +340,6 @@ void main() {
   col *= 1.0 - B.z;
 
   // defect mask (dark grey to black)
-  vec2 mu = clamp(m / uMaskExtent * 0.5 + 0.5, 0.0, 1.0);
-  float dark = texture2D(uMask, vec2((eye + mu.x) * 0.5, mu.y)).a;
   col = mix(col, vec3(0.02), dark);
 
   // floating 3D model (rendered separately for each eye, premultiplied alpha)
@@ -407,7 +411,8 @@ async function initRenderer() {
     uOvL: rtL.texture, uOvR: rtR.texture, uOvExtent: OV_EXTENT, uOvAlpha: 0,
     uRet: new THREE.Vector4(), uTip: new THREE.Vector4(),
     uK: 0, uZoom: 1, uIpd: 0.5, uVert: 0, uEye: 0.9, uRound: 1, uDiv: 0, uTest: 0, uNose: new THREE.Vector2(),
-    uFxA0: new THREE.Vector4(), uFxB0: new THREE.Vector4(), uFxA1: new THREE.Vector4(), uFxB1: new THREE.Vector4()
+    uFxA0: new THREE.Vector4(), uFxB0: new THREE.Vector4(), uFxA1: new THREE.Vector4(), uFxB1: new THREE.Vector4(),
+    uMaskBlur: new THREE.Vector2()
   })) u[k] = { value: v };
   U = u;
   composite = new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: FRAG, uniforms: u, depthTest: false, depthWrite: false });
@@ -479,6 +484,7 @@ function updateMask(t) {
 function setFx(eyeIdx, fx) {
   U["uFxA" + eyeIdx].value.set(fx.blur, fx.contrast, fx.tint, fx.glare);
   U["uFxB" + eyeIdx].value.set(fx.desat, fx.redDesat, fx.dim, fx.warp);
+  if (eyeIdx === 0) U.uMaskBlur.value.x = fx.maskBlur || 0; else U.uMaskBlur.value.y = fx.maskBlur || 0;
 }
 
 let hintText = "";

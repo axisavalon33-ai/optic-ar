@@ -32,7 +32,7 @@ export function envelope(t) {
   return smooth(0, F, t) * smooth(T, T - F, t);
 }
 
-const NO_FILTER = { blur: 0, contrast: 0, tint: 0, glare: 0, desat: 0, redDesat: 0, dim: 0, warp: 0 };
+const NO_FILTER = { blur: 0, contrast: 0, tint: 0, glare: 0, desat: 0, redDesat: 0, dim: 0, warp: 0, maskBlur: 0 };
 
 export const CONDITIONS = {
   // ---------------- Eye disorders ----------------
@@ -41,16 +41,26 @@ export const CONDITIONS = {
     filters: { both: { blur: 0.011, contrast: 0.40, tint: 0.60, glare: 0.9, dim: 0.06 } }
   },
   glaucoma: {
+    // Based on how patients describe it (and the US National Eye Institute simulation):
+    // smudged, blurry, irregular patches – not a black tunnel. Loss starts in arcs above and
+    // below the centre and on the NOSE side (nasal step), then creeps inward; the centre
+    // stays clear until late. The two eyes are affected a little differently.
     field: (eye, t) => {
-      const p = clamp01(t / (TIMING.effectTotal - 4));       // 0 -> 1 over ~16 s
-      const arcs = smooth(0.0, 0.35, p) * 0.92;               // arcs first
-      const rIn = lerp(1.25, 0.25, smooth(0.3, 0.95, p));     // then periphery closes
+      const p = clamp01(t / (TIMING.effectTotal - 4));        // 0 -> 1 over ~16 s
+      const nasal = eye === "L" ? 1 : -1;                      // nose side: right of the left eye's view, left of the right eye's
+      const q = smooth(0.15, 0.95, p);
+      const early = smooth(0.0, 0.4, p);
       return [
-        { kind: "dark", type: "arcs", r: 0.56, w: 0.17, span: 120, a: arcs },
-        { kind: "dark", type: "periphery", rIn, soft: 0.2, a: 1 }
+        // patchy arcuate scotomas above (stronger) and below the centre, on the nose side first
+        { kind: "dark", type: "puffs", a: 0.8 * early, nasal, seed: eye === "L" ? 1 : 2, spread: lerp(0.4, 1, early) },
+        // the irregular clear island that shrinks
+        { kind: "dark", type: "island", a: 0.9, nasal, seed: eye === "L" ? 3 : 7,
+          r: lerp(1.7, eye === "L" ? 0.5 : 0.6, q),
+          cx: -nasal * 0.12 * q, cy: -0.07 * q, soft: 0.42 }
       ];
     },
-    filters: {}
+    // affected areas are also blurred ("smudged"), plus a little overall dimming
+    filters: { both: { maskBlur: 0.05, dim: 0.07, contrast: 0.1 } }
   },
   amd: {
     field: () => [
@@ -162,6 +172,46 @@ function drawShape(c, sh, rgb, a, E) {
       const g = c.createRadialGradient(0, 0, 0, 0, 0, r1);
       g.addColorStop(0, rgba(rgb, a)); g.addColorStop(r0 / r1, rgba(rgb, a)); g.addColorStop(1, rgba(rgb, 0));
       c.fillStyle = g; c.fillRect(-r1, -r1, 2 * r1, 2 * r1);
+      break;
+    }
+    case "island": { // dark everywhere except an irregular clear island with very soft, smudgy edges
+      c.fillStyle = rgba(rgb, a); big();
+      c.globalCompositeOperation = "destination-out";
+      const N = 16, keep = 0.02, b = 1 - Math.pow(keep, 1 / N);
+      const ph = sh.seed * 1.7;
+      const nasalAngle = sh.nasal > 0 ? 0 : Math.PI;
+      c.fillStyle = `rgba(0,0,0,${b})`;
+      for (let i = 0; i < N; i++) {
+        const k = 1 + sh.soft * (1 - 2 * i / (N - 1));             // outer, faint … inner, fully clear
+        c.beginPath();
+        for (let j = 0; j <= 72; j++) {
+          const th = j / 72 * Math.PI * 2;
+          let rr = sh.r * (1 + 0.16 * Math.sin(2 * th + ph) + 0.11 * Math.sin(3 * th + ph * 2.3) + 0.07 * Math.sin(5 * th + ph * 0.7));
+          rr *= 1 - 0.28 * Math.max(0, Math.cos(th - nasalAngle));  // nose side lost first (nasal step)
+          rr *= 1 - 0.16 * Math.max(0, Math.sin(th));               // upper field a little worse
+          const x = sh.cx + rr * k * Math.cos(th), y = sh.cy + rr * k * Math.sin(th);
+          j ? c.lineTo(x, y) : c.moveTo(x, y);
+        }
+        c.closePath(); c.fill();
+      }
+      c.globalCompositeOperation = "source-over";
+      break;
+    }
+    case "puffs": { // soft smudges along the arcs above and below fixation (Bjerrum area)
+      if (a <= 0.001) break;
+      let seed = sh.seed * 97;
+      const rnd = () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
+      for (let i = 0; i < 14; i++) {
+        const upper = i < 9;                                      // the upper arc is usually worse
+        const ang = (upper ? 1 : -1) * (0.35 + rnd() * 1.1) * sh.spread;   // radians from horizontal, nose side
+        const th = sh.nasal > 0 ? ang : Math.PI - ang;
+        const rr = 0.42 + rnd() * 0.32;
+        const x = rr * Math.cos(th), y = rr * Math.sin(th), pr = 0.09 + rnd() * 0.11;
+        const g = c.createRadialGradient(x, y, 0, x, y, pr);
+        const pa = a * (0.55 + rnd() * 0.45) * (upper ? 1 : 0.75);
+        g.addColorStop(0, rgba(rgb, pa)); g.addColorStop(0.5, rgba(rgb, pa * 0.6)); g.addColorStop(1, rgba(rgb, 0));
+        c.fillStyle = g; c.fillRect(x - pr, y - pr, 2 * pr, 2 * pr);
+      }
       break;
     }
     case "blob": { // irregular, soft-edged blotch: many stacked faint copies
