@@ -228,6 +228,36 @@ The pathway part uses only the picture `images/pathway-still.jpg` plus `audio/pa
 
 ---
 
+## Android app for the headset phone (better camera)
+
+Instead of opening `viewer.html` in Chrome, the headset phone can run a real Android app.
+It does the same job (same tablet, same Firebase, same calibration) but uses Android's own camera system:
+
+- up to **1920×1080 at 60 frames per second** (or **4K** at 30), with continuous autofocus and exposure
+- less delay between moving your head and the picture moving
+- no browser: no address bar, no "tap for full screen", and the videos and pictures are built into the app
+
+**Install it (one time per phone)**
+
+1. On the Android phone, open this link in Chrome:
+   **https://github.com/axisavalon33-ai/optic-ar/releases/download/headset-app/EyeExhibitHeadset.apk**
+   (it is also on the start page of the site).
+2. Open the downloaded file. Android asks to allow installing apps from Chrome → **Settings → Allow**, then go back and tap **Install**.
+   If "Play Protect" warns about an unknown app, tap **More details → Install anyway**.
+3. Open **Eye Exhibit Headset**, type the **station number** (the same as the tablet), tap **Start** and allow the camera.
+4. Put the phone in the VR box. The tablet shows the green dot as usual.
+
+On the start screen you can also choose the camera quality, and turn the camera picture if it ever shows the wrong way up.
+To get back to the start screen, press the phone's Back button.
+
+**Updates:** every time files change on GitHub, GitHub builds a new app by itself (about 5–10 minutes; see the
+**Actions** tab). Install it from the same link; it replaces the old one and keeps the settings.
+The videos, pictures and narration are built into the app, so after changing media wait for the new build and reinstall.
+
+The app's code is in the `android/` folder; `tools/export-android.mjs` copies the settings, words and media into it.
+
+---
+
 ## Troubleshooting
 
 | Problem | What to do |
