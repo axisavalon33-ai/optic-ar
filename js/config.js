@@ -38,8 +38,7 @@ export const DB = {
   command: `exhibit/stations/${STATION}/command`,     // {condition, language, timestamp}
   presence: `exhibit/stations/${STATION}/presence`,   // phone heartbeat
   calibLive: `exhibit/stations/${STATION}/calibration`, // this station's headset settings
-  explore: `exhibit/stations/${STATION}/explore`,     // headset -> tablet: what the visitor looks at / selects
-  mirror: `exhibit/stations/${STATION}/mirror`,       // tablet -> headset: what the tablet is showing (video / picture / touched part)
+  show: `exhibit/stations/${STATION}/show`,           // tablet -> phone: what both devices show now (screen, language, start time, selected part, effect)
   hotspots: "exhibit/hotspots",                       // shared by all stations
   calibProfiles: "exhibit/calibration/profiles"       // shared, so any station can load them
 };
@@ -47,6 +46,9 @@ export const DB = {
 // Timings (seconds)
 export const TIMING = {
   effectTotal: 20,     // AR effect length; also the controller countdown
+  loading: 2,          // "Loading…" on the phone before the AR effect starts
+  startDelay: 2,       // the intro video starts this many seconds after the language is chosen (so both devices start together)
+  maxDrift: 0.3,       // a device more than this many seconds out of step is corrected
   nameShow: 2,         // condition name shown in the headset
   fade: 1.5,           // fade in / fade out
   lesionShow: 2,       // red lesion on the pathway before sending
@@ -55,6 +57,10 @@ export const TIMING = {
   videoVolume: 0.6,    // video's own soundtrack
   narrationVolume: 1.0
 };
+
+// Intro video choice: if a video made for the chosen language exists (videos/eye-intro-ta.mp4 …) it is used
+// with its own sound. Set to false to always use videos/eye-intro.mp4 plus the narration file.
+export const USE_LANGUAGE_VIDEOS = true;
 
 // Which language is already spoken inside the videos' own soundtrack.
 //   "en"  -> English visitors hear the video's own sound at full volume (no extra file);
@@ -74,7 +80,8 @@ export const MEDIA = {
   eyeStill: "images/eye-still.jpg",
   pathVideo: "videos/pathway.mp4",
   pathNarration: "audio/pathway-{lang}.mp3",
-  pathStill: "images/pathway-still.jpg"
+  pathStill: "images/pathway-still.jpg",
+  homeVideo: "videos/home.mp4"             // shown on the phone while the tablet is on the language screen
 };
 
 // Hotspot defaults: x, y = centre as % of image width / height,
@@ -110,25 +117,9 @@ export const DEFAULT_CALIBRATION = {
   noseHeight: 0.22,  // nose cutout height, fraction of H
   divider: 0.006,    // black centre divider width, fraction of W
   testPattern: false,
-  // ---- 3D selection inside the headset ----
-  selection: "tablet",   // "tablet" = tap hotspots on the tablet (original) | "headset" = 3D eye in the headset
-  selectMethod: "gaze",  // "gaze" = look and hold | "hand" = hand touch | "both"
-  holdTime: 2,           // seconds to look at a part before it is selected
-  modelDistance: 1.0,    // metres in front of the visitor
-  modelSize: 1.0,        // 1 = normal size
-  cameraFov: 42,         // phone camera's vertical field of view in degrees (makes the 3D model sit still in the view)
-  mirrorScreen: "on"     // "on" = the headset also shows the tablet's videos / pictures and what was touched
+  screenSize: 1.6,       // width of the picture / video in each eye in screen mode (2 = full eye circle)
+  soundFrom: "both"      // "both" | "phone" | "tablet": which device plays the sound
 };
-
-// Hand-touch selection time (seconds) and the 3D view's eye separation (metres).
-export const HAND_HOLD_TIME = 1.0;
-export const STEREO_IPD = 0.064;
-
-// Optional 3D models. If these files exist they are used instead of the built-in shapes.
-// Name the selectable parts in your 3D program so the names contain:
-//   eye.glb:     lens, retina (or macula), disc, nerve
-//   pathway.glb: nerve, chiasm, temporal, tract, meyer, parietal, occipital
-export const MODELS = { eye: "models/eye.glb", pathway: "models/pathway.glb" };
 
 // Slider ranges for calibration mode.
 export const CALIBRATION_SLIDERS = [
@@ -141,8 +132,5 @@ export const CALIBRATION_SLIDERS = [
   { key: "noseWidth",  min: 0,    max: 0.4,  step: 0.002 },
   { key: "noseHeight", min: 0,    max: 0.6,  step: 0.002 },
   { key: "divider",    min: 0,    max: 0.06, step: 0.001 },
-  { key: "holdTime",      min: 1,   max: 3,   step: 0.1,  section: "3d" },
-  { key: "modelDistance", min: 0.5, max: 2,   step: 0.05, section: "3d" },
-  { key: "modelSize",     min: 0.5, max: 2,   step: 0.05, section: "3d" },
-  { key: "cameraFov",     min: 25,  max: 75,  step: 1,    section: "3d" }
+  { key: "screenSize", min: 0.8,  max: 2.2,  step: 0.01 }
 ];

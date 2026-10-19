@@ -1,10 +1,14 @@
 // =====================================================================
 //  CONTROLLER (tablet)
+//  The operator controls everything from here. Every change of screen is
+//  also written to Firebase (DB.show), so the headset phone shows the same
+//  thing in "screen mode", or runs the AR effect.
 // =====================================================================
-import { DB, STATION, TIMING, MEDIA, VIDEO_BUILT_IN_LANGUAGE, DEFAULT_HOTSPOTS, DEFAULT_CALIBRATION, CALIBRATION_SLIDERS } from "./config.js";
+import { DB, STATION, TIMING, MEDIA, DEFAULT_HOTSPOTS, DEFAULT_CALIBRATION, CALIBRATION_SLIDERS } from "./config.js";
 import { LANGUAGES, T, ADMIN, tr } from "./translations.js";
-import { paintField, PATHWAY_DEFECTS, ALL_CONDITIONS } from "./defects.js";
+import { paintField, PATHWAY_DEFECTS } from "./defects.js";
 import { keepFullscreen } from "./fullscreen.js";
+import { Synced, introMedia, pathwayNarration } from "./sync.js";
 
 const $ = id => document.getElementById(id);
 const app = $("app");
@@ -12,7 +16,7 @@ const app = $("app");
 // ---------------------------------------------------------------- state
 const S = {
   lang: "en",
-  screen: "lang",        // lang | eyeVideo | eyeStill | pathVideo | pathStill | headset | credits
+  screen: "lang",        // lang | intro | eyeStill | pathStill | credits
   prevScreen: "lang",
   modal: null,           // null | card | choice
   cardCondition: null,
@@ -21,10 +25,11 @@ const S = {
   hotspots: JSON.parse(JSON.stringify(DEFAULT_HOTSPOTS)),
   calib: { ...DEFAULT_CALIBRATION },
   fbOk: false, online: false, viewerSeen: 0,
-  explore: null,         // what the visitor is doing inside the headset (3D selection)
-  touch: { highlight: null, lesion: null, caption: null }   // what was touched – mirrored in the headset
+  base: { screen: "lang" },   // what both devices show (without a selected part)
+  muteVideo: false
 };
 let fb = null; // Firebase helpers once loaded
+const serverNow = () => fb ? fb.serverNow() : Date.now();
 
 // ---------------------------------------------------------------- Firebase
 (async () => {
@@ -45,10 +50,10 @@ let fb = null; // Firebase helpers once loaded
     });
     fb.onValue(fb.ref(fb.db, DB.calibLive), s => {
       const v = s.val();
-      if (v && !calibDirty) { S.calib = { ...DEFAULT_CALIBRATION, ...v }; syncSliders(); }
+      if (v && !calibDirty) { S.calib = { ...DEFAULT_CALIBRATION, ...v }; syncSliders(); applySound(); }
     });
     fb.onValue(fb.ref(fb.db, DB.calibProfiles), s => fillProfiles(s.val() || {}));
-    fb.onValue(fb.ref(fb.db, DB.explore), s => { S.explore = s.val(); updateMirror(); });
+    pushShow(S.base);   // the phone follows whatever the tablet shows now
   } catch (e) {
     console.error("Firebase failed to load", e);
     toast("Firebase could not load – check the internet connection");
@@ -65,32 +70,49 @@ function updateStatus() {
   $("statusTxt").textContent = `#${STATION} · ` + tr(S.lang, on ? "headsetOnline" : "headsetOffline");
 }
 
+// Tells the phone what to show. state.screen: lang | intro | eyeStill | pathStill | effect
+function pushShow(state) {
+  if (!fb) return;
+  const clean = {};
+  for (const [k, v] of Object.entries({ language: S.lang, ...state })) if (v !== undefined && v !== null) clean[k] = v;
+  fb.set(fb.ref(fb.db, DB.show), clean).catch(e => toast("Could not send: " + e.message));
+}
+
 // ---------------------------------------------------------------- audio
-// Web Audio is used for volume so that 60 % also works on iPads.
+// Web Audio is used for volume so that it also works on iPads.
 const video = $("video"), still = $("still"), stage = $("stage");
 const narration = new Audio();
-narration.preload = "auto";
+const introSync = new Synced(video, serverNow);
+const narrSync = new Synced(narration, serverNow);
+setInterval(() => { introSync.tick(); narrSync.tick(); checkIntroEnd(); }, 250);
 let actx = null, videoGain = null, narrGain = null;
 function initAudio() {
   if (actx) { if (actx.state === "suspended") actx.resume(); return; }
   try {
     actx = new (window.AudioContext || window.webkitAudioContext)();
-    videoGain = actx.createGain(); videoGain.gain.value = TIMING.videoVolume;
+    videoGain = actx.createGain();
     narrGain = actx.createGain(); narrGain.gain.value = TIMING.narrationVolume;
     actx.createMediaElementSource(video).connect(videoGain).connect(actx.destination);
     actx.createMediaElementSource(narration).connect(narrGain).connect(actx.destination);
   } catch (e) {
     console.warn("Web Audio not available, using element volume", e);
-    actx = null; video.volume = TIMING.videoVolume; narration.volume = TIMING.narrationVolume;
+    actx = null; narration.volume = TIMING.narrationVolume;
   }
+  applySound();
 }
-function setVideoVolume(v) {
+// "Sound from" setting: the tablet is silent when it is set to "Phone only".
+function applySound() {
+  const tabletSound = S.calib.soundFrom !== "phone";
+  const v = tabletSound && !S.muteVideo ? 1 : 0;
   video.muted = v === 0;
   if (videoGain) videoGain.gain.value = v; else video.volume = v;
+  narration.muted = !tabletSound;
 }
+// Browsers only allow sound after a tap: start each element inside the tap (the sync pauses it again until startAt).
+function unlock(el) { const p = el.play(); if (p) p.catch(() => {}); }
 function stopMedia() {
-  video.pause(); narration.pause();
-  video.onended = video.onerror = null;
+  introSync.stop(); narrSync.stop();
+  video.onerror = null;
 }
 
 // ---------------------------------------------------------------- language & text
@@ -133,10 +155,9 @@ function setHomeVideo(on) {
 }
 
 function setScreen(name) {
-  if (name !== S.screen) { S.touch = { highlight: null, lesion: null, caption: null }; if (!/Video$/.test(name)) mirrorVideo = { src: null, startedAt: null }; }
   S.screen = name;
   setHomeVideo(name === "lang");
-  const section = name === "lang" ? "langScreen" : name === "credits" ? "creditsScreen" : name === "headset" ? "headsetScreen" : "stageScreen";
+  const section = name === "lang" ? "langScreen" : name === "credits" ? "creditsScreen" : "stageScreen";
   for (const s of document.querySelectorAll(".screen")) s.classList.toggle("active", s.id === section);
   app.classList.toggle("lang-screen", name === "lang");
   const stillShown = name === "eyeStill" || name === "pathStill";
@@ -144,61 +165,35 @@ function setScreen(name) {
   renderHotspots();
   resetIdle();
   showHint();
-  pushMirror();
 }
 
-function chooseLanguage(code) {
+// Language chosen: both devices start the intro video together, 2 seconds from now.
+let introMediaCache = {};
+for (const l of LANGUAGES) introMedia(l.code).then(m => { introMediaCache[l.code] = m; });
+async function chooseLanguage(code) {
+  if (S.locked) return;
   S.lang = code;
   applyText();
   initAudio();
-  playIntro("eye");
-}
-
-// Plays the video + narration, then shows the matching still image in the same box.
-function playIntro(kind) {
-  stopMedia();
-  closeModal();
-  clearLesions();
-  const isEye = kind === "eye";
-  const langSrc = (isEye ? MEDIA.eyeVideoLang : MEDIA.pathVideoLang).replace("{lang}", S.lang);
-  const sharedSrc = isEye ? MEDIA.eyeVideo : MEDIA.pathVideo;
-  const aSrc = (isEye ? MEDIA.eyeNarration : MEDIA.pathNarration).replace("{lang}", S.lang);
-  const videoScreen = isEye ? "eyeVideo" : "pathVideo";
-  setStill(isEye ? MEDIA.eyeStill : MEDIA.pathStill);
+  stopMedia(); closeModal(); clearLesions();
+  const m = introMediaCache[code] || await introMedia(code);
+  const startAt = serverNow() + TIMING.startDelay * 1000;
+  S.muteVideo = m.muteVideo; applySound();
+  setStill(MEDIA.eyeStill);
   still.classList.remove("shown");
   video.classList.remove("hidden");
-  setScreen(videoScreen);
-
-  const finish = () => {
-    if (S.screen !== videoScreen) return;
-    narration.pause();
-    if (isEye && headsetSelection()) { startHeadsetSelection(); return; }
-    still.classList.add("shown");
-    video.classList.add("hidden");
-    setScreen(isEye ? "eyeStill" : "pathStill");
-  };
-  video.onended = finish;
-
-  // 1) the video made for this language, with its own sound
-  setVideoVolume(1);
-  video.onerror = () => {
-    if (S.screen !== videoScreen) return;
-    console.warn("No language video, using shared video:", langSrc);
-    // 2) shared video + separate narration file
-    video.onerror = () => { toast(tr(S.lang, "videoMissing")); finish(); };
-    video.src = sharedSrc;
-    video.play().catch(e => console.warn(e));
-    if (VIDEO_BUILT_IN_LANGUAGE && S.lang === VIDEO_BUILT_IN_LANGUAGE) {
-      setVideoVolume(1);                       // the video already speaks this language
-    } else {
-      setVideoVolume(VIDEO_BUILT_IN_LANGUAGE ? 0 : TIMING.videoVolume); // mute the built-in voice
-      narration.src = aSrc;
-      narration.onerror = () => console.warn("Narration missing:", aSrc);
-      narration.play().catch(() => {});
-    }
-  };
-  video.src = langSrc;
-  video.play().catch(e => console.warn(e));
+  setScreen("intro");
+  introSync.play(m.src, startAt); unlock(video);
+  if (m.narr) { narrSync.play(m.narr, startAt); unlock(narration); }
+  introSync.tick(); narrSync.tick();
+  video.onerror = () => { if (S.screen === "intro") { toast(tr(S.lang, "videoMissing")); showStillOnly("eye"); } };
+  S.base = { screen: "intro", startAt, src: m.src, narr: m.narr, muteVideo: m.muteVideo };
+  pushShow(S.base);
+  if (!viewerConnected()) toast(tr(S.lang, "headsetOffline"));
+}
+// When the intro video ends, both devices show the eye picture.
+function checkIntroEnd() {
+  if (S.screen === "intro" && (introSync.ended() || video.ended)) showStillOnly("eye");
 }
 
 function setStill(src) {
@@ -209,28 +204,44 @@ function setStill(src) {
   }
 }
 
+// Shows a still picture on both devices. narr = narration that plays with it (pathway).
+function showStillOnly(kind, narr = null) {
+  stopMedia(); closeModal(true); clearLesions();
+  const src = kind === "eye" ? MEDIA.eyeStill : MEDIA.pathStill;
+  setStill(src);
+  still.classList.add("shown");
+  video.classList.add("hidden");
+  const screen = kind === "eye" ? "eyeStill" : "pathStill";
+  setScreen(screen);
+  S.base = { screen, still: src };
+  if (narr) {
+    const startAt = serverNow() + TIMING.startDelay * 1000;
+    narrSync.play(narr, startAt); unlock(narration); narrSync.tick();
+    Object.assign(S.base, { narr, startAt });
+  }
+  pushShow(S.base);
+}
+// "Visual field defects": pathway picture + its narration, in step on both devices.
+function showPathway() {
+  initAudio();
+  showStillOnly("pathway", pathwayNarration(S.lang));
+}
+
 function goBack() {
   if (S.locked) return;
   if (S.modal) { closeModal(); return; }
   switch (S.screen) {
     case "credits": setScreen(S.prevScreen === "credits" ? "lang" : S.prevScreen); break;
-    case "eyeVideo": case "eyeStill": case "headset": goHome(); break;
-    case "pathVideo": case "pathStill": showStillOnly("eye"); break;
+    case "intro": case "eyeStill": goHome(); break;
+    case "pathStill": showStillOnly("eye"); break;
   }
 }
 function goHome() {
   if (S.locked) return;
-  if (S.screen === "headset") sendCommand({ mode: "idle" });   // headset goes back to "Please wait"
-  stopMedia(); closeModal(); clearLesions();
-  stopMirrorDiagram();
+  stopMedia(); closeModal(true); clearLesions();
   setScreen("lang");
-}
-function showStillOnly(kind) {
-  stopMedia(); closeModal(); clearLesions();
-  setStill(kind === "eye" ? MEDIA.eyeStill : MEDIA.pathStill);
-  still.classList.add("shown");
-  video.classList.add("hidden");
-  setScreen(kind === "eye" ? "eyeStill" : "pathStill");
+  S.base = { screen: "lang" };
+  pushShow(S.base);
 }
 
 // ---------------------------------------------------------------- hotspots
@@ -257,24 +268,23 @@ function renderHotspots() {
   }
 }
 
+let highlight = null;
 function hotspotTapped(kind, id) {
   if (S.locked || S.modal) return;
   hideHand();
+  highlight = id;
   if (kind === "eye") {
-    S.touch.highlight = id;
     if (id === "lens") openCard("cataract");
     else if (id === "retina") openCard("amd");
     else if (id === "opticDisc") openCard("glaucoma");
     else if (id === "opticNerve") openChoice();
   } else if (PATHWAY_DEFECTS.includes(id)) {
-    // red lesion for 2 s, then send automatically
-    S.locked = true; app.classList.add("locked");
+    // red lesion on the tablet, glowing part + name on the phone, then the operator taps "Show in VR"
     const h = S.hotspots.pathway[id];
     const l = document.createElement("div");
     l.className = "lesion"; l.style.left = h.x + "%"; l.style.top = h.y + "%";
     $("lesions").appendChild(l);
-    setTouch(id, { title: tr(S.lang, `hotspots.${id}`), line: tr(S.lang, `conditions.${id}.name`) }, id);
-    setTimeout(() => sendCondition(id), TIMING.lesionShow * 1000);
+    openCard(id);
   }
 }
 function clearLesions() { $("lesions").innerHTML = ""; }
@@ -282,39 +292,48 @@ function clearLesions() { $("lesions").innerHTML = ""; }
 // ---------------------------------------------------------------- cards
 function openCard(cond) {
   S.cardCondition = cond;
+  const pathway = PATHWAY_DEFECTS.includes(cond);
   $("cardTitle").textContent = tr(S.lang, `conditions.${cond}.name`);
-  $("cardLine1").textContent = tr(S.lang, `conditions.${cond}.line1`);
-  $("cardLine2").textContent = tr(S.lang, `conditions.${cond}.line2`);
+  $("cardLine1").textContent = pathway ? tr(S.lang, `hotspots.${cond}`) : tr(S.lang, `conditions.${cond}.line1`);
+  $("cardLine2").textContent = pathway ? tr(S.lang, `conditions.${cond}.field`) : tr(S.lang, `conditions.${cond}.line2`);
   $("choice").classList.remove("open");
   $("card").classList.add("open");
   S.modal = "card";
-  setTouch(S.touch.highlight || (cond === "neuritis" ? "opticNerve" : null),
-    { title: tr(S.lang, `conditions.${cond}.name`), line: tr(S.lang, `conditions.${cond}.line1`) });
+  const part = highlight || (cond === "neuritis" ? "opticNerve" : null);
+  pushShow({ ...S.base, highlight: part, title: tr(S.lang, `conditions.${cond}.name`),
+    subtitle: part ? tr(S.lang, `hotspots.${part}`) : null });
 }
 function openChoice() {
   $("choice").classList.add("open");
   S.modal = "choice";
-  setTouch("opticNerve", { title: tr(S.lang, "opticNerveChoose"), line: `${tr(S.lang, "opticNeuritisBtn")}  ·  ${tr(S.lang, "visualFieldBtn")}` });
+  pushShow({ ...S.base, highlight: "opticNerve", title: tr(S.lang, "hotspots.opticNerve"),
+    subtitle: `${tr(S.lang, "opticNeuritisBtn")}  ·  ${tr(S.lang, "visualFieldBtn")}` });
 }
-function closeModal() {
+// quiet = the caller sends its own new screen to the phone
+function closeModal(quiet = false) {
   const had = S.modal;
   $("card").classList.remove("open");
   $("choice").classList.remove("open");
   S.modal = null;
+  highlight = null;
+  if (currentKind() === "pathway") clearLesions();
   resetIdle();
-  if (had && S.touch.highlight) setTouch();
+  if (had && !quiet) pushShow(S.base);
 }
 
-// ---------------------------------------------------------------- sending + countdown
+// ---------------------------------------------------------------- Show in VR + countdown
+// Phone: "Loading…" for 2 s while it switches to the camera, then the AR effect for 20 s.
+// Tablet: visual field diagram + countdown, buttons locked.
 let cdTimer = null, cdRaf = 0;
 function sendCondition(cond) {
-  const kindBefore = currentKind();
+  if (S.locked) return;
   S.locked = true; app.classList.add("locked");
   hideHand();
-  if (fb) {
-    fb.set(fb.ref(fb.db, DB.command), { condition: cond, language: S.lang, timestamp: fb.serverTimestamp() })
-      .catch(e => toast("Could not send: " + e.message));
-  }
+  narrSync.stop();
+  const startAt = serverNow() + TIMING.loading * 1000;
+  const back = { ...S.base };
+  delete back.narr; delete back.startAt;        // do not replay the narration afterwards
+  pushShow({ screen: "effect", condition: cond, startAt, returnTo: back });
   if (!viewerConnected()) toast(tr(S.lang, "headsetOffline"));
 
   // diagram panel
@@ -324,12 +343,13 @@ function sendCondition(cond) {
   app.classList.add("diagram");
   $("card").classList.remove("open"); $("choice").classList.remove("open");
 
-  const t0 = performance.now();
   const total = TIMING.effectTotal;
   const frame = () => {
-    const t = (performance.now() - t0) / 1000;
-    drawDiagram(cond, Math.min(t, total));
-    const left = Math.max(0, total - t);
+    const t = (serverNow() - startAt) / 1000;
+    const loading = t < 0;
+    $("lookText").textContent = tr(S.lang, loading ? "loading" : "lookInHeadset");
+    drawDiagram(cond, Math.max(0, Math.min(t, total)));
+    const left = Math.max(0, Math.min(total, total - t));
     $("cdNum").textContent = Math.ceil(left);
     $("cdBar").style.strokeDashoffset = (276.5 * (1 - left / total)).toFixed(1);
     if (t < total) cdRaf = requestAnimationFrame(frame);
@@ -342,13 +362,12 @@ function sendCondition(cond) {
     cancelAnimationFrame(cdRaf);
     app.classList.remove("diagram", "locked");
     S.locked = false;
-    clearLesions();
     S.modal = null;
-    S.touch = { highlight: null, lesion: null, caption: null };
-    pushMirror();
-    // back to the screen the visitor was on (the still image)
-    if (kindBefore) setScreen(kindBefore === "eye" ? "eyeStill" : "pathStill");
-  }, total * 1000);
+    closeModal(true);
+    clearLesions();
+    S.base = back;
+    pushShow(back);                              // the phone goes back to the same picture
+  }, (TIMING.loading + total) * 1000);
 }
 
 // Two patient-view visual field circles drawn from the shared defect data.
@@ -388,109 +407,6 @@ function drawDiagram(cond, t, cv = $("fieldCanvas")) {
     c.textAlign = "center"; c.textBaseline = "top";
     c.fillText(tr(S.lang, eye === "L" ? "leftEye" : "rightEye"), cx, cy + R + fontPx * 0.5);
   });
-}
-
-// ---------------------------------------------------------------- MIRROR: the headset shows what the tablet shows
-let mirrorVideo = { src: null, startedAt: null };
-function setTouch(highlight = null, caption = null, lesion = null) {
-  S.touch = { highlight, caption, lesion };
-  pushMirror();
-}
-function pushMirror() {
-  if (!fb) return;
-  const scr = S.screen;
-  const m = { screen: scr, lang: S.lang, ts: fb.serverTimestamp() };
-  if (scr === "eyeVideo" || scr === "pathVideo") Object.assign(m, mirrorVideo, { still: still.getAttribute("src") || null });
-  if (scr === "eyeStill" || scr === "pathStill") {
-    Object.assign(m, { still: still.getAttribute("src"), kind: scr === "eyeStill" ? "eye" : "pathway",
-      highlight: S.touch.highlight, lesion: S.touch.lesion, caption: S.touch.caption });
-  }
-  fb.set(fb.ref(fb.db, DB.mirror), m).catch(() => {});
-}
-// keep the headset's copy of the video in step with the tablet
-video.addEventListener("playing", () => {
-  if (!fb) return;
-  mirrorVideo = { src: (video.currentSrc || video.src).replace(location.origin, ""), startedAt: fb.serverNow() - video.currentTime * 1000 };
-  pushMirror();
-});
-
-// ---------------------------------------------------------------- HEADSET SELECTION (3D eye in the headset)
-function headsetSelection() { return S.calib.selection === "headset"; }
-function sendCommand(extra) {
-  if (!fb) { toast("Firebase not connected"); return; }
-  fb.set(fb.ref(fb.db, DB.command), { language: S.lang, ...extra, timestamp: fb.serverTimestamp() })
-    .catch(e => toast("Could not send: " + e.message));
-}
-function startHeadsetSelection() {
-  stopMedia();
-  video.classList.add("hidden");
-  S.explore = null;
-  setScreen("headset");
-  applyHeadsetText();
-  updateMirror();
-  sendCommand({ mode: "explore" });
-  if (!viewerConnected()) toast(tr(S.lang, "headsetOffline"));
-}
-function applyHeadsetText() {
-  const L = S.lang, m = S.calib.selectMethod;
-  $("hsTitle").textContent = tr(L, "putOnHeadset");
-  $("hsSub").textContent = tr(L, m === "hand" ? "fingerToSelect" : "lookToSelect");
-  $("hsLookLbl").textContent = tr(L, "lookingAt");
-  $("hsSelLbl").textContent = tr(L, "selectedLabel");
-  $("opToggle").textContent = ADMIN.operator;
-  $("opTitle").textContent = ADMIN.triggerTitle;
-  $("opRecentre").textContent = ADMIN.recentreBtn;
-  $("opEyeHome").textContent = ADMIN.eyeHomeBtn;
-  const box = $("opConds");
-  if (!box.childElementCount) {
-    for (const c of ALL_CONDITIONS) {
-      const b = document.createElement("button");
-      b.className = "glass pill admin"; b.dataset.cond = c;
-      b.onclick = () => sendCommand({ condition: c, source: "operator" });
-      box.appendChild(b);
-    }
-  }
-  for (const b of box.children) b.textContent = tr("en", `conditions.${b.dataset.cond}.name`);
-}
-// names the tablet shows for things the visitor looks at in the headset
-const MIRROR_KEY = { lens: "hotspots.lens", retina: "retinaMacula", opticDisc: "hotspots.opticDisc", opticNerve: "hotspots.opticNerve",
-  chNeuritis: "opticNeuritisBtn", chField: "visualFieldBtn", navBack: "back", navHome: "home" };
-function mirrorName(id) {
-  if (!id) return "—";
-  return tr(S.lang, MIRROR_KEY[id] || `hotspots.${id}`);
-}
-let mirrorRaf = 0, mirrorCond = null;
-function updateMirror() {
-  if (S.screen !== "headset") return;
-  const e = S.explore || {};
-  $("hsLook").textContent = mirrorName(e.looking);
-  const selName = e.condition ? tr(S.lang, `conditions.${e.condition}.name`) : mirrorName(e.selected);
-  $("hsSel").textContent = selName;
-  if (e.phase === "effect" && e.condition && e.effectStart) startMirrorDiagram(e.condition, e.effectStart);
-  else if (e.phase !== "effect") stopMirrorDiagram();
-}
-function startMirrorDiagram(cond, startMs) {
-  if (mirrorCond === cond + startMs) return;
-  mirrorCond = cond + startMs;
-  $("hsFieldName").textContent = tr(S.lang, `conditions.${cond}.name`);
-  $("hsFieldLine").textContent = tr(S.lang, `conditions.${cond}.field`);
-  $("headsetScreen").classList.add("effect");
-  const total = TIMING.effectTotal;
-  cancelAnimationFrame(mirrorRaf);
-  const frame = () => {
-    const t = Math.max(0, (fb.serverNow() - startMs) / 1000);
-    drawDiagram(cond, Math.min(t, total), $("hsCanvas"));
-    const left = Math.max(0, total - t);
-    $("hsCdNum").textContent = Math.ceil(left);
-    $("hsCdBar").style.strokeDashoffset = (276.5 * (1 - left / total)).toFixed(1);
-    if (t < total + 0.5) mirrorRaf = requestAnimationFrame(frame); else stopMirrorDiagram();
-  };
-  mirrorRaf = requestAnimationFrame(frame);
-}
-function stopMirrorDiagram() {
-  cancelAnimationFrame(mirrorRaf);
-  mirrorCond = null;
-  $("headsetScreen").classList.remove("effect");
 }
 
 // ---------------------------------------------------------------- idle hand + hint
@@ -614,39 +530,30 @@ function buildCalibration() {
   $("profileSave").textContent = ADMIN.saveProfile;
   $("profileLoad").textContent = ADMIN.loadProfile;
   for (const s of CALIBRATION_SLIDERS) {
-    const box = s.section === "3d" ? $("sliders3d") : $("sliders");
     const row = document.createElement("div");
     row.className = "slider-row";
     row.innerHTML = `<div class="top"><span>${ADMIN.sliders[s.key]}</span><b id="v_${s.key}"></b></div>
       <input type="range" id="s_${s.key}" min="${s.min}" max="${s.max}" step="${s.step}">`;
-    box.appendChild(row);
+    $("sliders").appendChild(row);
     row.querySelector("input").addEventListener("input", e => {
       S.calib[s.key] = parseFloat(e.target.value);
       $("v_" + s.key).textContent = fmt(s, S.calib[s.key]);
       pushCalib();
     });
   }
-  // 3D selection: Tablet / Headset and the selection method
-  const sel = $("sel3d");
-  sel.innerHTML = `<div class="cal-section">${ADMIN.section3d}</div>`;
-  const seg = (key, title, options) => {
-    const row = document.createElement("div");
-    row.className = "seg-row";
-    row.innerHTML = `<span>${title}</span><div class="seg"></div>`;
-    for (const [value, label] of options) {
-      const b = document.createElement("button");
-      b.className = "glass admin"; b.textContent = label; b.dataset.key = key; b.dataset.value = value;
-      b.onclick = () => { S.calib[key] = value; syncSliders(); pushCalib(); };
-      row.querySelector(".seg").appendChild(b);
-    }
-    sel.appendChild(row);
-  };
-  seg("selection", ADMIN.selectionTitle, [["tablet", ADMIN.selTablet], ["headset", ADMIN.selHeadset]]);
-  seg("selectMethod", ADMIN.methodTitle, [["gaze", ADMIN.mGaze], ["hand", ADMIN.mHand], ["both", ADMIN.mBoth]]);
-  seg("mirrorScreen", ADMIN.mirrorTitle, [["on", ADMIN.on], ["off", ADMIN.off]]);
+  // Sound from: Both / Phone only / Tablet only
+  const row = document.createElement("div");
+  row.className = "seg-row";
+  row.innerHTML = `<span>${ADMIN.soundTitle}</span><div class="seg"></div>`;
+  for (const [value, label] of [["both", ADMIN.sBoth], ["phone", ADMIN.sPhone], ["tablet", ADMIN.sTablet]]) {
+    const b = document.createElement("button");
+    b.className = "glass admin"; b.textContent = label; b.dataset.key = "soundFrom"; b.dataset.value = value;
+    b.onclick = () => { S.calib.soundFrom = value; syncSliders(); applySound(); pushCalib(); };
+    row.querySelector(".seg").appendChild(b);
+  }
+  $("segs").appendChild(row);
   $("tpSwitch").addEventListener("change", e => { S.calib.testPattern = e.target.checked; pushCalib(); });
-  const keepMode = () => ({ selection: S.calib.selection, selectMethod: S.calib.selectMethod, mirrorScreen: S.calib.mirrorScreen });
-  $("calibReset").onclick = () => { S.calib = { ...DEFAULT_CALIBRATION, ...keepMode() }; syncSliders(); pushCalib(); };
+  $("calibReset").onclick = () => { S.calib = { ...DEFAULT_CALIBRATION, soundFrom: S.calib.soundFrom }; syncSliders(); pushCalib(); };
   $("calibClose").onclick = () => $("calibPanel").classList.remove("open");
   showCamInfo();
   $("profileSave").onclick = () => {
@@ -659,7 +566,7 @@ function buildCalibration() {
   $("profileLoad").onclick = () => {
     const p = profiles[$("profileList").value];
     if (!p) return;
-    S.calib = { ...DEFAULT_CALIBRATION, ...p, testPattern: S.calib.testPattern, ...keepMode() };
+    S.calib = { ...DEFAULT_CALIBRATION, ...p, testPattern: S.calib.testPattern, soundFrom: S.calib.soundFrom };
     $("profileName").value = $("profileList").value;
     syncSliders(); pushCalib();
   };
@@ -678,8 +585,7 @@ function syncSliders() {
     $("v_" + s.key).textContent = fmt(s, v);
   }
   $("tpSwitch").checked = !!S.calib.testPattern;
-  for (const b of document.querySelectorAll("#sel3d .seg button")) b.classList.toggle("on", S.calib[b.dataset.key] === b.dataset.value);
-  if (S.screen === "headset") applyHeadsetText();
+  for (const b of document.querySelectorAll("#segs .seg button")) b.classList.toggle("on", S.calib[b.dataset.key] === b.dataset.value);
 }
 function pushCalib() {
   calibDirty = true;
@@ -700,7 +606,8 @@ function showCamInfo() {
     `Headset camera: <b class="${low ? "warn" : ""}">${c.width}×${c.height}</b> at <b>${c.fps || "?"} fps</b>` +
     (low ? ` <span class="warn">(low – this phone/browser did not give HD)</span>` : "") +
     `<br>Autofocus: <b>${c.autofocus}</b> · Auto exposure: <b>${c.autoexposure}</b>` +
-    `<br>Screen: <b>${sc.width}×${sc.height}</b> pixels (density ${sc.dpr}×) · <b>${sc.fps}</b> frames/s`;
+    `<br>Screen: <b>${sc.width}×${sc.height}</b> pixels (density ${sc.dpr}×) · <b>${sc.fps}</b> frames/s` +
+    (v.preload && v.preload.total ? `<br>Videos and sounds stored on the phone: <b>${v.preload.done} of ${v.preload.total}</b>` : "");
 }
 function fmt(s, v) { const d = s.step >= 1 ? 0 : s.step >= 0.05 ? 2 : 3; return Number(v).toFixed(d); }
 let profiles = {};
@@ -715,14 +622,11 @@ function fillProfiles(p) {
 $("backBtn").onclick = goBack;
 $("homeBtn").onclick = goHome;
 $("creditsBtn").onclick = () => { S.prevScreen = S.screen; setScreen("credits"); };
-$("cardClose").onclick = closeModal;
-$("choiceClose").onclick = closeModal;
+$("cardClose").onclick = () => closeModal();
+$("choiceClose").onclick = () => closeModal();
 $("cardAR").onclick = () => { if (!S.locked && S.cardCondition) sendCondition(S.cardCondition); };
 $("choiceNeuritis").onclick = () => openCard("neuritis");
-$("choiceField").onclick = () => { closeModal(); playIntro("pathway"); };
-$("opToggle").onclick = () => $("opPanel").classList.toggle("open");
-$("opRecentre").onclick = () => sendCommand({ action: "recentre" });
-$("opEyeHome").onclick = () => sendCommand({ action: "eyeHome" });
+$("choiceField").onclick = () => showPathway();
 document.addEventListener("contextmenu", e => e.preventDefault());
 
 keepFullscreen(); // first tap anywhere makes the tablet full screen

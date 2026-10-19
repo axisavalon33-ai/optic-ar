@@ -19,12 +19,8 @@
   #gl { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
   .eyeText { position: fixed; transform: translate(-50%, -50%); text-align: center; pointer-events: none;
     text-shadow: 0 0 6px #000, 0 0 12px #000; transition: opacity .6s; white-space: nowrap; }
-  .wait { font-size: 2.1vh; line-height: 1.35; opacity: .85; }
-  .wait span { display: block; }
   .name { font-size: 4.6vh; font-weight: 700; color: #ffcf7a; opacity: 0; white-space: normal; width: 34vw; }
   .name.on { opacity: 1; }
-  .hint { font-size: 2.3vh; color: #fff; background: rgba(5, 12, 31, .55); padding: .6vh 1.4vh; border-radius: 99px; opacity: 0; }
-  .hint.on { opacity: .9; }
   .err { font-size: 4.4vh; font-weight: 700; color: #fff; background: rgba(170, 20, 20, .92);
     padding: 2.5vh 2vw; border-radius: 2vh; white-space: normal; width: 34vw; display: none; }
   .err.on { display: block; }
@@ -48,10 +44,8 @@
 <canvas id="gl"></canvas>
 
 <!-- text shown inside each eye (left / right) -->
-<div class="eyeText wait" id="waitL"></div><div class="eyeText wait" id="waitR"></div>
 <div class="eyeText name" id="nameL"></div><div class="eyeText name" id="nameR"></div>
 <div class="eyeText err" id="errL"></div><div class="eyeText err" id="errR"></div>
-<div class="eyeText hint" id="hintL"></div><div class="eyeText hint" id="hintR"></div>
 
 <div id="fsPrompt">Tap anywhere for full screen</div>
 

@@ -4,8 +4,10 @@ Two web pages that talk to each other through Firebase:
 
 | Page | Device | What it does |
 |---|---|---|
-| `controller.html` | Tablet | Visitors choose a language, watch the videos, tap the eye or the visual pathway |
-| `viewer.html` | Android phone inside the VR box | Shows the camera view and simulates the eye condition the visitor chose |
+| `controller.html` | Tablet | The operator controls everything: language, video, tapping the eye or the visual pathway, "Show in VR" |
+| `viewer.html` | Android phone inside the VR box | Shows the same pictures and video as a screen in front of the visitor, then the camera view with the eye condition |
+
+The visitor in the headset never has to choose anything.
 
 ---
 
@@ -20,14 +22,13 @@ js/translations.js  ALL the words, in Tamil, English and Sinhala  <- edit this t
 js/config.js        settings: timings, file names, default hotspot positions, default headset calibration
 js/defects.js       how each condition looks (shared by the tablet diagram and the headset)
 js/controller.js    tablet logic
-js/viewer.js        headset logic (camera + lens distortion)
-js/ar-scene.js      3D eye / visual pathway for selection inside the headset
-js/hands.js         optional hand-touch tracking (MediaPipe)
-js/vendor/          Three.js 3D library (copy kept in the project)
+js/viewer.js        headset logic (screen mode, camera, lens distortion)
+js/sync.js          keeps the tablet and the phone playing in step
+js/vendor/          Three.js graphics library (copy kept in the project)
 js/fb.js            Firebase connection
 videos/             eye-intro.mp4, pathway.mp4                        (placeholders for now)
 images/             eye-still.jpg, pathway-still.jpg                  (placeholders for now)
-audio/              eye-intro-ta/si.mp3, pathway-ta/si.mp3            (placeholder beeps for now)
+audio/              eye-intro-ta/si.mp3, pathway-en/ta/si.mp3         (narration)
 database.rules.json Firebase security rules to paste in (step 1)
 ```
 
@@ -99,6 +100,8 @@ Every time you change a file on `main`, the site updates by itself within a minu
 1. Open the viewer link in **Chrome** on the Android phone.
 2. Tap **Start** and choose **Allow** when it asks for the camera.
    The page goes full screen, turns sideways (landscape) and keeps the screen awake.
+   This one tap also allows sound, keeps the camera open in the background, and starts storing
+   the videos, pictures and narration on the phone (about 70 MB, so use good Wi-Fi the first time).
 3. Put the phone in the VR box. You never need to touch it again.
    "Please wait" in three languages means it is ready.
 
@@ -106,9 +109,18 @@ Every time you change a file on `main`, the site updates by itself within a minu
 
 1. Open the controller link. Tip: in Chrome or Safari use **Add to Home Screen** so it opens full screen like an app.
 2. The small dot at the bottom right is **green** when the phone is connected and **red** when it is not.
-3. A visitor picks a language, watches the video, and taps parts of the picture.
-   "Show in AR" (or a tap on the pathway) starts 20 seconds in the headset. The buttons
-   are locked during that time, and the tablet shows the same visual field the visitor sees.
+3. The operator follows this flow – the phone always shows the same thing (see *What the headset shows* below):
+
+| Operator does on the tablet | Tablet | Phone (headset) |
+|---|---|---|
+| Picks a language | Intro video starts 2 s later | The same video and narration, starting at exactly the same moment |
+| (video ends) | Eye picture with hotspots | The same eye picture (no hotspots) |
+| Taps a part (lens, retina, optic disc) | Info card with a big **Show in VR** button | The part glows and the disease name appears in big letters |
+| Taps **Show in VR** | Visual field diagram + 20 s countdown, buttons locked | "Loading…" for 2 s, then the camera view with the effect for 20 s |
+| (20 s later) | Back to the same picture | Back to the same picture |
+| Optic nerve → **Visual field defects** | Pathway picture with 7 hotspots + narration | The same picture and narration, in step |
+| Taps a pathway site → **Show in VR** | Same as above | Name of the defect, then Loading → effect → back |
+| **Back** / **Home** | Previous screen / language screen | Changes in the same way |
 
 ---
 
@@ -197,52 +209,22 @@ Give each tablet + phone pair the same **station number** by adding `?station=N`
 
 ---
 
-## 3D selection inside the headset (optional)
+## What the headset shows (screen mode)
 
-Instead of tapping the tablet, visitors can choose eye parts **inside the headset**: a cut-away 3D eye floats about
-1 metre in front of them, and they **look at a part and hold** for 2 seconds (a ring fills around the small white dot).
+When no effect is running, the phone works like a **cinema screen inside the headset**: the same picture or video
+in both eyes, in the middle of the round eye areas, with black around it (the camera is not shown).
+The size is set in the calibration panel with **Picture size in screen mode**.
 
-**Switch it on:** tablet → hold the top-right corner 3 s → *3D selection in the headset* → **Selection: Headset**.
-(Default is **Tablet**, the original flow with hotspots on the tablet.)
+**Keeping the two devices together:** each video and narration starts at a time agreed through Firebase's clock.
+If either device gets more than 0.3 seconds out of step, it jumps back into step by itself.
 
-| Setting (calibration panel) | Meaning |
-|---|---|
-| Selection | Tablet (original) / Headset (3D eye) |
-| Selection method | Look and hold (default) / Hand touch / Both |
-| Hold time | 1–3 seconds of looking before a part is selected |
-| Model distance | How far away the 3D model floats (metres) |
-| Model size | Bigger / smaller model |
-| Camera field of view | Match this to the phone camera so the model sits still in the view (default 42°) |
+**Sound from** (calibration panel): **Both** (default), **Phone only** (the tablet is silent) or **Tablet only**
+(the headset is silent).
 
-**Flow:** language → eye video on the tablet → tablet says *Put on the headset* → in the headset: Lens = Cataract,
-Retina = AMD, Optic disc = Glaucoma, Optic nerve = two floating choices (Optic neuritis / Visual field defects).
-Visual field defects shows a 3D visual pathway with 7 selectable sites. A selected part glows red for 2 s, the model
-fades, the 20-second effect runs, then the model comes back. Floating **Back** / **Home** buttons sit under the model.
-
-**Tablet while the visitor explores:** shows *Looking at* / *Selected* and the visual field diagram during each effect,
-so the queue can follow. The small **Operator** button opens backup controls: run any effect, **Recentre model**
-(puts the model straight ahead), and **Headset back to the eye**.
-
-**Hand touch:** uses the rear camera to find the visitor's index fingertip (a glowing dot); hold it on a part for 1 s.
-If no hand is found, or the phone is too slow (under 20 frames per second), it falls back to look and hold by itself.
-Hand tracking needs internet (it downloads about 10 MB the first time) and is only loaded when switched on.
-
-**Your own 3D models (optional):** put `models/eye.glb` and/or `models/pathway.glb` in a `models` folder.
-Name the parts in your 3D program so the names contain: eye – `lens`, `retina` (or `macula`), `disc`, `nerve`;
-pathway – `nerve`, `chiasm`, `temporal`, `tract`, `meyer`, `parietal`, `occipital`. Without these files the built-in
-shapes are used. Keep models simple (low polygon) so the phone stays smooth.
-
----
-
-## The headset also shows the tablet's screen
-
-While the visitor waits, the headset shows a **floating screen** in front of them that mirrors the tablet:
-the intro / pathway **videos** (in step with the tablet, silent – the sound comes from the tablet) and the
-**eye / pathway pictures**. When someone touches a part on the tablet, the same part **lights up amber** on the
-headset picture with its name and the info-card text; a tapped pathway site glows **red**. When "Show in AR"
-starts an effect, the screen fades away so the visitor sees the effect, then it comes back.
-
-Switch it off in the calibration panel: *Tablet screen in the headset → Off*.
+**Intro video:** if a video made for the language exists (`videos/eye-intro-ta.mp4` …) it is used with its own sound.
+To always use `videos/eye-intro.mp4` plus the narration file instead, set `USE_LANGUAGE_VIDEOS = false` in `js/config.js`.
+The pathway part uses only the picture `images/pathway-still.jpg` plus `audio/pathway-en/ta/si.mp3`
+(the pathway videos are no longer played).
 
 ---
 
