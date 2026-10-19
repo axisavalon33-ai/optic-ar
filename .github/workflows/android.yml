@@ -1,0 +1,67 @@
+# Builds the Android headset app (android/ folder) and publishes the APK at a fixed link:
+# https://github.com/axisavalon33-ai/optic-ar/releases/download/headset-app/EyeExhibitHeadset.apk
+name: Build headset app
+
+on:
+  push:
+    paths:
+      - "android/**"
+      - "js/**"
+      - "videos/**"
+      - "images/**"
+      - "audio/**"
+      - "tools/**"
+      - ".github/workflows/android.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: headset-app
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Copy the exhibit's settings, words and media into the app
+        run: node tools/export-android.mjs
+
+      - name: Build the app
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon --stacktrace assembleRelease
+
+      - name: Name the APK
+        run: cp android/app/build/outputs/apk/release/app-release.apk EyeExhibitHeadset.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: EyeExhibitHeadset
+          path: EyeExhibitHeadset.apk
+          retention-days: 14
+
+      - name: Publish at the fixed download link
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete headset-app --yes --cleanup-tag || true
+          gh release create headset-app EyeExhibitHeadset.apk \
+            --target "$GITHUB_SHA" \
+            --title "Headset app (latest build)" \
+            --notes "Built from branch ${GITHUB_REF_NAME}, commit ${GITHUB_SHA::7}. Open this link on the headset phone to install: https://github.com/${GITHUB_REPOSITORY}/releases/download/headset-app/EyeExhibitHeadset.apk"
