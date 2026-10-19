@@ -21,7 +21,8 @@ const S = {
   hotspots: JSON.parse(JSON.stringify(DEFAULT_HOTSPOTS)),
   calib: { ...DEFAULT_CALIBRATION },
   fbOk: false, online: false, viewerSeen: 0,
-  explore: null          // what the visitor is doing inside the headset (3D selection)
+  explore: null,         // what the visitor is doing inside the headset (3D selection)
+  touch: { highlight: null, lesion: null, caption: null }   // what was touched – mirrored in the headset
 };
 let fb = null; // Firebase helpers once loaded
 
@@ -132,6 +133,7 @@ function setHomeVideo(on) {
 }
 
 function setScreen(name) {
+  if (name !== S.screen) { S.touch = { highlight: null, lesion: null, caption: null }; if (!/Video$/.test(name)) mirrorVideo = { src: null, startedAt: null }; }
   S.screen = name;
   setHomeVideo(name === "lang");
   const section = name === "lang" ? "langScreen" : name === "credits" ? "creditsScreen" : name === "headset" ? "headsetScreen" : "stageScreen";
@@ -142,6 +144,7 @@ function setScreen(name) {
   renderHotspots();
   resetIdle();
   showHint();
+  pushMirror();
 }
 
 function chooseLanguage(code) {
@@ -258,6 +261,7 @@ function hotspotTapped(kind, id) {
   if (S.locked || S.modal) return;
   hideHand();
   if (kind === "eye") {
+    S.touch.highlight = id;
     if (id === "lens") openCard("cataract");
     else if (id === "retina") openCard("amd");
     else if (id === "opticDisc") openCard("glaucoma");
@@ -269,6 +273,7 @@ function hotspotTapped(kind, id) {
     const l = document.createElement("div");
     l.className = "lesion"; l.style.left = h.x + "%"; l.style.top = h.y + "%";
     $("lesions").appendChild(l);
+    setTouch(id, { title: tr(S.lang, `hotspots.${id}`), line: tr(S.lang, `conditions.${id}.name`) }, id);
     setTimeout(() => sendCondition(id), TIMING.lesionShow * 1000);
   }
 }
@@ -283,16 +288,21 @@ function openCard(cond) {
   $("choice").classList.remove("open");
   $("card").classList.add("open");
   S.modal = "card";
+  setTouch(S.touch.highlight || (cond === "neuritis" ? "opticNerve" : null),
+    { title: tr(S.lang, `conditions.${cond}.name`), line: tr(S.lang, `conditions.${cond}.line1`) });
 }
 function openChoice() {
   $("choice").classList.add("open");
   S.modal = "choice";
+  setTouch("opticNerve", { title: tr(S.lang, "opticNerveChoose"), line: `${tr(S.lang, "opticNeuritisBtn")}  ·  ${tr(S.lang, "visualFieldBtn")}` });
 }
 function closeModal() {
+  const had = S.modal;
   $("card").classList.remove("open");
   $("choice").classList.remove("open");
   S.modal = null;
   resetIdle();
+  if (had && S.touch.highlight) setTouch();
 }
 
 // ---------------------------------------------------------------- sending + countdown
@@ -334,6 +344,8 @@ function sendCondition(cond) {
     S.locked = false;
     clearLesions();
     S.modal = null;
+    S.touch = { highlight: null, lesion: null, caption: null };
+    pushMirror();
     // back to the screen the visitor was on (the still image)
     if (kindBefore) setScreen(kindBefore === "eye" ? "eyeStill" : "pathStill");
   }, total * 1000);
@@ -377,6 +389,30 @@ function drawDiagram(cond, t, cv = $("fieldCanvas")) {
     c.fillText(tr(S.lang, eye === "L" ? "leftEye" : "rightEye"), cx, cy + R + fontPx * 0.5);
   });
 }
+
+// ---------------------------------------------------------------- MIRROR: the headset shows what the tablet shows
+let mirrorVideo = { src: null, startedAt: null };
+function setTouch(highlight = null, caption = null, lesion = null) {
+  S.touch = { highlight, caption, lesion };
+  pushMirror();
+}
+function pushMirror() {
+  if (!fb) return;
+  const scr = S.screen;
+  const m = { screen: scr, lang: S.lang, ts: fb.serverTimestamp() };
+  if (scr === "eyeVideo" || scr === "pathVideo") Object.assign(m, mirrorVideo, { still: still.getAttribute("src") || null });
+  if (scr === "eyeStill" || scr === "pathStill") {
+    Object.assign(m, { still: still.getAttribute("src"), kind: scr === "eyeStill" ? "eye" : "pathway",
+      highlight: S.touch.highlight, lesion: S.touch.lesion, caption: S.touch.caption });
+  }
+  fb.set(fb.ref(fb.db, DB.mirror), m).catch(() => {});
+}
+// keep the headset's copy of the video in step with the tablet
+video.addEventListener("playing", () => {
+  if (!fb) return;
+  mirrorVideo = { src: (video.currentSrc || video.src).replace(location.origin, ""), startedAt: fb.serverNow() - video.currentTime * 1000 };
+  pushMirror();
+});
 
 // ---------------------------------------------------------------- HEADSET SELECTION (3D eye in the headset)
 function headsetSelection() { return S.calib.selection === "headset"; }
@@ -607,8 +643,9 @@ function buildCalibration() {
   };
   seg("selection", ADMIN.selectionTitle, [["tablet", ADMIN.selTablet], ["headset", ADMIN.selHeadset]]);
   seg("selectMethod", ADMIN.methodTitle, [["gaze", ADMIN.mGaze], ["hand", ADMIN.mHand], ["both", ADMIN.mBoth]]);
+  seg("mirrorScreen", ADMIN.mirrorTitle, [["on", ADMIN.on], ["off", ADMIN.off]]);
   $("tpSwitch").addEventListener("change", e => { S.calib.testPattern = e.target.checked; pushCalib(); });
-  const keepMode = () => ({ selection: S.calib.selection, selectMethod: S.calib.selectMethod });
+  const keepMode = () => ({ selection: S.calib.selection, selectMethod: S.calib.selectMethod, mirrorScreen: S.calib.mirrorScreen });
   $("calibReset").onclick = () => { S.calib = { ...DEFAULT_CALIBRATION, ...keepMode() }; syncSliders(); pushCalib(); };
   $("calibClose").onclick = () => $("calibPanel").classList.remove("open");
   showCamInfo();

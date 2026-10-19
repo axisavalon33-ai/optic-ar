@@ -3,7 +3,7 @@
 //  Camera -> defect mask & filters -> 3D model layer -> barrel distortion -> two eyes.
 // =====================================================================
 import * as THREE from "three";
-import { DB, STATION, TIMING, DEFAULT_CALIBRATION, HAND_HOLD_TIME } from "./config.js";
+import { DB, STATION, TIMING, DEFAULT_CALIBRATION, HAND_HOLD_TIME, DEFAULT_HOTSPOTS } from "./config.js";
 import { LANGUAGES, T, tr } from "./translations.js";
 import { paintField, filtersAt, ALL_CONDITIONS } from "./defects.js";
 import { isFullscreen, enterFullscreen, keepFullscreen } from "./fullscreen.js";
@@ -96,6 +96,13 @@ let pushStatus = () => {};
   };
   fb.onDisconnect(exploreRef).remove();
 
+  fb.onValue(fb.ref(fb.db, DB.mirror), s => { mirrorState = s.val(); mirrorDirty = true; updateOverlay(); });
+  fb.onValue(fb.ref(fb.db, DB.hotspots), s => {
+    const v = s.val() || {};
+    for (const kind of ["eye", "pathway"]) for (const id in DEFAULT_HOTSPOTS[kind])
+      hotspots[kind][id] = { ...DEFAULT_HOTSPOTS[kind][id], ...((v[kind] && v[kind][id]) || {}) };
+    mirrorDirty = true;
+  });
   fb.onValue(fb.ref(fb.db, DB.calibLive), s => {
     const v = s.val();
     if (v) { calib = { ...DEFAULT_CALIBRATION, ...v }; try { localStorage.setItem("calib-" + STATION, JSON.stringify(calib)); } catch (e) {} }
@@ -148,7 +155,7 @@ function startEffect(cond, lang) {
   updateOverlay();
 }
 function updateOverlay() {
-  const waiting = started && !running && !errState && !(ar && ar.active);
+  const waiting = started && !running && !errState && !(ar && ar.active) && !mirrorShown;
   $("waitL").classList.toggle("hidden", !waiting);
   $("waitR").classList.toggle("hidden", !waiting);
 }
@@ -265,6 +272,117 @@ async function startCamera() {
 }
 let camRetry = null;
 function retryCamera() { clearTimeout(camRetry); camRetry = setTimeout(() => { if (!camOk) startCamera(); }, 4000); }
+
+// ---------------------------------------------------------------- MIRROR: show what the tablet shows
+// The tablet's videos (silent here – the sound comes from the tablet) and pictures float in front of
+// the visitor, with the part someone touched on the tablet lit up and named.
+let mirrorState = null, mirrorDirty = true, mirrorShown = false;
+const hotspots = JSON.parse(JSON.stringify(DEFAULT_HOTSPOTS));
+let mVideo = null, mVideoTex = null, mLastSync = 0, mSeek = null;
+const stillCache = {};
+const overCanvas = document.createElement("canvas");
+overCanvas.width = 1280; overCanvas.height = 720;
+const overCtx = overCanvas.getContext("2d");
+let overTex = null, overDrawn = "";
+
+function mirrorVideoEl() {
+  if (!mVideo) {
+    mVideo = document.createElement("video");
+    mVideo.muted = true; mVideo.playsInline = true; mVideo.setAttribute("playsinline", ""); mVideo.preload = "auto";
+    mVideo.crossOrigin = "anonymous";
+  }
+  return mVideo;
+}
+function stillTexture(src) {
+  if (!stillCache[src]) {
+    const t = new THREE.TextureLoader().load(src, () => { mirrorDirty = true; });
+    t.minFilter = THREE.LinearMipmapLinearFilter; t.magFilter = THREE.LinearFilter;
+    stillCache[src] = t;
+  }
+  return stillCache[src];
+}
+function drawOverlay(aspect, m, now) {
+  const W = 1280, H = Math.round(W / aspect);
+  if (overCanvas.height !== H) overCanvas.height = H;
+  const c = overCtx;
+  c.clearRect(0, 0, W, H);
+  if (!m || !(m.highlight || m.caption || m.lesion)) return;
+  const pulse = 0.6 + 0.4 * Math.sin(now / 160);
+  const spot = m.highlight && hotspots[m.kind] && hotspots[m.kind][m.highlight];
+  if (spot) {
+    const x = spot.x / 100 * W, y = spot.y / 100 * H, r = Math.max(14, spot.r / 100 * W);
+    const red = m.lesion === m.highlight;
+    const g = c.createRadialGradient(x, y, 0, x, y, r * 2.2);
+    g.addColorStop(0, red ? `rgba(255,50,50,${0.85 * pulse})` : `rgba(255,181,71,${0.5 * pulse})`);
+    g.addColorStop(0.45, red ? `rgba(255,30,30,${0.45 * pulse})` : `rgba(255,181,71,${0.22 * pulse})`);
+    g.addColorStop(1, "rgba(0,0,0,0)");
+    c.fillStyle = g; c.fillRect(x - r * 2.2, y - r * 2.2, r * 4.4, r * 4.4);
+    c.lineWidth = 5; c.strokeStyle = red ? "rgba(255,80,80,0.95)" : "rgba(255,190,90,0.95)";
+    c.beginPath(); c.arc(x, y, r * (1 + 0.08 * pulse), 0, Math.PI * 2); c.stroke();
+    // name tag next to the part
+    const name = tr(m.lang || "en", `hotspots.${m.highlight}`);
+    c.font = `700 30px "Noto Sans","Noto Sans Tamil","Noto Sans Sinhala",sans-serif`;
+    const tw = c.measureText(name).width + 28, tx = Math.min(W - tw - 8, Math.max(8, x - tw / 2)), ty = Math.max(8, y - r - 58);
+    c.fillStyle = "rgba(5,12,31,0.85)"; c.beginPath(); c.roundRect(tx, ty, tw, 44, 22); c.fill();
+    c.fillStyle = "#ffcf7a"; c.textBaseline = "middle"; c.textAlign = "left"; c.fillText(name, tx + 14, ty + 23);
+  }
+  if (m.caption && (m.caption.title || m.caption.line)) {
+    const bh = 118;
+    c.fillStyle = "rgba(5,12,31,0.86)"; c.fillRect(0, H - bh, W, bh);
+    c.textAlign = "center"; c.textBaseline = "middle";
+    const fit = (text, px, weight) => { let f = px; do { c.font = `${weight} ${f}px "Noto Sans","Noto Sans Tamil","Noto Sans Sinhala",sans-serif`; f -= 2; } while (c.measureText(text).width > W - 60 && f > 14); };
+    if (m.caption.title) { fit(m.caption.title, 42, 700); c.fillStyle = "#ffb547"; c.fillText(m.caption.title, W / 2, H - bh + 38); }
+    if (m.caption.line) { fit(m.caption.line, 28, 400); c.fillStyle = "#f3f1ea"; c.fillText(m.caption.line, W / 2, H - bh + 86); }
+  }
+}
+function updateMirror(now) {
+  const m = mirrorState;
+  const isVideo = m && (m.screen === "eyeVideo" || m.screen === "pathVideo") && m.src;
+  const isStill = m && (m.screen === "eyeStill" || m.screen === "pathStill") && m.still;
+  const want = calib.mirrorScreen !== "off" && started && !running && !(ar && ar.active) && (isVideo || isStill);
+  if (!ar) return;
+  if (!want) {
+    if (mirrorShown) { ar.hideScreen(); mirrorShown = false; updateOverlay(); }
+    if (mVideo && !mVideo.paused && !isVideo) mVideo.pause();
+    return;
+  }
+  if (!overTex) { overTex = new THREE.CanvasTexture(overCanvas); overTex.minFilter = THREE.LinearFilter; overTex.generateMipmaps = false; }
+  let tex, aspect;
+  if (isVideo) {
+    const v = mirrorVideoEl();
+    if (v.getAttribute("src") !== m.src) { v.src = m.src; v.load(); }
+    if (v.paused && !v.ended) v.play().catch(() => {});
+    // stay in step with the tablet (it tells us when its video started)
+    if (m.startedAt && fb && now - mLastSync > 1000 && v.readyState >= 2 && !v.seeking) {
+      mLastSync = now;
+      const expect = (fb.serverNow() - m.startedAt) / 1000;
+      if (mSeek && mSeek.src === m.src && Math.abs(v.currentTime - (mSeek.target + (now - mSeek.at) / 1000)) > 1.5) {
+        mSeek.failed = true;            // this server/phone cannot jump inside the video: just let it play
+      }
+      const canSeek = !(mSeek && mSeek.src === m.src && mSeek.failed);
+      if (canSeek && isFinite(v.duration) && expect < v.duration - 0.2 && Math.abs(v.currentTime - expect) > 0.4) {
+        v.currentTime = Math.max(0, expect);
+        mSeek = { src: m.src, target: Math.max(0, expect), at: now };
+      }
+    }
+    if (!mVideoTex) { mVideoTex = new THREE.VideoTexture(v); mVideoTex.minFilter = THREE.LinearFilter; mVideoTex.magFilter = THREE.LinearFilter; mVideoTex.generateMipmaps = false; }
+    tex = mVideoTex;
+    aspect = v.videoWidth ? v.videoWidth / v.videoHeight : 16 / 9;
+  } else {
+    if (mVideo && !mVideo.paused) mVideo.pause();
+    tex = stillTexture(m.still);
+    aspect = tex.image && tex.image.width ? tex.image.width / tex.image.height : 16 / 9;
+  }
+  // redraw the highlight layer when something changed (and a few times a second while it pulses)
+  const key = JSON.stringify([isStill ? m.highlight : null, isStill ? m.lesion : null, isStill ? m.caption : null, aspect.toFixed(3)]);
+  const pulsing = isStill && (m.highlight || m.lesion);
+  if (mirrorDirty || key !== overDrawn || (pulsing && now % 100 < 40)) {
+    drawOverlay(aspect, isStill ? m : null, now);
+    overTex.needsUpdate = true; overDrawn = key; mirrorDirty = false;
+  }
+  ar.showScreen(tex, aspect, overTex);
+  if (!mirrorShown) { mirrorShown = true; updateOverlay(); }
+}
 
 // ---------------------------------------------------------------- final (screen) shader
 const VERT = `
@@ -474,7 +592,10 @@ async function initRenderer() {
   ar.onStatus = s => pushStatus({ ...s, method: activeMethod(), lang: exploreLang,
     effectStart: s.phase === "effect" ? effectStartMs : null, condition: s.condition });
   try { await ar.init(); } catch (e) { console.error("3D scene failed", e); }
-  if (/[?&]debug/.test(location.search)) window.__ar = ar;   // for testing only
+  if (/[?&]debug/.test(location.search)) {   // for testing only
+    window.__ar = ar;
+    window.__mirror = () => ({ screen: mirrorState && mirrorState.screen, v: mVideo && { src: mVideo.currentSrc, t: +mVideo.currentTime.toFixed(2), rs: mVideo.readyState, paused: mVideo.paused, w: mVideo.videoWidth, err: mVideo.error && mVideo.error.code } });
+  }
   applySettings();
 }
 
@@ -592,6 +713,7 @@ function loop() {
     tipM = { x: (tip.x - 0.5) * 2 * aspect * calib.zoom, y: (0.5 - tip.y) * 2 * calib.zoom };
     pointers.push({ kind: "hand", ndc: { x: tipM.x / OV_EXTENT, y: tipM.y / OV_EXTENT }, holdTime: HAND_HOLD_TIME });
   }
+  updateMirror(now);
   let sel = { hits: {}, hitDistance: 1 };
   if (ar) {
     sel = ar.update(dt, exploring ? pointers : []);
@@ -601,7 +723,7 @@ function loop() {
   const g = sel.hits.gaze, h = sel.hits.hand;
   U.uRet.value.set(browsing && gazeOn ? 1 : 0, g ? g.progress : 0, g && g.id ? 1 : 0, ar ? ar.reticleOffset(sel.hitDistance) : 0);
   U.uTip.value.set(tipM ? tipM.x : 0, tipM ? tipM.y : 0, browsing && tipM ? 1 : 0, h ? h.progress : 0);
-  U.uOvAlpha.value = ar ? ar.alpha : 0;
+  U.uOvAlpha.value = ar ? ar.layerAlpha() : 0;
 
   // small instruction under each lens while exploring
   let hint = "";

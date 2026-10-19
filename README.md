@@ -234,6 +234,18 @@ shapes are used. Keep models simple (low polygon) so the phone stays smooth.
 
 ---
 
+## The headset also shows the tablet's screen
+
+While the visitor waits, the headset shows a **floating screen** in front of them that mirrors the tablet:
+the intro / pathway **videos** (in step with the tablet, silent – the sound comes from the tablet) and the
+**eye / pathway pictures**. When someone touches a part on the tablet, the same part **lights up amber** on the
+headset picture with its name and the info-card text; a tapped pathway site glows **red**. When "Show in AR"
+starts an effect, the screen fades away so the visitor sees the effect, then it comes back.
+
+Switch it off in the calibration panel: *Tablet screen in the headset → Off*.
+
+---
+
 ## Troubleshooting
 
 | Problem | What to do |

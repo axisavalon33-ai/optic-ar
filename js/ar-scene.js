@@ -105,6 +105,17 @@ export class ARScene {
     this.anchor.add(this.content);
     this.scene.add(this.anchor);
 
+    // floating "cinema screen" that mirrors the tablet (videos, eye / pathway pictures)
+    this.screenRoot = new THREE.Group();
+    this.anchor.add(this.screenRoot);
+    this.screenAlpha = 0; this.screenWanted = false;
+    const flat = (order) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(1, 1),
+      new THREE.MeshBasicMaterial({ transparent: true, depthTest: false, depthWrite: false })); m.renderOrder = order; return m; };
+    this.screenBack = flat(28); this.screenBack.material.color.setHex(0x050c1f);
+    this.screenMain = flat(29); this.screenOver = flat(30);
+    this.screenRoot.add(this.screenBack, this.screenMain, this.screenOver);
+    this.screenRoot.visible = false;
+
     this.sel = new Map();                     // id -> { id, meshes:[], label, button, scene }
     this.labels = [];                         // all TextThings
     this.raycaster = new THREE.Raycaster();
@@ -400,6 +411,7 @@ export class ARScene {
     this.distance = modelDistance;
     this.size = modelSize;
     this.content.scale.setScalar(modelSize);
+    if (this._screenAspect) this._layoutScreen();
     // m-space radius 1 = edge of the eye circle = what the camera image shows at that radius
     this.tanHalf = Math.tan(THREE.MathUtils.degToRad(cameraFov) / 2) / Math.max(0.1, zoom);
     this.extent = extent;
@@ -417,10 +429,29 @@ export class ARScene {
     this.targetQ.setFromEuler(euler);
     this.targetQ.multiply(new THREE.Quaternion(-Math.SQRT1_2, 0, 0, Math.SQRT1_2));   // camera looks out of the back
     this.targetQ.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), -orient));
-    if (!this.hasOrientation) { this.hasOrientation = true; this.head.quaternion.copy(this.targetQ); if (this.active) this.recentre(); }
+    if (!this.hasOrientation) { this.hasOrientation = true; this.head.quaternion.copy(this.targetQ); if (this.active || this.screenWanted) this.recentre(); }
   }
 
   recentre() { this._placeAnchor(true); }
+
+  // ------------------------------------------------------------ mirrored tablet screen
+  // mainTex: video or picture; overTex: transparent layer with highlights / captions
+  showScreen(mainTex, aspect, overTex) {
+    const firstTime = !this.screenWanted;
+    this.screenWanted = true;
+    this.screenMain.material.map = mainTex; this.screenMain.material.needsUpdate = true;
+    this.screenOver.material.map = overTex; this.screenOver.material.needsUpdate = true;
+    this._screenAspect = aspect || 16 / 9;
+    this._layoutScreen();
+    if (firstTime && !this.active) this.recentre();
+  }
+  hideScreen() { this.screenWanted = false; }
+  _layoutScreen() {
+    const w = 0.6 * this.size, h = w / (this._screenAspect || 16 / 9);   // about 33° wide at 1 m: the whole frame fits in the lens view
+    this.screenMain.scale.set(w, h, 1); this.screenOver.scale.set(w, h, 1);
+    this.screenBack.scale.set(w * 1.03, h * 1.03 + 0.012, 1);
+    this.screenRoot.position.y = Math.tan(THREE.MathUtils.degToRad(10)) * this.distance;   // back up to eye level
+  }
 
   // testing helper: point the head at a selectable part
   _aimAt(id) {
@@ -550,8 +581,15 @@ export class ARScene {
         break;
     }
 
+    // mirrored screen fades in / out (never together with the 3D eye)
+    const showScr = this.screenWanted && !this.active;
+    this.screenAlpha = Math.max(0, Math.min(1, this.screenAlpha + (showScr ? dt * 2.5 : -dt * 3)));
+    this.screenRoot.visible = this.screenAlpha > 0.001;
+    for (const m of [this.screenBack, this.screenMain, this.screenOver]) m.material.opacity = this.screenAlpha * (m === this.screenBack ? 0.85 : 1);
+    this.content.visible = this.active || this.alpha > 0.001;
+
     // keep the model in view: if it has been out of sight for 4 s, bring it back in front
-    if (this.active && this.phase === "browse" && this.hasOrientation) {
+    if (((this.active && this.phase === "browse") || (showScr && this.screenAlpha > 0.9)) && this.hasOrientation) {
       const f = new THREE.Vector3(0, 0, -1).applyQuaternion(this.head.quaternion);
       const toModel = this.anchor.position.clone().normalize();
       this.outOfView = f.dot(toModel) < Math.cos(THREE.MathUtils.degToRad(45)) ? this.outOfView + dt : 0;
@@ -642,12 +680,15 @@ export class ARScene {
     [rtL, rtR].forEach((rt, i) => {
       r.setRenderTarget(rt);
       r.clear(true, true, true);
-      if (this.alpha > 0.001) r.render(this.scene, this.eyeCams[i]);
+      if (this.alpha > 0.001 || this.screenAlpha > 0.001) r.render(this.scene, this.eyeCams[i]);
     });
     r.setRenderTarget(null);
     r.setClearColor(prevColor, prevAlpha);
   }
 
   // how far each eye's reticle is shifted so the dot sits at the depth of what it points at
+  // overall opacity of the 3D layer in the final image
+  layerAlpha() { return this.active ? this.alpha : (this.screenAlpha > 0.001 ? 1 : this.alpha); }
+
   reticleOffset(distance) { return (STEREO_IPD / 2 / Math.max(0.2, distance)) / this.tanHalf; }
 }

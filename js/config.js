@@ -39,6 +39,7 @@ export const DB = {
   presence: `exhibit/stations/${STATION}/presence`,   // phone heartbeat
   calibLive: `exhibit/stations/${STATION}/calibration`, // this station's headset settings
   explore: `exhibit/stations/${STATION}/explore`,     // headset -> tablet: what the visitor looks at / selects
+  mirror: `exhibit/stations/${STATION}/mirror`,       // tablet -> headset: what the tablet is showing (video / picture / touched part)
   hotspots: "exhibit/hotspots",                       // shared by all stations
   calibProfiles: "exhibit/calibration/profiles"       // shared, so any station can load them
 };
@@ -115,7 +116,8 @@ export const DEFAULT_CALIBRATION = {
   holdTime: 2,           // seconds to look at a part before it is selected
   modelDistance: 1.0,    // metres in front of the visitor
   modelSize: 1.0,        // 1 = normal size
-  cameraFov: 42          // phone camera's vertical field of view in degrees (makes the 3D model sit still in the view)
+  cameraFov: 42,         // phone camera's vertical field of view in degrees (makes the 3D model sit still in the view)
+  mirrorScreen: "on"     // "on" = the headset also shows the tablet's videos / pictures and what was touched
 };
 
 // Hand-touch selection time (seconds) and the 3D view's eye separation (metres).
