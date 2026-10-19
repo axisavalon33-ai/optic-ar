@@ -31,7 +31,7 @@ let fb = null; // Firebase helpers once loaded
     fb = await import("./fb.js");
     S.fbOk = true;
     fb.watchConnection(on => { S.online = on; updateStatus(); });
-    fb.onValue(fb.ref(fb.db, DB.presence), s => { const v = s.val(); S.viewerSeen = v && v.lastSeen ? v.lastSeen : 0; updateStatus(); });
+    fb.onValue(fb.ref(fb.db, DB.presence), s => { const v = s.val(); S.viewerSeen = v && v.lastSeen ? v.lastSeen : 0; S.viewerInfo = v; updateStatus(); showCamInfo(); });
     fb.onValue(fb.ref(fb.db, DB.hotspots), s => {
       const v = s.val() || {};
       for (const kind of ["eye", "pathway"]) {
@@ -611,6 +611,7 @@ function buildCalibration() {
   const keepMode = () => ({ selection: S.calib.selection, selectMethod: S.calib.selectMethod });
   $("calibReset").onclick = () => { S.calib = { ...DEFAULT_CALIBRATION, ...keepMode() }; syncSliders(); pushCalib(); };
   $("calibClose").onclick = () => $("calibPanel").classList.remove("open");
+  showCamInfo();
   $("profileSave").onclick = () => {
     const name = $("profileName").value.trim().replace(/[.#$\[\]\/]/g, "-");
     if (!name) { toast(ADMIN.profileName + "?"); return; }
@@ -650,6 +651,19 @@ function pushCalib() {
     if (fb) fb.set(fb.ref(fb.db, DB.calibLive), S.calib).finally(() => { calibDirty = false; });
     else calibDirty = false;
   }, 60);
+}
+// What the headset phone actually got from its camera and screen
+function showCamInfo() {
+  const box = $("camInfo"); if (!box) return;
+  const v = S.viewerInfo;
+  if (!v || !v.camera) { box.innerHTML = "Headset camera: <b>waiting for the phone…</b> (tap Start on the phone)"; return; }
+  const c = v.camera, sc = v.screen || {};
+  const low = c.width && c.width < 1280;
+  box.innerHTML =
+    `Headset camera: <b class="${low ? "warn" : ""}">${c.width}×${c.height}</b> at <b>${c.fps || "?"} fps</b>` +
+    (low ? ` <span class="warn">(low – this phone/browser did not give HD)</span>` : "") +
+    `<br>Autofocus: <b>${c.autofocus}</b> · Auto exposure: <b>${c.autoexposure}</b>` +
+    `<br>Screen: <b>${sc.width}×${sc.height}</b> pixels (density ${sc.dpr}×) · <b>${sc.fps}</b> frames/s`;
 }
 function fmt(s, v) { const d = s.step >= 1 ? 0 : s.step >= 0.05 ? 2 : 3; return Number(v).toFixed(d); }
 let profiles = {};

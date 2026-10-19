@@ -184,7 +184,7 @@ function drawShape(c, sh, rgb, a, E) {
     case "island": { // dark everywhere except an irregular clear island with very soft, smudgy edges
       c.fillStyle = rgba(rgb, a); big();
       c.globalCompositeOperation = "destination-out";
-      const N = 16, keep = 0.02, b = 1 - Math.pow(keep, 1 / N);
+      const N = 16, keep = 0.002, b = 1 - Math.pow(keep, 1 / N);   // centre left fully clear
       const ph = sh.seed * 1.7;
       const nasalAngle = sh.nasal > 0 ? 0 : Math.PI;
       c.fillStyle = `rgba(0,0,0,${b})`;

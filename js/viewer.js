@@ -63,7 +63,11 @@ let pushStatus = () => {};
   $("startBtn").disabled = false;
   $("startStatus").textContent = "Ready";
   const presenceRef = fb.ref(fb.db, DB.presence);
-  const beat = () => fb.set(presenceRef, { lastSeen: fb.serverTimestamp(), started, state: running ? running.cond : "waiting" }).catch(() => {});
+  const beat = () => fb.set(presenceRef, {
+    lastSeen: fb.serverTimestamp(), started, state: running ? running.cond : "waiting",
+    camera: camInfo && { ...camInfo, received: video ? `${video.videoWidth}x${video.videoHeight}` : "" },
+    screen: { width: canvas.width, height: canvas.height, dpr: Math.round((window.devicePixelRatio || 1) * 100) / 100, fps: Math.round(fps) }
+  }).catch(() => {});
   let netTimer = null;
   fb.watchConnection(on => {
     netOk = on;
@@ -191,13 +195,58 @@ document.addEventListener("visibilitychange", () => {
   }
 });
 
+// Ask for the best rear-camera picture: 1920×1080, then 1280×720, at 30 fps.
+const CAMERA_TRIES = [
+  { width: { ideal: 1920 }, height: { ideal: 1080 } },
+  { width: { ideal: 1280 }, height: { ideal: 720 } },
+  {}
+];
+let camInfo = null;   // what the phone actually gave us (shown on the tablet's calibration panel)
+async function openCamera() {
+  let last = null;
+  for (const size of CAMERA_TRIES) {
+    try {
+      return await navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: { facingMode: { ideal: "environment" }, frameRate: { ideal: 30 }, ...size }
+      });
+    } catch (e) {
+      last = e;
+      if (e.name === "NotAllowedError" || e.name === "SecurityError") throw e;   // permission refused: stop
+    }
+  }
+  throw last;
+}
+async function tuneCamera(track) {
+  // if the phone picked a small size, ask once more for at least 1280×720
+  let st = track.getSettings ? track.getSettings() : {};
+  if (st.width && st.width < 1280) {
+    try { await track.applyConstraints({ width: { ideal: 1920 }, height: { ideal: 1080 }, frameRate: { ideal: 30 } }); } catch (e) {}
+    try { await track.applyConstraints({ width: { min: 1280 }, height: { min: 720 } }); } catch (e) {}
+  }
+  // continuous autofocus / exposure / white balance where the browser supports it
+  const caps = track.getCapabilities ? track.getCapabilities() : {};
+  const adv = {};
+  for (const k of ["focusMode", "exposureMode", "whiteBalanceMode"])
+    if (caps[k] && caps[k].includes("continuous")) adv[k] = "continuous";
+  let auto = [];
+  if (Object.keys(adv).length) {
+    try { await track.applyConstraints({ advanced: [adv] }); auto = Object.keys(adv); } catch (e) { console.warn("Auto focus/exposure not applied", e); }
+  }
+  st = track.getSettings ? track.getSettings() : {};
+  camInfo = {
+    width: st.width || 0, height: st.height || 0, fps: Math.round(st.frameRate || 0),
+    autofocus: auto.includes("focusMode") ? "on" : (caps.focusMode ? "not continuous" : "not supported"),
+    autoexposure: auto.includes("exposureMode") ? "on" : (caps.exposureMode ? "not continuous" : "not supported")
+  };
+  console.info("Camera:", camInfo);
+}
+
 async function startCamera() {
   try {
     if (stream) stream.getTracks().forEach(t => t.stop());
-    stream = await navigator.mediaDevices.getUserMedia({
-      audio: false,
-      video: { facingMode: { ideal: "environment" }, width: { ideal: 1920 }, height: { ideal: 1080 } }
-    });
+    stream = await openCamera();
+    await tuneCamera(stream.getVideoTracks()[0]);
     if (!video) {
       video = document.createElement("video");
       video.muted = true; video.playsInline = true; video.setAttribute("playsinline", "");
@@ -306,7 +355,7 @@ void main() {
     col = testPattern(m);
   } else {
     col = cam(cc);
-    if (blurR > 0.0001) {             // blur
+    if (blurR > 0.002) {              // blur (only where an effect asks for it; clear areas stay sharp)
       vec3 s = col;
       for (int i = 0; i < 12; i++) {
         float a = float(i) * 2.39996;
@@ -394,7 +443,7 @@ async function initRenderer() {
     renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: false, powerPreference: "high-performance" });
   } catch (e) { alert("WebGL is not supported on this phone."); return; }
   renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.setPixelRatio(window.devicePixelRatio || 1);     // full physical resolution of the screen
   renderer.setSize(window.innerWidth, window.innerHeight, false);
 
   const blank = new THREE.DataTexture(new Uint8Array([0, 0, 0, 255]), 1, 1);
@@ -433,6 +482,8 @@ function resize() {
   if (!renderer) return;
   const w = window.innerWidth, h = window.innerHeight;
   const size = renderer.getSize(new THREE.Vector2());
+  const dpr = window.devicePixelRatio || 1;
+  if (renderer.getPixelRatio() !== dpr) renderer.setPixelRatio(dpr);
   if (size.x !== w || size.y !== h) renderer.setSize(w, h, false);
 }
 window.addEventListener("resize", () => { resize(); layoutText(); });
@@ -514,7 +565,7 @@ function loop() {
   const hasCam = camOk && video && video.readyState >= 2 && video.videoWidth > 0;
   if (hasCam && (!camTex || camTex.image !== video)) {
     camTex = new THREE.VideoTexture(video);
-    camTex.minFilter = THREE.LinearFilter; camTex.generateMipmaps = false;
+    camTex.minFilter = THREE.LinearFilter; camTex.magFilter = THREE.LinearFilter; camTex.generateMipmaps = false;
     U.uCam.value = camTex;
   }
   updateMask(t);

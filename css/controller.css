@@ -310,3 +310,8 @@ input[type=range] { width: 100%; accent-color: var(--amber); height: 28px; }
 .seg { display: flex; gap: 6px; margin-top: 6px; }
 .seg button { flex: 1; padding: 9px 8px; border-radius: 12px; font-size: 13px; }
 .seg button.on { border-color: var(--amber); background: linear-gradient(135deg, rgba(255, 181, 71, 0.35), rgba(232, 145, 42, 0.2)); }
+
+/* headset camera / screen report in the calibration panel */
+.cam-info { font-size: 13px; line-height: 1.6; padding: 10px 12px; margin: 4px 0 10px; border-radius: 12px; background: rgba(255,255,255,.06); color: var(--muted); }
+.cam-info b { color: var(--text); font-weight: 600; }
+.cam-info .warn { color: #ffb547; }
