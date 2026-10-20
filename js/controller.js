@@ -9,6 +9,7 @@ import { LANGUAGES, T, ADMIN, tr } from "./translations.js";
 import { paintField, PATHWAY_DEFECTS } from "./defects.js";
 import { keepFullscreen } from "./fullscreen.js";
 import { Synced, introMedia, pathwayNarration } from "./sync.js";
+import { showSignIn } from "./signin.js";
 
 const $ = id => document.getElementById(id);
 const app = $("app");
@@ -35,6 +36,8 @@ const serverNow = () => fb ? fb.serverNow() : Date.now();
 (async () => {
   try {
     fb = await import("./fb.js");
+    S.user = await fb.authReady;                  // wait for the saved sign-in before connecting
+    if (!S.user) showSignIn(fb);
     S.fbOk = true;
     fb.watchConnection(on => { S.online = on; updateStatus(); });
     fb.onValue(fb.ref(fb.db, DB.presence), s => { const v = s.val(); S.viewerSeen = v && v.lastSeen ? v.lastSeen : 0; S.viewerInfo = v; updateStatus(); showCamInfo(); });
@@ -598,11 +601,16 @@ function pushCalib() {
 // What the headset phone actually got from its camera and screen
 function showCamInfo() {
   const box = $("camInfo"); if (!box) return;
+  const who = S.user ? `Signed in as <b>${S.user.email}</b> · <a href="#" id="signOut">Sign out</a><br>` : `<span class="warn">Not signed in</span> · <a href="#" id="signInNow">Sign in</a><br>`;
+  setTimeout(() => {
+    const o = $("signOut"); if (o) o.onclick = e => { e.preventDefault(); fb.signOut().then(() => location.reload()); };
+    const n = $("signInNow"); if (n) n.onclick = e => { e.preventDefault(); if (fb) showSignIn(fb); };
+  });
   const v = S.viewerInfo;
-  if (!v || !v.camera) { box.innerHTML = "Headset camera: <b>waiting for the phone…</b> (tap Start on the phone)"; return; }
+  if (!v || !v.camera) { box.innerHTML = who + "Headset camera: <b>waiting for the phone…</b> (tap Start on the phone)"; return; }
   const c = v.camera, sc = v.screen || {};
   const low = c.width && c.width < 1280;
-  box.innerHTML =
+  box.innerHTML = who +
     `Headset camera: <b class="${low ? "warn" : ""}">${c.width}×${c.height}</b> at <b>${c.fps || "?"} fps</b>` +
     (low ? ` <span class="warn">(low – this phone/browser did not give HD)</span>` : "") +
     `<br>Autofocus: <b>${c.autofocus}</b> · Auto exposure: <b>${c.autoexposure}</b>` +

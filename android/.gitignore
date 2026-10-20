@@ -6,3 +6,6 @@ local.properties
 *.iml
 # filled by tools/export-android.mjs before each build
 app/src/main/assets/web/
+*.keystore
+*.jks
+*.p12

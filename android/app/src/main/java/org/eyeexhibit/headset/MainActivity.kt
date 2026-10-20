@@ -108,6 +108,26 @@ class MainActivity : ComponentActivity(), Net.Listener {
         col.addView(label("Camera picture turned the wrong way? Fix it here", 15f))
         val rotation = spinner(listOf("Normal", "Turn 90°", "Turn 180°", "Turn 270°"), prefs.getInt("rotFix", 0))
         col.addView(rotation)
+        // exhibit sign-in (one time; Firebase remembers it)
+        val auth = try { Net.auth(this) } catch (e: Exception) { null }
+        val user = auth?.currentUser
+        fun field(hint: String, password: Boolean) = EditText(this).apply {
+            this.hint = hint; textSize = 18f; setTextColor(Color.WHITE); setHintTextColor(Color.rgb(140, 150, 170)); minEms = 12
+            inputType = if (password) InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+                        else InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
+        }
+        val email = field("Exhibit account email", false)
+        val password = field("Password", true)
+        if (user == null) {
+            col.addView(label("Exhibit sign-in (one time on this phone)", 15f))
+            col.addView(email); col.addView(password)
+        } else {
+            col.addView(label("Signed in as ${user.email}", 14f))
+            col.addView(Button(this).apply {
+                text = "Sign out"; textSize = 13f
+                setOnClickListener { auth?.signOut(); recreate() }
+            })
+        }
         val start = Button(this).apply {
             text = "Start"; textSize = 30f; setTextColor(Color.rgb(8, 18, 42)); setBackgroundColor(Color.rgb(255, 181, 71))
             setPadding((60 * dp).toInt(), (10 * dp).toInt(), (60 * dp).toInt(), (10 * dp).toInt())
@@ -121,6 +141,14 @@ class MainActivity : ComponentActivity(), Net.Listener {
         col.addView(status)
         col.addView(label("Version ${BuildConfig.VERSION_NAME}", 12f, Color.rgb(110, 120, 140)))
         start.setOnClickListener {
+            val em = email.text.toString().trim(); val pw = password.text.toString()
+            if (auth != null && auth.currentUser == null && em.isNotEmpty() && pw.isNotEmpty()) {
+                status.text = "Signing in…"
+                auth.signInWithEmailAndPassword(em, pw)
+                    .addOnSuccessListener { start.performClick() }
+                    .addOnFailureListener { e -> status.text = "Could not sign in: ${e.message}" }
+                return@setOnClickListener
+            }
             val st = station.text.toString().filter { it.isLetterOrDigit() }.ifEmpty { "1" }
             prefs.edit()
                 .putString("station", st)

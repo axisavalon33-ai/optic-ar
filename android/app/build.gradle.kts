@@ -16,21 +16,22 @@ android {
         versionName = "1.0.$versionCode"
     }
 
-    // A fixed key kept in the project, so updates install over the previous version.
-    // (Fine for the exhibition; make a private key before publishing on Google Play.)
+    // The private signing key is NOT in the project. GitHub unpacks it from the repository's secrets
+    // (ANDROID_KEYSTORE_BASE64, ANDROID_KEY_PASSWORD) and passes its place and password here.
+    // Without it (e.g. a build on your own computer) Android Studio's own debug key is used.
+    val keystore = System.getenv("SIGNING_KEYSTORE")
     signingConfigs {
-        create("exhibit") {
-            storeFile = file("exhibit.keystore")
-            storePassword = "exhibit"
+        if (keystore != null) create("exhibit") {
+            storeFile = file(keystore)
+            storePassword = System.getenv("SIGNING_PASSWORD")
             keyAlias = "exhibit"
-            keyPassword = "exhibit"
+            keyPassword = System.getenv("SIGNING_PASSWORD")
         }
     }
     buildTypes {
-        getByName("debug") { signingConfig = signingConfigs.getByName("exhibit") }
         getByName("release") {
             isMinifyEnabled = false
-            signingConfig = signingConfigs.getByName("exhibit")
+            signingConfig = signingConfigs.findByName("exhibit") ?: signingConfigs.getByName("debug")
         }
     }
     buildFeatures { buildConfig = true }
@@ -55,4 +56,5 @@ dependencies {
     implementation("androidx.media3:media3-exoplayer:1.4.1")
     implementation(platform("com.google.firebase:firebase-bom:33.3.0"))
     implementation("com.google.firebase:firebase-database")
+    implementation("com.google.firebase:firebase-auth")
 }

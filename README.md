@@ -37,26 +37,46 @@ The placeholder videos are 6-second clips with a label, and the placeholder narr
 
 ---
 
-## Step 1 – Switch on the Firebase database (one time, about 3 minutes)
+## Step 1 – Switch on the Firebase database and the exhibit sign-in (one time, about 10 minutes)
 
+Only your own tablets and phones may read or change the database: they sign in once with an
+**exhibit account** that only you know.
+
+**A. Database**
 1. Go to <https://console.firebase.google.com> and open the project **optic-ar-1bf1f**.
-2. In the left menu click **Build → Realtime Database**.
-   If you see a **Create database** button, click it, choose **Singapore (asia-southeast1)**,
-   pick **Start in locked mode**, and click **Enable**.
-3. Click the **Rules** tab at the top.
-4. Delete everything in the box and paste in the contents of `database.rules.json`:
+2. Left menu: **Build → Realtime Database**. If you see **Create database**, click it, choose
+   **Singapore (asia-southeast1)**, pick **Start in locked mode**, and click **Enable**.
+
+**B. Exhibit account**
+1. Left menu: **Build → Authentication → Get started**.
+2. Tab **Sign-in method → Email/Password → Enable → Save** (leave "Email link" off).
+3. Tab **Users → Add user**. Type an email (it does not need to be a real inbox, e.g. `exhibit@myexhibit.org`)
+   and a long password. Click **Add user**.
+4. In the list, copy the **User UID** (a long code like `Xy12AbC…`).
+
+**C. Sign in on every device** – open the controller on each tablet and the viewer (or the app) on each phone:
+an **Exhibit sign-in** box appears once. Type the email and password. The device remembers it.
+(Tablet: the calibration panel shows "Signed in as …" and has a **Sign out** link.)
+
+**D. Lock the database** (do this last, after every device is signed in)
+1. **Realtime Database → Rules** tab. Delete everything and paste this, with your User UID in both places:
    ```json
    {
      "rules": {
        ".read": false,
        ".write": false,
-       "exhibit": { ".read": true, ".write": true }
+       "exhibit": {
+         ".read": "auth != null && auth.uid === 'PASTE-THE-USER-UID-HERE'",
+         ".write": "auth != null && auth.uid === 'PASTE-THE-USER-UID-HERE'"
+       }
      }
    }
    ```
-5. Click **Publish**.
+2. Click **Publish**.
 
-This lets the two pages read and write only the `exhibit` part of the database.
+Now a device that is not signed in cannot read or change anything (its dot stays red).
+The Firebase settings in `js/config.js` (apiKey etc.) are meant to be public – the rules and the
+password are what protect the data.
 
 ---
 
@@ -249,6 +269,16 @@ It does the same job (same tablet, same Firebase, same calibration) but uses And
 
 On the start screen you can also choose the camera quality, and turn the camera picture if it ever shows the wrong way up.
 To get back to the start screen, press the phone's Back button.
+
+**The app's private signing key (one time):** Android only accepts an update if it is signed with the same
+private key as the installed app. That key is kept in your repository's **Secrets**, which nobody can read –
+not even visitors of the repository. Add it once:
+1. On GitHub open the repository → **Settings → Secrets and variables → Actions → New repository secret**.
+2. Name `ANDROID_KEYSTORE_BASE64`, value: the long key text you were given. **Add secret**.
+3. Again **New repository secret**: name `ANDROID_KEY_PASSWORD`, value: the key password. **Add secret**.
+4. Keep a copy of both somewhere safe (e.g. a password manager). If they are lost, the next app needs a fresh install.
+
+Without these secrets GitHub cannot build the app (the Actions tab shows a red ✗ with a message).
 
 **Updates:** every time files change on GitHub, GitHub builds a new app by itself (about 5–10 minutes; see the
 **Actions** tab). Install it from the same link; it replaces the old one and keeps the settings.

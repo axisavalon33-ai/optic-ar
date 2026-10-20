@@ -10,6 +10,7 @@ import { LANGUAGES, T, tr } from "./translations.js";
 import { paintField, filtersAt, ALL_CONDITIONS } from "./defects.js";
 import { isFullscreen, enterFullscreen, keepFullscreen } from "./fullscreen.js";
 import { Synced } from "./sync.js";
+import { showSignIn } from "./signin.js";
 
 const $ = id => document.getElementById(id);
 const canvas = $("gl");
@@ -49,6 +50,7 @@ const hotspots = JSON.parse(JSON.stringify(DEFAULT_HOTSPOTS));
 (async () => {
   try {
     fb = await import("./fb.js");
+    if (!(await fb.authReady)) showSignIn(fb);   // wait for the saved sign-in before connecting
   } catch (e) {
     console.error(e);
     showError("firebase");

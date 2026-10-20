@@ -3,8 +3,8 @@
     ".read": false,
     ".write": false,
     "exhibit": {
-      ".read": true,
-      ".write": true
+      ".read": "auth != null && auth.uid === 'PASTE-THE-USER-UID-HERE'",
+      ".write": "auth != null && auth.uid === 'PASTE-THE-USER-UID-HERE'"
     }
   }
 }

@@ -41,22 +41,40 @@ jobs:
       - name: Copy the exhibit's settings, words and media into the app
         run: node tools/export-android.mjs
 
+      - name: Unpack the private signing key (from the repository's secrets)
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE_B64" ] || [ -z "$KEY_PASSWORD" ]; then
+            echo "::warning::No signing key in the secrets yet: test build only, nothing is published."
+            exit 0
+          fi
+          echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/exhibit.keystore"
+          echo "SIGNING_KEYSTORE=$RUNNER_TEMP/exhibit.keystore" >> "$GITHUB_ENV"
+          echo "HAVE_KEY=1" >> "$GITHUB_ENV"
+
       - name: Build the app
         working-directory: android
+        env:
+          SIGNING_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           chmod +x gradlew
           ./gradlew --no-daemon --stacktrace assembleRelease
 
       - name: Name the APK
+        if: env.HAVE_KEY == '1'
         run: cp android/app/build/outputs/apk/release/app-release.apk EyeExhibitHeadset.apk
 
       - uses: actions/upload-artifact@v4
+        if: env.HAVE_KEY == '1'
         with:
           name: EyeExhibitHeadset
           path: EyeExhibitHeadset.apk
           retention-days: 14
 
       - name: Publish at the fixed download link
+        if: env.HAVE_KEY == '1'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -65,3 +83,9 @@ jobs:
             --target "$GITHUB_SHA" \
             --title "Headset app (latest build)" \
             --notes "Built from branch ${GITHUB_REF_NAME}, commit ${GITHUB_SHA::7}. Open this link on the headset phone to install: https://github.com/${GITHUB_REPOSITORY}/releases/download/headset-app/EyeExhibitHeadset.apk"
+
+      - name: Signing key missing
+        if: env.HAVE_KEY != '1'
+        run: |
+          echo "::error::The app was built but NOT published: add the secrets ANDROID_KEYSTORE_BASE64 and ANDROID_KEY_PASSWORD (Settings → Secrets and variables → Actions), then run this workflow again."
+          exit 1

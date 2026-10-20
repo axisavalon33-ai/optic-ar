@@ -3,6 +3,7 @@ package org.eyeexhibit.headset
 import android.content.Context
 import com.google.firebase.FirebaseApp
 import com.google.firebase.FirebaseOptions
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
@@ -30,18 +31,7 @@ class Net(private val station: String, private val listener: Listener) {
     private val listeners = mutableListOf<Pair<DatabaseReference, ValueEventListener>>()
 
     fun start(ctx: Context) {
-        val c = Data.root.getJSONObject("firebaseConfig")
-        val url = c.getString("databaseURL")
-        val app = if (FirebaseApp.getApps(ctx).isEmpty()) {
-            val opts = FirebaseOptions.Builder()
-                .setApiKey(c.getString("apiKey"))
-                .setApplicationId(c.getString("appId"))
-                .setDatabaseUrl(url)
-                .setProjectId(c.getString("projectId"))
-                .build()
-            FirebaseApp.initializeApp(ctx, opts)
-        } else FirebaseApp.getInstance()
-        val d = FirebaseDatabase.getInstance(app, url)
+        val d = FirebaseDatabase.getInstance(app(ctx), Data.root.getJSONObject("firebaseConfig").getString("databaseURL"))
         db = d
         listen(d.getReference(".info/serverTimeOffset")) { offset = (it.value as? Number)?.toLong() ?: 0L }
         listen(d.getReference(".info/connected")) {
@@ -63,6 +53,23 @@ class Net(private val station: String, private val listener: Listener) {
     fun beat(data: Map<String, Any?>) {
         if (db == null) return
         ref("presence").setValue(data + ("lastSeen" to ServerValue.TIMESTAMP))
+    }
+
+    companion object {
+        /** the Firebase project from js/config.js */
+        fun app(ctx: Context): FirebaseApp {
+            if (FirebaseApp.getApps(ctx).isNotEmpty()) return FirebaseApp.getInstance()
+            val c = Data.root.getJSONObject("firebaseConfig")
+            val opts = FirebaseOptions.Builder()
+                .setApiKey(c.getString("apiKey"))
+                .setApplicationId(c.getString("appId"))
+                .setDatabaseUrl(c.getString("databaseURL"))
+                .setProjectId(c.getString("projectId"))
+                .build()
+            return FirebaseApp.initializeApp(ctx, opts)
+        }
+        /** the exhibit account (only it may read and write the database, see database.rules.json) */
+        fun auth(ctx: Context): FirebaseAuth = FirebaseAuth.getInstance(app(ctx))
     }
 
     private fun ref(p: String) = db!!.getReference("exhibit/stations/$station/$p")
