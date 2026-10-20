@@ -314,6 +314,7 @@ uniform float uK, uZoom, uIpd, uVert, uEye, uRound, uDiv, uTest;
 uniform vec2 uNose;
 uniform vec4 uFxA0, uFxB0, uFxA1, uFxB1; // A: blur, contrast, tint, glare   B: desat, redDesat, dim, warp
 uniform vec2 uMaskBlur;                  // extra blur inside the dark (affected) areas, per eye
+uniform vec2 uEdge;                      // bluish-grey haze where the dark areas begin (glaucoma), per eye
 
 vec3 cam(vec2 c) {
   // c: camera coords, -1..1 covers the camera's height (centre square crop)
@@ -414,10 +415,10 @@ void main() {
       col += A.w * max(col - 0.7, 0.0) * 1.2;   // bloom
     }
   }
-  // contrast reduction
-  col = mix(vec3(0.52), col, 1.0 - A.y);
-  // yellow-brown tint
-  col = mix(col, col * vec3(1.0, 0.84, 0.55) + vec3(0.05, 0.03, 0.0), A.z);
+  // amber-brown tint (cataract: the yellowed lens absorbs blue and green light)
+  col = mix(col, col * vec3(0.92, 0.64, 0.36) + vec3(0.09, 0.03, 0.0), A.z);
+  // contrast reduction: towards grey, or towards a milky orange veil when tinted (cataract)
+  col = mix(mix(vec3(0.52), vec3(0.80, 0.47, 0.20), clamp(A.z, 0.0, 1.0)), col, 1.0 - A.y);
   // desaturation, especially reds
   float L = lum(col);
   col = mix(col, vec3(L), B.x);
@@ -426,6 +427,9 @@ void main() {
   // brightness
   col *= 1.0 - B.z;
 
+  // bluish-grey haze where the dark areas begin (glaucoma)
+  float eg = (eye < 0.5 ? uEdge.x : uEdge.y) * smoothstep(0.05, 0.7, dark);
+  col = mix(col, vec3(lum(col)) * vec3(0.70, 0.80, 1.0) + vec3(0.02, 0.03, 0.06), eg * 0.6);
   // defect mask (dark grey to black)
   col = mix(col, vec3(0.02), dark);
 
@@ -469,7 +473,7 @@ async function initRenderer() {
     uScreenOn: 1, uScrMain: blank, uScrHasMain: 0, uScrOver: overTex, uScrAspect: 16 / 9, uScrSize: 1.6,
     uK: 0, uZoom: 1, uIpd: 0.5, uVert: 0, uEye: 0.9, uRound: 1, uDiv: 0, uTest: 0, uNose: new THREE.Vector2(),
     uFxA0: new THREE.Vector4(), uFxB0: new THREE.Vector4(), uFxA1: new THREE.Vector4(), uFxB1: new THREE.Vector4(),
-    uMaskBlur: new THREE.Vector2()
+    uMaskBlur: new THREE.Vector2(), uEdge: new THREE.Vector2()
   })) u[k] = { value: v };
   U = u;
   const mat = new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: FRAG, uniforms: u, depthTest: false, depthWrite: false });
@@ -523,7 +527,8 @@ function updateMask(t) {
 function setFx(eyeIdx, fx) {
   U["uFxA" + eyeIdx].value.set(fx.blur, fx.contrast, fx.tint, fx.glare);
   U["uFxB" + eyeIdx].value.set(fx.desat, fx.redDesat, fx.dim, fx.warp);
-  if (eyeIdx === 0) U.uMaskBlur.value.x = fx.maskBlur || 0; else U.uMaskBlur.value.y = fx.maskBlur || 0;
+  if (eyeIdx === 0) { U.uMaskBlur.value.x = fx.maskBlur || 0; U.uEdge.value.x = fx.edge || 0; }
+  else { U.uMaskBlur.value.y = fx.maskBlur || 0; U.uEdge.value.y = fx.edge || 0; }
 }
 
 // ---------------------------------------------------------------- screen-mode content

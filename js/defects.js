@@ -32,35 +32,32 @@ export function envelope(t) {
   return smooth(0, F, t) * smooth(T, T - F, t);
 }
 
-const NO_FILTER = { blur: 0, contrast: 0, tint: 0, glare: 0, desat: 0, redDesat: 0, dim: 0, warp: 0, maskBlur: 0 };
+const NO_FILTER = { blur: 0, contrast: 0, tint: 0, glare: 0, desat: 0, redDesat: 0, dim: 0, warp: 0, maskBlur: 0, edge: 0 };
 
 export const CONDITIONS = {
   // ---------------- Eye disorders ----------------
   cataract: {
-    field: () => [{ kind: "haze", type: "full", a: 0.42 }],
-    filters: { both: { blur: 0.011, contrast: 0.40, tint: 0.60, glare: 0.9, dim: 0.06 } }
+    // Like the reference video: the view turns amber-brown at once (blue and green light are absorbed
+    // by the yellowed lens), lights get glowing halos, then a milky orange veil slowly thickens,
+    // the picture gets softer and the dark areas turn brown instead of black.
+    field: (eye, t) => [{ kind: "haze", type: "full", a: lerp(0.25, 0.6, smooth(0, 1, clamp01(t / (TIMING.effectTotal - 3)))) }],
+    filters: (eye, t) => {
+      const p = clamp01(t / (TIMING.effectTotal - 3));   // 0 -> 1 over ~17 s
+      return { tint: 1, contrast: lerp(0.12, 0.56, smooth(0.15, 1, p)), blur: lerp(0.006, 0.02, p), glare: lerp(0.8, 1.5, p) };
+    }
   },
   glaucoma: {
-    // Based on how patients describe it (and the US National Eye Institute simulation):
-    // smudged, blurry, irregular patches – not a black tunnel. Loss starts in arcs above and
-    // below the centre and on the NOSE side (nasal step), then creeps inward; the centre
-    // stays clear until late. The two eyes are affected a little differently.
+    // Like the US National Eye Institute simulation: almost black all round, with a wide, irregular
+    // clear area in the middle. Its wavy, very soft edge keeps moving slowly; the edge zone looks blurred
+    // and bluish-grey. Dark bulges push in from above and below, the nose side is lost a little more,
+    // and the clear area slowly narrows. The two eyes are a little different.
     field: (eye, t) => {
-      const p = clamp01(t / (TIMING.effectTotal - 4));        // 0 -> 1 over ~16 s
-      const nasal = eye === "L" ? 1 : -1;                      // nose side: right of the left eye's view, left of the right eye's
-      const q = smooth(0.15, 0.95, p);
-      const early = smooth(0.0, 0.4, p);
-      return [
-        // patchy arcuate scotomas above (stronger) and below the centre, on the nose side first
-        { kind: "dark", type: "puffs", a: 0.8 * early, nasal, seed: eye === "L" ? 1 : 2, spread: lerp(0.4, 1, early) },
-        // the irregular clear island that shrinks
-        { kind: "dark", type: "island", a: 0.9, nasal, seed: eye === "L" ? 3 : 7,
-          r: lerp(1.7, eye === "L" ? 0.5 : 0.6, q),
-          cx: -nasal * 0.12 * q, cy: -0.07 * q, soft: 0.42 }
-      ];
+      const q = smooth(0, 1, clamp01(t / (TIMING.effectTotal - 3)));
+      const L = eye === "L", nasal = L ? 1 : -1;   // nose side: right of the left eye's view, left of the right eye's
+      return [{ kind: "dark", type: "tunnel", a: 0.97, nasal, seed: L ? 1 : 2.3, time: t,
+        rx: lerp(1.05, 0.8, q), ry: lerp(0.62, 0.45, q), cx: -nasal * 0.05, cy: 0.02, soft: 0.42, dent: lerp(0.15, 0.3, q) }];
     },
-    // affected areas are also blurred ("smudged"), plus a little overall dimming
-    filters: { both: { maskBlur: 0.05, dim: 0.07, contrast: 0.1 } }
+    filters: { both: { maskBlur: 0.045, dim: 0.1, contrast: 0.1, desat: 0.15, edge: 0.8 } }
   },
   amd: {
     field: () => [
@@ -101,7 +98,7 @@ export function filtersAt(condition, eye, t) {
   const c = CONDITIONS[condition];
   const out = { ...NO_FILTER };
   if (!c) return out;
-  const src = c.filters[eye] || c.filters.both || {};
+  const src = typeof c.filters === "function" ? c.filters(eye, t) : (c.filters[eye] || c.filters.both || {});
   const e = envelope(t);
   for (const k in src) out[k] = src[k] * e;
   return out;
@@ -196,6 +193,34 @@ function drawShape(c, sh, rgb, a, E) {
           let rr = sh.r * (1 + 0.16 * Math.sin(2 * th + ph) + 0.11 * Math.sin(3 * th + ph * 2.3) + 0.07 * Math.sin(5 * th + ph * 0.7));
           rr *= 1 - 0.28 * Math.max(0, Math.cos(th - nasalAngle));  // nose side lost first (nasal step)
           rr *= 1 - 0.16 * Math.max(0, Math.sin(th));               // upper field a little worse
+          const x = sh.cx + rr * k * Math.cos(th), y = sh.cy + rr * k * Math.sin(th);
+          j ? c.lineTo(x, y) : c.moveTo(x, y);
+        }
+        c.closePath(); c.fill();
+      }
+      c.globalCompositeOperation = "source-over";
+      break;
+    }
+    case "tunnel": { // dark all round except a wide, irregular clear area whose wavy edge slowly moves
+      c.fillStyle = rgba(rgb, a); big();
+      c.globalCompositeOperation = "destination-out";
+      const N = 18;
+      const ph = sh.seed * 1.3, w = sh.time * 0.35;
+      const nasalAngle = sh.nasal > 0 ? 0 : Math.PI;
+      const bump = (th, at) => { const d = Math.atan2(Math.sin(th - at), Math.cos(th - at)); return Math.exp(-d * d / 0.25); };
+      // each ring removes just enough that the darkness fades evenly (smoothly) from the outer to the inner ring
+      const left = i => 1 - smooth(0, 1, (i + 1) / N);
+      for (let i = 0; i < N; i++) {
+        const k = 1 + sh.soft * (1 - 2 * i / (N - 1));             // outer, faint … inner, fully clear
+        c.fillStyle = `rgba(0,0,0,${i === N - 1 ? 1 : 1 - left(i) / (i ? left(i - 1) : 1)})`;
+        c.beginPath();
+        for (let j = 0; j <= 96; j++) {
+          const th = j / 96 * Math.PI * 2;
+          let rr = 1 / Math.hypot(Math.cos(th) / sh.rx, Math.sin(th) / sh.ry);   // wide oval
+          rr *= 1 + 0.09 * Math.sin(2 * th + ph + w) + 0.07 * Math.sin(3 * th + ph * 2.1 - w * 0.8) + 0.05 * Math.sin(5 * th + ph * 0.6 + w * 1.3);
+          rr *= 1 - sh.dent * bump(th, Math.PI / 2 + 0.35 * Math.sin(w * 0.5 + ph))      // dark bulge from above
+                  - 0.6 * sh.dent * bump(th, -Math.PI / 2 + 0.4 * Math.sin(w * 0.4 + ph * 2)); // and from below
+          rr *= 1 - 0.15 * Math.max(0, Math.cos(th - nasalAngle));  // nose side lost a little more
           const x = sh.cx + rr * k * Math.cos(th), y = sh.cy + rr * k * Math.sin(th);
           j ? c.lineTo(x, y) : c.moveTo(x, y);
         }

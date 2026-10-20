@@ -98,7 +98,7 @@ class Renderer(
         for (n in listOf("uRes", "uCam", "uCamM", "uCamR", "uCamAspect", "uHasCam", "uMask", "uMaskExtent",
             "uScreenOn", "uScrKind", "uVid", "uVidM", "uStill", "uOver", "uOverAR", "uScrAspect", "uScrSize",
             "uK", "uZoom", "uIpd", "uVert", "uEye", "uRound", "uDiv", "uTest", "uNose",
-            "uFxA0", "uFxB0", "uFxA1", "uFxB1", "uMaskBlur")) loc[n] = GLES20.glGetUniformLocation(prog, n)
+            "uFxA0", "uFxB0", "uFxA1", "uFxB1", "uMaskBlur", "uEdge")) loc[n] = GLES20.glGetUniformLocation(prog, n)
         loc["aPos"] = GLES20.glGetAttribLocation(prog, "aPos")
         quad = ByteBuffer.allocateDirect(8 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer()
             .apply { put(floatArrayOf(-1f, -1f, 1f, -1f, -1f, 1f, 1f, 1f)); position(0) }
@@ -236,6 +236,7 @@ class Renderer(
         val fr = Effects.filtersAt(if (arOn) run?.cond else null, 'R', t)
         setFx(fl, "uFxA0", "uFxB0"); setFx(fr, "uFxA1", "uFxB1")
         GLES20.glUniform2f(loc["uMaskBlur"]!!, fl.maskBlur.toFloat(), fr.maskBlur.toFloat())
+        GLES20.glUniform2f(loc["uEdge"]!!, fl.edge.toFloat(), fr.edge.toFloat())
 
         val a = loc["aPos"]!!
         GLES20.glEnableVertexAttribArray(a)
@@ -327,6 +328,7 @@ uniform float uRound; uniform float uDiv; uniform float uTest;
 uniform vec2 uNose;
 uniform vec4 uFxA0; uniform vec4 uFxB0; uniform vec4 uFxA1; uniform vec4 uFxB1;
 uniform vec2 uMaskBlur;
+uniform vec2 uEdge;
 
 vec3 cam(vec2 c) {
   vec2 uv = vec2(0.5 + c.x * 0.5 / uCamAspect, 0.5 + c.y * 0.5);
@@ -419,13 +421,15 @@ void main() {
       col += A.w * max(col - 0.7, 0.0) * 1.2;
     }
   }
-  col = mix(vec3(0.52), col, 1.0 - A.y);
-  col = mix(col, col * vec3(1.0, 0.84, 0.55) + vec3(0.05, 0.03, 0.0), A.z);
+  col = mix(col, col * vec3(0.92, 0.64, 0.36) + vec3(0.09, 0.03, 0.0), A.z);
+  col = mix(mix(vec3(0.52), vec3(0.80, 0.47, 0.20), clamp(A.z, 0.0, 1.0)), col, 1.0 - A.y);
   float L = lum(col);
   col = mix(col, vec3(L), B.x);
   float red = max(col.r - max(col.g, col.b), 0.0);
   col.r -= red * B.y * 0.85;
   col *= 1.0 - B.z;
+  float eg = (eye < 0.5 ? uEdge.x : uEdge.y) * smoothstep(0.05, 0.7, dark);
+  col = mix(col, vec3(lum(col)) * vec3(0.70, 0.80, 1.0) + vec3(0.02, 0.03, 0.06), eg * 0.6);
   col = mix(col, vec3(0.02), dark);
   if (uOverAR > 0.5) {               // condition name at the start of the effect
     vec2 su = scrUV(m);

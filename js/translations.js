@@ -59,7 +59,7 @@ export const T = {
         name: "Cataract",
         line1: "The clear lens inside the eye becomes cloudy.",
         line2: "Everything looks blurry, faded and yellowish, with glare from lights.",
-        field: "Both eyes see an even haze."
+        field: "Both eyes: everything turns yellow-brown and hazy, lights glow, and the haze slowly thickens."
       },
       amd: {
         name: "Age-related macular degeneration",
@@ -71,7 +71,7 @@ export const T = {
         name: "Glaucoma",
         line1: "High pressure in the eye slowly damages the optic nerve.",
         line2: "Side vision is lost first, often without any pain, until only a small centre is left.",
-        field: "Blurry, patchy areas eat into the side vision, the nose side first."
+        field: "Dark, blurry edges close in from all sides, leaving only a clear area in the middle."
       },
       neuritis: {
         name: "Optic neuritis",
@@ -142,7 +142,7 @@ export const T = {
         name: "கண்புரை",
         line1: "கண்ணின் உள்ளே உள்ள தெளிவான வில்லை மங்கலாகிறது.",
         line2: "எல்லாம் மங்கலாகவும் மஞ்சளாகவும் தெரியும்; விளக்குகள் கண்கூசும்.",
-        field: "இரு கண்களிலும் சீரான மங்கல்."
+        field: "இரு கண்களிலும் எல்லாம் மஞ்சள்-பழுப்பாக மங்கலாகி, விளக்குகள் ஒளிர்ந்து, மங்கல் மெதுவாக அதிகரிக்கிறது."
       },
       amd: {
         name: "வயது தொடர்பான மாகுலா சிதைவு",
@@ -154,7 +154,7 @@ export const T = {
         name: "கண் அழுத்த நோய் (குளுக்கோமா)",
         line1: "கண்ணில் உள்ள அதிக அழுத்தம் பார்வை நரம்பை மெதுவாகச் சேதப்படுத்துகிறது.",
         line2: "வலி இல்லாமல் பக்கப் பார்வை முதலில் குறைந்து, சிறிய மையம் மட்டும் மிஞ்சும்.",
-        field: "பக்கப் பார்வையில் மங்கலான திட்டுகள் தோன்றி, மூக்குப் பக்கம் முதலில் குறைகிறது."
+        field: "இருண்ட, மங்கலான ஓரங்கள் எல்லாப் பக்கங்களிலிருந்தும் நெருங்கி, நடுவில் மட்டும் தெளிவான பகுதி மிஞ்சுகிறது."
       },
       neuritis: {
         name: "பார்வை நரம்பு அழற்சி",
@@ -225,7 +225,7 @@ export const T = {
         name: "ඇසේ සුද (කැටරැක්ට්)",
         line1: "ඇස ඇතුළේ ඇති පැහැදිලි කාචය බොඳ වේ.",
         line2: "සියල්ල බොඳ, මැලවුණු සහ කහ පාටට පෙනේ; ආලෝකයෙන් ඇස් නිලංකාර වේ.",
-        field: "ඇස් දෙකේම ඒකාකාර බොඳවීමක්."
+        field: "ඇස් දෙකේම සියල්ල කහ-දුඹුරු පාටින් බොඳ වී, ආලෝක දිදුලන අතර බොඳවීම සෙමින් වැඩි වේ."
       },
       amd: {
         name: "වයස්ගත වීම ආශ්‍රිත මැකියුලා පිරිහීම",
@@ -237,7 +237,7 @@ export const T = {
         name: "ග්ලුකෝමාව",
         line1: "ඇසේ අධික පීඩනය දෘෂ්ටි ස්නායුවට සෙමින් හානි කරයි.",
         line2: "වේදනාවකින් තොරව පැති පෙනීම මුලින් නැති වී, කුඩා මැද කොටසක් පමණක් ඉතිරි වේ.",
-        field: "පැති පෙනීමේ බොඳ පැල්ලම් ඇති වී, නාසය පැත්ත මුලින්ම නැති වේ."
+        field: "අඳුරු, බොඳ දාර සෑම පැත්තකින්ම ළං වී, මැද පැහැදිලි කොටසක් පමණක් ඉතිරි වේ."
       },
       neuritis: {
         name: "දෘෂ්ටි ස්නායු ප්‍රදාහය",

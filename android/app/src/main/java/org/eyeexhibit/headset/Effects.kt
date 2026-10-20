@@ -12,7 +12,10 @@ import android.graphics.PorterDuffXfermode
 import android.graphics.RadialGradient
 import android.graphics.Shader
 import kotlin.math.PI
+import kotlin.math.atan2
 import kotlin.math.cos
+import kotlin.math.exp
+import kotlin.math.hypot
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
@@ -43,7 +46,7 @@ object Effects {
     class Fx(
         var blur: Double = 0.0, var contrast: Double = 0.0, var tint: Double = 0.0, var glare: Double = 0.0,
         var desat: Double = 0.0, var redDesat: Double = 0.0, var dim: Double = 0.0, var warp: Double = 0.0,
-        var maskBlur: Double = 0.0
+        var maskBlur: Double = 0.0, var edge: Double = 0.0
     )
 
     fun filtersAt(cond: String?, eye: Char, t: Double): Fx {
@@ -51,13 +54,17 @@ object Effects {
         if (cond == null) return fx
         val e = envelope(t)
         when (cond) {
-            "cataract" -> { fx.blur = 0.011; fx.contrast = 0.40; fx.tint = 0.60; fx.glare = 0.9; fx.dim = 0.06 }
-            "glaucoma" -> { fx.maskBlur = 0.05; fx.dim = 0.07; fx.contrast = 0.1 }
+            "cataract" -> {     // amber at once, then a thickening milky veil (see js/defects.js)
+                val p = clamp01(t / (Data.effectTotal - 3))
+                fx.tint = 1.0; fx.contrast = lerp(0.12, 0.56, smooth(0.15, 1.0, p))
+                fx.blur = lerp(0.006, 0.02, p); fx.glare = lerp(0.8, 1.5, p)
+            }
+            "glaucoma" -> { fx.maskBlur = 0.045; fx.dim = 0.1; fx.contrast = 0.1; fx.desat = 0.15; fx.edge = 0.8 }
             "amd" -> fx.warp = 1.0
             "neuritis" -> if (eye == 'L') { fx.blur = 0.007; fx.contrast = 0.3; fx.desat = 0.5; fx.redDesat = 0.9; fx.dim = 0.30; fx.maskBlur = 0.04 }
         }
         fx.blur *= e; fx.contrast *= e; fx.tint *= e; fx.glare *= e; fx.desat *= e
-        fx.redDesat *= e; fx.dim *= e; fx.warp *= e; fx.maskBlur *= e
+        fx.redDesat *= e; fx.dim *= e; fx.warp *= e; fx.maskBlur *= e; fx.edge *= e
         return fx
     }
 
@@ -65,7 +72,8 @@ object Effects {
         val type: String, val a: Double = 1.0,
         val axis: String = "x", val side: Double = 1.0, val sx: Double = 1.0, val sy: Double = 1.0,
         val cx: Double = 0.0, val cy: Double = 0.0, val r: Double = 0.0, val soft: Double = 0.0,
-        val nasal: Double = 1.0, val seed: Double = 1.0, val spread: Double = 1.0, val hole: Double = 0.0
+        val nasal: Double = 1.0, val seed: Double = 1.0, val spread: Double = 1.0, val hole: Double = 0.0,
+        val rx: Double = 1.0, val ry: Double = 1.0, val time: Double = 0.0, val dent: Double = 0.0
     )
 
     /** dark shapes for one eye ('L' / 'R') at time t */
@@ -73,16 +81,12 @@ object Effects {
         val L = eye == 'L'
         return when (cond) {
             "cataract" -> emptyList()   // only a haze (diagram), the headset uses filters
-            "glaucoma" -> {
-                val p = clamp01(t / (Data.effectTotal - 4))
+            "glaucoma" -> {     // dark all round, a wide irregular clear area with a slowly moving soft edge
+                val q = smooth(0.0, 1.0, clamp01(t / (Data.effectTotal - 3)))
                 val nasal = if (L) 1.0 else -1.0
-                val q = smooth(0.15, 0.95, p)
-                val early = smooth(0.0, 0.4, p)
-                listOf(
-                    Shape("puffs", a = 0.8 * early, nasal = nasal, seed = if (L) 1.0 else 2.0, spread = lerp(0.4, 1.0, early)),
-                    Shape("island", a = 0.9, nasal = nasal, seed = if (L) 3.0 else 7.0,
-                        r = lerp(1.7, if (L) 0.5 else 0.6, q), cx = -nasal * 0.12 * q, cy = -0.07 * q, soft = 0.42)
-                )
+                listOf(Shape("tunnel", a = 0.97, nasal = nasal, seed = if (L) 1.0 else 2.3, time = t,
+                    rx = lerp(1.05, 0.8, q), ry = lerp(0.62, 0.45, q), cx = -nasal * 0.05, cy = 0.02, soft = 0.42,
+                    dent = lerp(0.15, 0.3, q)))
             }
             "amd" -> listOf(Shape("blob", r = 0.2, a = 0.88))
             "neuritis" -> if (L) listOf(
@@ -167,6 +171,33 @@ object Effects {
                         var rr = sh.r * (1 + 0.16 * sin(2 * th + ph) + 0.11 * sin(3 * th + ph * 2.3) + 0.07 * sin(5 * th + ph * 0.7))
                         rr *= 1 - 0.28 * max(0.0, cos(th - nasalAngle))
                         rr *= 1 - 0.16 * max(0.0, sin(th))
+                        val x = sh.cx + rr * k * cos(th); val y = sh.cy + rr * k * sin(th)
+                        if (j == 0) path.moveTo(f(x), f(y)) else path.lineTo(f(x), f(y))
+                    }
+                    path.close(); c.drawPath(path, paint)
+                }
+                paint.xfermode = null
+            }
+            "tunnel" -> {
+                paint.color = white(a); big()
+                paint.xfermode = xferOut
+                val n = 18
+                val ph = sh.seed * 1.3; val w = sh.time * 0.35
+                val nasalAngle = if (sh.nasal > 0) 0.0 else PI
+                fun bump(th: Double, at: Double): Double { val d = atan2(sin(th - at), cos(th - at)); return exp(-d * d / 0.25) }
+                // each ring removes just enough that the darkness fades evenly from the outer to the inner ring
+                fun left(i: Int) = 1 - smooth(0.0, 1.0, (i + 1).toDouble() / n)
+                for (i in 0 until n) {
+                    val k = 1 + sh.soft * (1 - 2.0 * i / (n - 1))
+                    paint.color = black(if (i == n - 1) 1.0 else 1 - left(i) / (if (i > 0) left(i - 1) else 1.0))
+                    val path = Path()
+                    for (j in 0..96) {
+                        val th = j / 96.0 * PI * 2
+                        var rr = 1 / hypot(cos(th) / sh.rx, sin(th) / sh.ry)
+                        rr *= 1 + 0.09 * sin(2 * th + ph + w) + 0.07 * sin(3 * th + ph * 2.1 - w * 0.8) + 0.05 * sin(5 * th + ph * 0.6 + w * 1.3)
+                        rr *= 1 - sh.dent * bump(th, PI / 2 + 0.35 * sin(w * 0.5 + ph)) -
+                            0.6 * sh.dent * bump(th, -PI / 2 + 0.4 * sin(w * 0.4 + ph * 2))
+                        rr *= 1 - 0.15 * max(0.0, cos(th - nasalAngle))
                         val x = sh.cx + rr * k * cos(th); val y = sh.cy + rr * k * sin(th)
                         if (j == 0) path.moveTo(f(x), f(y)) else path.lineTo(f(x), f(y))
                     }
