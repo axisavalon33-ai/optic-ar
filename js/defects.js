@@ -26,9 +26,10 @@ const smooth = (a, b, v) => { const x = clamp01((v - a) / (b - a)); return x * x
 const lerp = (a, b, k) => a + (b - a) * k;
 const SOFT = 0.07; // width of the blurred edge on hemifield / quadrant borders
 
-// Fade in over 1.5 s, fade out over the last 1.5 s of the 20 s.
-export function envelope(t) {
-  const T = TIMING.effectTotal, F = TIMING.fade;
+// Fade in over 1.5 s, fade out over the last 1.5 s of the effect (T = effect length in seconds,
+// set per condition in the calibration panel; 20 s if not given).
+export function envelope(t, T = TIMING.effectTotal) {
+  const F = TIMING.fade;
   return smooth(0, F, t) * smooth(T, T - F, t);
 }
 
@@ -40,9 +41,9 @@ export const CONDITIONS = {
     // Like the reference video: the view turns amber-brown at once (blue and green light are absorbed
     // by the yellowed lens), lights get glowing halos, then a milky orange veil slowly thickens,
     // the picture gets softer and the dark areas turn brown instead of black.
-    field: (eye, t) => [{ kind: "haze", type: "full", a: lerp(0.25, 0.6, smooth(0, 1, clamp01(t / (TIMING.effectTotal - 3)))) }],
-    filters: (eye, t) => {
-      const p = clamp01(t / (TIMING.effectTotal - 3));   // 0 -> 1 over ~17 s
+    field: (eye, t, T) => [{ kind: "haze", type: "full", a: lerp(0.25, 0.6, smooth(0, 1, clamp01(t / (T - 3)))) }],
+    filters: (eye, t, T) => {
+      const p = clamp01(t / (T - 3));   // 0 -> 1 over the effect (but the last 3 s)
       return { tint: 1, contrast: lerp(0.12, 0.56, smooth(0.15, 1, p)), blur: lerp(0.006, 0.02, p), glare: lerp(0.8, 1.5, p) };
     }
   },
@@ -51,8 +52,8 @@ export const CONDITIONS = {
     // clear area in the middle. Its wavy, very soft edge keeps moving slowly; the edge zone looks blurred
     // and bluish-grey. Dark bulges push in from above and below, the nose side is lost a little more,
     // and the clear area slowly narrows. The two eyes are a little different.
-    field: (eye, t) => {
-      const q = smooth(0, 1, clamp01(t / (TIMING.effectTotal - 3)));
+    field: (eye, t, T) => {
+      const q = smooth(0, 1, clamp01(t / (T - 3)));
       const L = eye === "L", nasal = L ? 1 : -1;   // nose side: right of the left eye's view, left of the right eye's
       return [{ kind: "dark", type: "tunnel", a: 0.97, nasal, seed: L ? 1 : 2.3, time: t,
         rx: lerp(1.05, 0.8, q), ry: lerp(0.62, 0.45, q), cx: -nasal * 0.05, cy: 0.02, soft: 0.42, dent: lerp(0.15, 0.3, q) }];
@@ -93,20 +94,26 @@ export const CONDITIONS = {
   }
 };
 
+// Effect length (seconds) for a condition, from the calibration settings: 10–40 s, default 20 s.
+export function effectLength(calib, condition) {
+  const v = Number(calib && calib.durations && calib.durations[condition]);
+  return v >= 10 && v <= 40 ? v : TIMING.effectTotal;
+}
+
 // Whole-image filter strengths for one eye at time t (already faded).
-export function filtersAt(condition, eye, t) {
+export function filtersAt(condition, eye, t, T = TIMING.effectTotal) {
   const c = CONDITIONS[condition];
   const out = { ...NO_FILTER };
   if (!c) return out;
-  const src = typeof c.filters === "function" ? c.filters(eye, t) : (c.filters[eye] || c.filters.both || {});
-  const e = envelope(t);
+  const src = typeof c.filters === "function" ? c.filters(eye, t, T) : (c.filters[eye] || c.filters.both || {});
+  const e = envelope(t, T);
   for (const k in src) out[k] = src[k] * e;
   return out;
 }
 
 // ---------------------------------------------------------------------
 //  PAINTER
-//  paintField(ctx, size, condition, eye, t, {color, kinds, extent})
+//  paintField(ctx, size, condition, eye, t, {color, kinds, extent, total})
 //  Draws the field shapes into a square area of `size` px whose centre
 //  is the eye centre and whose half-width is `extent` field units.
 //  Only shapes whose kind is listed in `kinds` are drawn.
@@ -295,8 +302,9 @@ export function paintField(ctx, size, condition, eye, t, opts = {}) {
   const rgb = opts.color || [255, 255, 255];
   const kinds = opts.kinds || ["dark"];
   const E = opts.extent || 1.5;
-  const env = envelope(t);
-  for (const sh of c.field(eye, t)) {
+  const T = opts.total || TIMING.effectTotal;
+  const env = envelope(t, T);
+  for (const sh of c.field(eye, t, T)) {
     if (!kinds.includes(sh.kind)) continue;
     const a = (sh.a === undefined ? 1 : sh.a) * env;
     if (a <= 0.001) continue;

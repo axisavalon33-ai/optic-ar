@@ -295,3 +295,16 @@ input[type=range] { width: 100%; accent-color: var(--amber); height: 28px; }
 
 /* the large "Show in VR" button on the info card */
 #cardAR { display: block; width: 100%; font-size: clamp(22px, 3.2vw, 34px); font-weight: 700; padding: 22px 34px; margin-top: 20px; }
+
+/* "Watch the introduction or skip?" */
+#introChoiceScreen { display: flex; align-items: center; justify-content: center; }
+.intro-choice { width: min(760px, 88vw); padding: clamp(24px, 5vmin, 48px); text-align: center; }
+.intro-choice h2 { margin: 0 0 28px; color: var(--amber); font-size: clamp(24px, 3.6vw, 38px); line-height: 1.35; }
+.intro-buttons { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
+.intro-buttons .big { min-width: 240px; font-size: clamp(20px, 2.6vw, 28px); padding: 22px 34px; }
+
+/* calibration: effect length per condition */
+.dur-row { display: flex; align-items: center; gap: 10px; margin: 6px 0; font-size: 13px; }
+.dur-row span { flex: 0 0 46%; color: var(--muted); }
+.dur-row input { flex: 1; }
+.dur-row b { flex: 0 0 34px; text-align: right; }

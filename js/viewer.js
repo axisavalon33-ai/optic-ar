@@ -121,13 +121,14 @@ function applySound() {
 }
 
 // ---------------------------------------------------------------- what to show
-// show.screen: lang | intro | eyeStill | pathStill | effect
+// show.screen: lang | introChoice | intro | eyeStill | pathStill | effect
 function applyShow() {
   const s = show;
   const age = (serverNow() - (s.startAt || 0)) / 1000;
   if (s.screen === "effect") {
-    if (s.startAt && ALL_CONDITIONS.includes(s.condition) && age < TIMING.effectTotal) {
-      if (!running || running.key !== s.startAt) startEffect(s.condition, s.language || "en", s.startAt, s.returnTo);
+    const total = s.duration || TIMING.effectTotal;
+    if (s.startAt && ALL_CONDITIONS.includes(s.condition) && age < total) {
+      if (!running || running.key !== s.startAt) startEffect(s.condition, s.language || "en", s.startAt, s.returnTo, total);
       intro.stop(); narr.stop(); homeEl.pause();
       return;
     }
@@ -144,6 +145,8 @@ function applyShow() {
     homeEl.pause(); intro.stop();
     if (s.narr && s.startAt) narr.play(s.narr, s.startAt); else narr.stop();
     stillTexture(s.still || (s.screen === "eyeStill" ? MEDIA.eyeStill : MEDIA.pathStill));
+  } else if (s.screen === "introChoice") {             // "Watch the introduction?" – the guide answers on the tablet
+    homeEl.pause(); intro.stop(); narr.stop();
   } else {                                              // language screen
     intro.stop(); narr.stop();
     if (homeOk) homeEl.play().catch(() => {});
@@ -153,9 +156,9 @@ function applyShow() {
 
 // ---------------------------------------------------------------- AR effect
 let nameTimer = null;
-function startEffect(cond, lang, startAt, back) {
+function startEffect(cond, lang, startAt, back, total) {
   const lead = startAt - serverNow();                 // ms until the effect starts ("Loading…" until then)
-  running = { cond, lang, key: startAt, t0: performance.now() + lead, back };
+  running = { cond, lang, key: startAt, t0: performance.now() + lead, back, total };
   clearTimeout(nameTimer);
   nameTimer = setTimeout(() => {
     const name = tr(lang, `conditions.${cond}.name`);
@@ -518,7 +521,7 @@ function updateMask(t) {
     ["L", "R"].forEach((eye, i) => {
       eyeCtx.setTransform(1, 0, 0, 1, 0, 0);
       eyeCtx.clearRect(0, 0, MASK_SIZE, MASK_SIZE);
-      paintField(eyeCtx, MASK_SIZE, running.cond, eye, t, { kinds: ["dark"], extent: MASK_EXTENT });
+      paintField(eyeCtx, MASK_SIZE, running.cond, eye, t, { kinds: ["dark"], extent: MASK_EXTENT, total: running.total });
       maskCtx.drawImage(eyeLayer, i * MASK_SIZE, 0);
     });
     maskEmpty = false;
@@ -578,6 +581,24 @@ function drawOver(aspect, mode, now) {
     fit(txt, 72, 700, Wc - 80); c.fillStyle = "#f3f1ea"; c.fillText(txt, Wc / 2, Hc * 0.68);
     return;
   }
+  if (mode === "choice") {                         // "Would you like to watch an introduction to the eye?"
+    const lang = show.language || "en";
+    c.fillStyle = "#08122a"; c.fillRect(0, 0, Wc, Hc);
+    // the question on two lines (split at the space nearest the middle), as large as fits
+    const q = tr(lang, "introQuestion"), sp = [...q.matchAll(/ /g)].map(m => m.index);
+    const cut = sp.length ? sp.reduce((a, b) => Math.abs(b - q.length / 2) < Math.abs(a - q.length / 2) ? b : a) : -1;
+    const lines = cut > 0 ? [q.slice(0, cut), q.slice(cut + 1)] : [q];
+    let f = 72; do { c.font = `700 ${f}px ${FONT}`; f -= 2; } while (Math.max(...lines.map(l => c.measureText(l).width)) > Wc - 100 && f > 14);
+    c.fillStyle = "#ffcf7a";
+    lines.forEach((l, i) => c.fillText(l, Wc / 2, Hc * (lines.length > 1 ? 0.27 + i * 0.13 : 0.34)));
+    [["watchIntro", Wc * 0.3], ["skipIntro", Wc * 0.7]].forEach(([k, x]) => {
+      const t = tr(lang, k), w = Wc * 0.34, h = 110, y = Hc * 0.62;
+      c.fillStyle = "rgba(255,255,255,0.10)"; c.strokeStyle = "rgba(255,181,71,0.9)"; c.lineWidth = 4;
+      c.beginPath(); c.roundRect(x - w / 2, y - h / 2, w, h, 55); c.fill(); c.stroke();
+      fit(t, 46, 700, w - 40); c.fillStyle = "#f3f1ea"; c.fillText(t, x, y);
+    });
+    return;
+  }
   if (mode === "lang") {
     if (!homeOk || homeEl.readyState < 2) { c.fillStyle = "#08122a"; c.fillRect(0, 0, Wc, Hc); }
     const lines = LANGUAGES.map(l => T[l.code].pleaseWait);
@@ -625,7 +646,7 @@ function loop() {
   let t = -1;
   if (running) {
     t = (now - running.t0) / 1000;
-    if (t >= TIMING.effectTotal) { endEffect(); t = -1; }
+    if (t >= running.total) { endEffect(); t = -1; }
   }
   const arOn = running && t >= 0;
   const loading = running && t < 0;
@@ -645,6 +666,7 @@ function loop() {
   // screen-mode content
   let main = null, aspect = 16 / 9, mode = "lang";
   if (loading) mode = "loading";
+  else if (show.screen === "introChoice") mode = "choice";
   else if (show.screen === "intro") { main = introEl.readyState >= 2 ? videoTexture(introEl) : null; mode = "video";
     if (introEl.videoWidth) aspect = introEl.videoWidth / introEl.videoHeight; }
   else if (show.screen === "eyeStill" || show.screen === "pathStill") {
@@ -674,8 +696,8 @@ function loop() {
   U.uTest.value = calib.testPattern ? 1 : 0;
   U.uNose.value.set(calib.noseWidth, calib.noseHeight);
   const none = filtersAt("", "L", 0);
-  setFx(0, arOn ? filtersAt(running.cond, "L", t) : none);
-  setFx(1, arOn ? filtersAt(running.cond, "R", t) : none);
+  setFx(0, arOn ? filtersAt(running.cond, "L", t, running.total) : none);
+  setFx(1, arOn ? filtersAt(running.cond, "R", t, running.total) : none);
 
   renderer.render(fsScene, fsCam);
 }

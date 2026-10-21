@@ -38,8 +38,8 @@ object Effects {
     private fun lerp(a: Double, b: Double, k: Double) = a + (b - a) * k
 
     /** fade in over 1.5 s, fade out over the last 1.5 s */
-    fun envelope(t: Double): Double {
-        val T = Data.effectTotal; val F = Data.fade
+    fun envelope(t: Double, T: Double): Double {
+        val F = Data.fade
         return smooth(0.0, F, t) * smooth(T, T - F, t)
     }
 
@@ -49,13 +49,14 @@ object Effects {
         var maskBlur: Double = 0.0, var edge: Double = 0.0
     )
 
-    fun filtersAt(cond: String?, eye: Char, t: Double): Fx {
+    /** T = effect length in seconds (set per condition on the tablet) */
+    fun filtersAt(cond: String?, eye: Char, t: Double, T: Double): Fx {
         val fx = Fx()
         if (cond == null) return fx
-        val e = envelope(t)
+        val e = envelope(t, T)
         when (cond) {
             "cataract" -> {     // amber at once, then a thickening milky veil (see js/defects.js)
-                val p = clamp01(t / (Data.effectTotal - 3))
+                val p = clamp01(t / (T - 3))
                 fx.tint = 1.0; fx.contrast = lerp(0.12, 0.56, smooth(0.15, 1.0, p))
                 fx.blur = lerp(0.006, 0.02, p); fx.glare = lerp(0.8, 1.5, p)
             }
@@ -77,12 +78,12 @@ object Effects {
     )
 
     /** dark shapes for one eye ('L' / 'R') at time t */
-    fun field(cond: String, eye: Char, t: Double): List<Shape> {
+    fun field(cond: String, eye: Char, t: Double, T: Double): List<Shape> {
         val L = eye == 'L'
         return when (cond) {
             "cataract" -> emptyList()   // only a haze (diagram), the headset uses filters
             "glaucoma" -> {     // dark all round, a wide irregular clear area with a slowly moving soft edge
-                val q = smooth(0.0, 1.0, clamp01(t / (Data.effectTotal - 3)))
+                val q = smooth(0.0, 1.0, clamp01(t / (T - 3)))
                 val nasal = if (L) 1.0 else -1.0
                 listOf(Shape("tunnel", a = 0.97, nasal = nasal, seed = if (L) 1.0 else 2.3, time = t,
                     rx = lerp(1.05, 0.8, q), ry = lerp(0.62, 0.45, q), cx = -nasal * 0.05, cy = 0.02, soft = 0.42,
@@ -115,9 +116,9 @@ object Effects {
     private fun f(v: Double) = v.toFloat()
 
     /** Draws the dark areas (white with alpha) into target, a size×size square covering ±extent field units. */
-    fun paintField(target: Canvas, size: Int, cond: String, eye: Char, t: Double, extent: Double) {
-        val env = envelope(t)
-        for (sh in field(cond, eye, t)) {
+    fun paintField(target: Canvas, size: Int, cond: String, eye: Char, t: Double, extent: Double, total: Double) {
+        val env = envelope(t, total)
+        for (sh in field(cond, eye, t, total)) {
             val a = sh.a * env
             if (a <= 0.001) continue
             var s = scratch

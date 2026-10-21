@@ -33,6 +33,17 @@
     <button class="glass pill credits-btn" id="creditsBtn">Credits</button>
   </section>
 
+  <!-- 1b. WATCH THE INTRODUCTION OR SKIP? (also shown in the headset) -->
+  <section id="introChoiceScreen" class="screen">
+    <div class="intro-choice glass">
+      <h2 id="introQ"></h2>
+      <div class="intro-buttons">
+        <button class="glass amber big" id="introWatch"></button>
+        <button class="glass big" id="introSkip"></button>
+      </div>
+    </div>
+  </section>
+
   <!-- 2. VIDEO / STILL IMAGE SCREEN -->
   <section id="stageScreen" class="screen">
     <div id="stageWrap">
@@ -115,6 +126,7 @@
     <div id="camInfo" class="cam-info"></div>
     <div id="sliders"></div>
     <div id="segs"></div>
+    <div id="durations"></div>
     <label class="switch-row"><span id="tpLabel"></span><input type="checkbox" id="tpSwitch"><span class="switch"></span></label>
     <button class="glass pill wide" id="calibReset"></button>
     <div class="profile-row">

@@ -133,7 +133,9 @@ Every time you change a file on `main`, the site updates by itself within a minu
 
 | Operator does on the tablet | Tablet | Phone (headset) |
 |---|---|---|
-| Picks a language | Intro video starts 2 s later | The same video and narration, starting at exactly the same moment |
+| Picks a language | "Would you like to watch an introduction to the eye?" – **Watch the introduction** / **Skip** | The same question (the guide answers on the tablet) |
+| **Watch the introduction** | Intro video starts 2 s later | The same video and narration, starting at exactly the same moment |
+| **Skip** | Eye picture straight away (no video) | The same eye picture |
 | (video ends) | Eye picture with hotspots | The same eye picture (no hotspots) |
 | Taps a part (lens, retina, optic disc) | Info card with a big **Show in VR** button | The part glows and the disease name appears in big letters |
 | Taps **Show in VR** | Visual field diagram + 20 s countdown, buttons locked | "Loading…" for 2 s, then the camera view with the effect for 20 s |
@@ -154,6 +156,8 @@ Every time you change a file on `main`, the site updates by itself within a minu
    - **Distance between eye centres** and **Vertical position** move the two circles.
    - **Distortion strength** fixes curved lines; **Image size** zooms the camera picture.
    - **Eye circle size**, **Roundness**, **Nose cutout** and **Divider** shape the black mask.
+   - **Effect length (seconds)**: how long each condition runs in the headset, 10–40 seconds in steps of 5
+     (default 20). The tablet countdown follows it. Reset to default does not change these.
 3. Type a name (for example "White box") and press **Save profile**. Later, choose it from the
    list and press **Load profile**. **Reset to default** returns to the starting values.
 4. Turn **Test pattern** off before visitors arrive.

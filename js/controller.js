@@ -6,7 +6,7 @@
 // =====================================================================
 import { DB, STATION, TIMING, MEDIA, DEFAULT_HOTSPOTS, DEFAULT_CALIBRATION, CALIBRATION_SLIDERS } from "./config.js";
 import { LANGUAGES, T, ADMIN, tr } from "./translations.js";
-import { paintField, PATHWAY_DEFECTS } from "./defects.js";
+import { paintField, PATHWAY_DEFECTS, ALL_CONDITIONS, effectLength } from "./defects.js";
 import { keepFullscreen } from "./fullscreen.js";
 import { Synced, introMedia, pathwayNarration } from "./sync.js";
 import { showSignIn } from "./signin.js";
@@ -17,7 +17,7 @@ const app = $("app");
 // ---------------------------------------------------------------- state
 const S = {
   lang: "en",
-  screen: "lang",        // lang | intro | eyeStill | pathStill | credits
+  screen: "lang",        // lang | introChoice | intro | eyeStill | pathStill | credits
   prevScreen: "lang",
   modal: null,           // null | card | choice
   cardCondition: null,
@@ -140,6 +140,9 @@ function applyText() {
   $("choiceTitle").textContent = tr(L, "opticNerveChoose");
   $("choiceNeuritis").textContent = tr(L, "opticNeuritisBtn");
   $("choiceField").textContent = tr(L, "visualFieldBtn");
+  $("introQ").textContent = tr(L, "introQuestion");
+  $("introWatch").textContent = tr(L, "watchIntro");
+  $("introSkip").textContent = tr(L, "skipIntro");
   $("creditsTitle").textContent = tr(L, "creditsTitle");
   $("creditsBody").innerHTML = "";
   for (const line of tr(L, "creditsBody")) { const p = document.createElement("p"); p.textContent = line; $("creditsBody").appendChild(p); }
@@ -160,7 +163,8 @@ function setHomeVideo(on) {
 function setScreen(name) {
   S.screen = name;
   setHomeVideo(name === "lang");
-  const section = name === "lang" ? "langScreen" : name === "credits" ? "creditsScreen" : "stageScreen";
+  const section = name === "lang" ? "langScreen" : name === "credits" ? "creditsScreen" :
+    name === "introChoice" ? "introChoiceScreen" : "stageScreen";
   for (const s of document.querySelectorAll(".screen")) s.classList.toggle("active", s.id === section);
   app.classList.toggle("lang-screen", name === "lang");
   const stillShown = name === "eyeStill" || name === "pathStill";
@@ -170,7 +174,8 @@ function setScreen(name) {
   showHint();
 }
 
-// Language chosen: both devices start the intro video together, 2 seconds from now.
+// Language chosen: both devices ask "Would you like to watch an introduction to the eye?";
+// the guide answers on the tablet.
 let introMediaCache = {};
 for (const l of LANGUAGES) introMedia(l.code).then(m => { introMediaCache[l.code] = m; });
 async function chooseLanguage(code) {
@@ -179,7 +184,16 @@ async function chooseLanguage(code) {
   applyText();
   initAudio();
   stopMedia(); closeModal(); clearLesions();
-  const m = introMediaCache[code] || await introMedia(code);
+  setScreen("introChoice");
+  S.base = { screen: "introChoice" };
+  pushShow(S.base);
+  if (!viewerConnected()) toast(tr(S.lang, "headsetOffline"));
+}
+// "Watch the introduction": both devices start the intro video together, 2 seconds from now.
+async function startIntro() {
+  if (S.locked || S.screen !== "introChoice") return;
+  initAudio();
+  const m = introMediaCache[S.lang] || await introMedia(S.lang);
   const startAt = serverNow() + TIMING.startDelay * 1000;
   S.muteVideo = m.muteVideo; applySound();
   setStill(MEDIA.eyeStill);
@@ -192,7 +206,6 @@ async function chooseLanguage(code) {
   video.onerror = () => { if (S.screen === "intro") { toast(tr(S.lang, "videoMissing")); showStillOnly("eye"); } };
   S.base = { screen: "intro", startAt, src: m.src, narr: m.narr, muteVideo: m.muteVideo };
   pushShow(S.base);
-  if (!viewerConnected()) toast(tr(S.lang, "headsetOffline"));
 }
 // When the intro video ends, both devices show the eye picture.
 function checkIntroEnd() {
@@ -235,7 +248,7 @@ function goBack() {
   if (S.modal) { closeModal(); return; }
   switch (S.screen) {
     case "credits": setScreen(S.prevScreen === "credits" ? "lang" : S.prevScreen); break;
-    case "intro": case "eyeStill": goHome(); break;
+    case "introChoice": case "intro": case "eyeStill": goHome(); break;
     case "pathStill": showStillOnly("eye"); break;
   }
 }
@@ -334,9 +347,10 @@ function sendCondition(cond) {
   hideHand();
   narrSync.stop();
   const startAt = serverNow() + TIMING.loading * 1000;
+  const total = effectLength(S.calib, cond);   // seconds, set per condition in the calibration panel
   const back = { ...S.base };
   delete back.narr; delete back.startAt;        // do not replay the narration afterwards
-  pushShow({ screen: "effect", condition: cond, startAt, returnTo: back });
+  pushShow({ screen: "effect", condition: cond, startAt, duration: total, returnTo: back });
   if (!viewerConnected()) toast(tr(S.lang, "headsetOffline"));
 
   // diagram panel
@@ -346,12 +360,11 @@ function sendCondition(cond) {
   app.classList.add("diagram");
   $("card").classList.remove("open"); $("choice").classList.remove("open");
 
-  const total = TIMING.effectTotal;
   const frame = () => {
     const t = (serverNow() - startAt) / 1000;
     const loading = t < 0;
     $("lookText").textContent = tr(S.lang, loading ? "loading" : "lookInHeadset");
-    drawDiagram(cond, Math.max(0, Math.min(t, total)));
+    drawDiagram(cond, Math.max(0, Math.min(t, total)), total);
     const left = Math.max(0, Math.min(total, total - t));
     $("cdNum").textContent = Math.ceil(left);
     $("cdBar").style.strokeDashoffset = (276.5 * (1 - left / total)).toFixed(1);
@@ -375,7 +388,7 @@ function sendCondition(cond) {
 
 // Two patient-view visual field circles drawn from the shared defect data.
 const layer = document.createElement("canvas");
-function drawDiagram(cond, t, cv = $("fieldCanvas")) {
+function drawDiagram(cond, t, total, cv = $("fieldCanvas")) {
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
   const W = Math.round(cv.clientWidth * dpr), H = Math.round(cv.clientHeight * dpr);
   if (!W || !H) return;
@@ -395,7 +408,7 @@ function drawDiagram(cond, t, cv = $("fieldCanvas")) {
     c.beginPath(); c.arc(cx, cy, R, 0, Math.PI * 2); c.clip();
     c.fillStyle = "rgba(214,222,238,0.92)"; c.fillRect(cx - R, cy - R, 2 * R, 2 * R);
     lctx.setTransform(1, 0, 0, 1, 0, 0); lctx.clearRect(0, 0, size, size);
-    paintField(lctx, size, cond, eye, t, { color: [92, 78, 56], kinds: ["dark", "haze", "warp"], extent: 1 });
+    paintField(lctx, size, cond, eye, t, { color: [92, 78, 56], kinds: ["dark", "haze", "warp"], extent: 1, total });
     c.drawImage(layer, cx - R, cy - R, 2 * R, 2 * R);
     c.strokeStyle = "rgba(8,18,42,0.22)"; c.lineWidth = 1 * dpr;
     c.beginPath(); c.moveTo(cx - R, cy); c.lineTo(cx + R, cy); c.moveTo(cx, cy - R); c.lineTo(cx, cy + R); c.stroke();
@@ -555,8 +568,23 @@ function buildCalibration() {
     row.querySelector(".seg").appendChild(b);
   }
   $("segs").appendChild(row);
+  // Effect length for each condition: 10–40 s in steps of 5 s
+  const dur = $("durations");
+  dur.innerHTML = `<div class="seg-row"><span>${ADMIN.durationTitle}</span></div>`;
+  for (const c of ALL_CONDITIONS) {
+    const r = document.createElement("div");
+    r.className = "dur-row";
+    r.innerHTML = `<span>${tr("en", `conditions.${c}.name`)}</span><input type="range" min="10" max="40" step="5" data-cond="${c}"><b></b>`;
+    r.querySelector("input").addEventListener("input", e => {
+      S.calib.durations = { ...(S.calib.durations || {}), [c]: Number(e.target.value) };
+      r.querySelector("b").textContent = e.target.value;
+      pushCalib();
+    });
+    dur.appendChild(r);
+  }
   $("tpSwitch").addEventListener("change", e => { S.calib.testPattern = e.target.checked; pushCalib(); });
-  $("calibReset").onclick = () => { S.calib = { ...DEFAULT_CALIBRATION, soundFrom: S.calib.soundFrom }; syncSliders(); pushCalib(); };
+  // "Reset to default" resets the headset fit; sound and effect lengths stay as they are
+  $("calibReset").onclick = () => { S.calib = { ...DEFAULT_CALIBRATION, soundFrom: S.calib.soundFrom, durations: S.calib.durations }; syncSliders(); pushCalib(); };
   $("calibClose").onclick = () => $("calibPanel").classList.remove("open");
   showCamInfo();
   $("profileSave").onclick = () => {
@@ -569,7 +597,7 @@ function buildCalibration() {
   $("profileLoad").onclick = () => {
     const p = profiles[$("profileList").value];
     if (!p) return;
-    S.calib = { ...DEFAULT_CALIBRATION, ...p, testPattern: S.calib.testPattern, soundFrom: S.calib.soundFrom };
+    S.calib = { ...DEFAULT_CALIBRATION, ...p, testPattern: S.calib.testPattern, soundFrom: S.calib.soundFrom, durations: S.calib.durations };
     $("profileName").value = $("profileList").value;
     syncSliders(); pushCalib();
   };
@@ -589,6 +617,10 @@ function syncSliders() {
   }
   $("tpSwitch").checked = !!S.calib.testPattern;
   for (const b of document.querySelectorAll("#segs .seg button")) b.classList.toggle("on", S.calib[b.dataset.key] === b.dataset.value);
+  for (const i of document.querySelectorAll("#durations input")) {
+    i.value = effectLength(S.calib, i.dataset.cond);
+    i.nextElementSibling.textContent = i.value;
+  }
 }
 function pushCalib() {
   calibDirty = true;
@@ -635,6 +667,8 @@ $("choiceClose").onclick = () => closeModal();
 $("cardAR").onclick = () => { if (!S.locked && S.cardCondition) sendCondition(S.cardCondition); };
 $("choiceNeuritis").onclick = () => openCard("neuritis");
 $("choiceField").onclick = () => showPathway();
+$("introWatch").onclick = () => startIntro();
+$("introSkip").onclick = () => { if (!S.locked && S.screen === "introChoice") { initAudio(); showStillOnly("eye"); } };
 document.addEventListener("contextmenu", e => e.preventDefault());
 
 keepFullscreen(); // first tap anywhere makes the tablet full screen

@@ -64,6 +64,26 @@ class Overlay {
                 val txt = Data.tr(lang, "loading")
                 fit(txt, 72f, wc - 80, bold); p.color = Color.rgb(243, 241, 234); centreText(txt, wc / 2, hc * 0.68f)
             }
+            "choice" -> {     // "Would you like to watch an introduction to the eye?"
+                c.drawColor(Color.rgb(8, 18, 42))
+                // the question on two lines (split at the space nearest the middle), as large as fits
+                val q = Data.tr(lang, "introQuestion")
+                val cut = q.indices.filter { q[it] == ' ' }.minByOrNull { kotlin.math.abs(it - q.length / 2) } ?: -1
+                val lines = if (cut > 0) listOf(q.substring(0, cut), q.substring(cut + 1)) else listOf(q)
+                fit(lines.maxByOrNull { it.length } ?: q, 72f, wc - 100, bold)
+                while (lines.any { p.measureText(it) > wc - 100 } && p.textSize > 14f) p.textSize -= 2f
+                p.color = Color.rgb(255, 207, 122)
+                lines.forEachIndexed { i, l -> centreText(l, wc / 2, hc * (if (lines.size > 1) 0.27f + i * 0.13f else 0.34f)) }
+                for ((k, x) in listOf("watchIntro" to wc * 0.3f, "skipIntro" to wc * 0.7f)) {
+                    val w = wc * 0.34f; val h = 110f; val y = hc * 0.62f
+                    val r = RectF(x - w / 2, y - h / 2, x + w / 2, y + h / 2)
+                    p.style = Paint.Style.FILL; p.color = Color.argb(26, 255, 255, 255); c.drawRoundRect(r, 55f, 55f, p)
+                    p.style = Paint.Style.STROKE; p.strokeWidth = 4f; p.color = Color.argb(230, 255, 181, 71); c.drawRoundRect(r, 55f, 55f, p)
+                    p.style = Paint.Style.FILL
+                    val t = Data.tr(lang, k)
+                    fit(t, 46f, w - 40, bold); p.color = Color.rgb(243, 241, 234); centreText(t, x, y)
+                }
+            }
             "lang" -> {
                 if (!homeShown) c.drawColor(Color.rgb(8, 18, 42))
                 p.color = Color.argb(199, 5, 12, 31); c.drawRect(0f, hc - 190, wc, hc, p)

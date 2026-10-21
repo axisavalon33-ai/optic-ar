@@ -39,7 +39,7 @@ class Scene {
 }
 
 /** An AR effect: "Loading…" until startAt, then 20 s of the condition, then back to the picture. */
-class Running(val cond: String, val lang: String, val startAt: Long, val back: Map<String, Any?>?)
+class Running(val cond: String, val lang: String, val startAt: Long, val back: Map<String, Any?>?, val total: Double)
 
 /**
  * Draws both eyes every frame with one full-screen shader – the same shader as js/viewer.js:
@@ -141,7 +141,7 @@ class Renderer(
         // AR effect timing ("Loading…" until it starts)
         val run = s.running
         val t = if (run != null) (now - run.startAt) / 1000.0 else -1.0
-        val arOn = run != null && t >= 0 && t < Data.effectTotal
+        val arOn = run != null && t >= 0 && t < run.total
         val loading = run != null && t < 0
 
         // screen-mode content
@@ -155,6 +155,7 @@ class Renderer(
         var spot: Overlay.Spot? = null
         when {
             loading -> mode = "loading"
+            screen == "introChoice" -> mode = "choice"
             screen == "intro" -> { kind = 1; aspect = s.introAspect(); mode = "video" }
             screen == "eyeStill" || screen == "pathStill" -> {
                 val eye = screen == "eyeStill"
@@ -191,7 +192,7 @@ class Renderer(
                 maskBmp.eraseColor(Color.TRANSPARENT)
                 listOf('L', 'R').forEachIndexed { i, e ->
                     eyeBmp.eraseColor(Color.TRANSPARENT)
-                    Effects.paintField(eyeCanvas, MASK_SIZE, run.cond, e, t, MASK_EXTENT)
+                    Effects.paintField(eyeCanvas, MASK_SIZE, run.cond, e, t, MASK_EXTENT, run.total)
                     maskCanvas.drawBitmap(eyeBmp, (i * MASK_SIZE).toFloat(), 0f, null)
                 }
                 uploadMask(); maskEmpty = false
@@ -232,8 +233,9 @@ class Renderer(
         GLES20.glUniform1f(loc["uDiv"]!!, cal.d("divider").toFloat())
         GLES20.glUniform1f(loc["uTest"]!!, if (cal.testPattern) 1f else 0f)
         GLES20.glUniform2f(loc["uNose"]!!, cal.d("noseWidth").toFloat(), cal.d("noseHeight").toFloat())
-        val fl = Effects.filtersAt(if (arOn) run?.cond else null, 'L', t)
-        val fr = Effects.filtersAt(if (arOn) run?.cond else null, 'R', t)
+        val total = run?.total ?: Data.effectTotal
+        val fl = Effects.filtersAt(if (arOn) run?.cond else null, 'L', t, total)
+        val fr = Effects.filtersAt(if (arOn) run?.cond else null, 'R', t, total)
         setFx(fl, "uFxA0", "uFxB0"); setFx(fr, "uFxA1", "uFxB1")
         GLES20.glUniform2f(loc["uMaskBlur"]!!, fl.maskBlur.toFloat(), fr.maskBlur.toFloat())
         GLES20.glUniform2f(loc["uEdge"]!!, fl.edge.toFloat(), fr.edge.toFloat())

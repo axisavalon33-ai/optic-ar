@@ -240,7 +240,7 @@ class MainActivity : ComponentActivity(), Net.Listener {
             }
             val run = scene.running
             val now = net?.serverNow() ?: System.currentTimeMillis()
-            if (run != null && now - run.startAt >= Data.effectTotal * 1000) endEffect()
+            if (run != null && now - run.startAt >= run.total * 1000) endEffect()
             if (!online && everOnline && offlineSince > 0 && System.currentTimeMillis() - offlineSince > 4000 && scene.error == null)
                 scene.error = OFFLINE
             if (System.currentTimeMillis() - lastBeat > 5000) { lastBeat = System.currentTimeMillis(); beat() }
@@ -294,8 +294,9 @@ class MainActivity : ComponentActivity(), Net.Listener {
         val startAt = s.long("startAt")
         if (s.str("screen") == "effect") {
             val cond = s.str("condition")
-            if (startAt > 0 && cond != null && cond in Effects.ALL && (now - startAt) / 1000.0 < Data.effectTotal) {
-                if (scene.running?.startAt != startAt) scene.running = Running(cond, s.str("language") ?: "en", startAt, asMap(s["returnTo"]))
+            val total = (s["duration"] as? Number)?.toDouble()?.takeIf { it > 0 } ?: Data.effectTotal
+            if (startAt > 0 && cond != null && cond in Effects.ALL && (now - startAt) / 1000.0 < total) {
+                if (scene.running?.startAt != startAt) scene.running = Running(cond, s.str("language") ?: "en", startAt, asMap(s["returnTo"]), total)
                 i.stop(); a.stop(); h.pause()
                 return
             }
@@ -317,6 +318,7 @@ class MainActivity : ComponentActivity(), Net.Listener {
                 if (!nr.isNullOrEmpty() && startAt > 0) a.play(nr, startAt) else a.stop()
                 renderer?.requestStill(s.str("still") ?: Data.media(if (s.str("screen") == "eyeStill") "eyeStill" else "pathStill"))
             }
+            "introChoice" -> { h.pause(); i.stop(); a.stop() }   // the guide answers on the tablet
             else -> { i.stop(); a.stop(); h.play() }
         }
         applySound()
