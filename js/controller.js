@@ -479,6 +479,7 @@ function longPress(el, ms, fn) {
 }
 longPress($("cornerTL"), 3000, () => setEditing(!S.editing));
 longPress($("cornerTR"), 3000, () => $("calibPanel").classList.toggle("open"));
+$("gearBtn").onclick = () => $("calibPanel").classList.toggle("open");   // visible settings button
 
 // ---------------------------------------------------------------- EDIT MODE
 function setEditing(on) {
