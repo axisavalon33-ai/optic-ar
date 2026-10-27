@@ -43,6 +43,10 @@
   #fsPrompt { position: fixed; inset: 0; z-index: 20; display: none; align-items: center; justify-content: center;
     background: rgba(5, 12, 31, .92); color: #ffb547; font-size: 7vmin; font-weight: 700; text-align: center; padding: 5vmin; }
   #fsPrompt.on { display: flex; }
+  #turnPrompt { position: fixed; inset: 0; z-index: 21; display: none; flex-direction: column; gap: 3vmin; align-items: center; justify-content: center;
+    background: #08122a; color: #ffb547; font-size: 7vmin; font-weight: 700; text-align: center; padding: 6vmin; }
+  #turnPrompt small { color: #f3f1ea; font-size: 4vmin; font-weight: 400; }
+  #turnPrompt.on { display: flex; }
   #iosTip { display: none; font-size: 3.2vmin; color: #f3f1ea; background: rgba(255,255,255,.08); border: 1px solid rgba(255,181,71,.6);
     border-radius: 2vmin; padding: 2vmin 3vmin; max-width: 86vw; line-height: 1.5; }
   #checkRow { font-size: 3vmin; color: #a9b3c9; line-height: 1.6; }
@@ -59,6 +63,7 @@
 <div class="eyeText err" id="errL"></div><div class="eyeText err" id="errR"></div>
 
 <div id="fsPrompt">Tap anywhere for full screen</div>
+<div id="turnPrompt">Turn the phone sideways<small>iPhone: swipe down from the top-right corner and turn off Portrait Orientation Lock</small></div>
 
 <div id="startScreen">
   <h1>Eye Exhibit – Headset</h1>

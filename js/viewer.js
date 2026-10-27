@@ -219,6 +219,7 @@ if (IS_IPHONE && !isFullscreen()) $("iosTip").style.display = "block";
 keepFullscreen();
 function updateFsPrompt() {
   $("fsPrompt").classList.toggle("on", started && canFullscreen && !isFullscreen());
+  $("turnPrompt").classList.toggle("on", started && window.innerHeight > window.innerWidth);   // must be sideways
 }
 for (const ev of ["fullscreenchange", "webkitfullscreenchange", "resize"]) {
   document.addEventListener(ev, () => { updateFsPrompt(); if (isFullscreen()) requestWakeLock(); });
@@ -337,6 +338,7 @@ uniform sampler2D uMask; uniform float uMaskExtent;
 uniform float uScreenOn;                 // 1 = screen mode (picture / video), 0 = AR (camera)
 uniform sampler2D uScrMain; uniform float uScrHasMain; uniform sampler2D uScrOver;
 uniform float uScrAspect, uScrSize;
+uniform vec3 uScrBg;                     // colour of the round eye area around the picture
 uniform float uK, uZoom, uIpd, uVert, uEye, uRound, uDiv, uTest;
 uniform vec2 uNose;
 uniform vec4 uFxA0, uFxB0, uFxA1, uFxB1; // A: blur, contrast, tint, glare   B: desat, redDesat, dim, warp
@@ -392,11 +394,11 @@ void main() {
   float k1 = uK, k2 = uK * 0.5;
   vec2 m = p * (1.0 + k1 * r2 + k2 * r2 * r2) / (1.0 + k1 + k2);
 
-  // ---- SCREEN MODE: the same picture / video in both eyes, centred, black around it
+  // ---- SCREEN MODE: the same picture / video in both eyes, centred in the round eye area
   if (uScreenOn > 0.5 && uTest < 0.5) {
     vec2 halfSize = vec2(uScrSize * 0.5, uScrSize * 0.5 / uScrAspect);
     vec2 su = m / (2.0 * halfSize) + 0.5;
-    vec3 sc = vec3(0.0);
+    vec3 sc = uScrBg;                          // dark blue round "window" around the picture
     if (su.x >= 0.0 && su.x <= 1.0 && su.y >= 0.0 && su.y <= 1.0) {
       if (uScrHasMain > 0.5) sc = texture2D(uScrMain, su).rgb;
       vec4 o = texture2D(uScrOver, su);
@@ -497,7 +499,7 @@ async function initRenderer() {
   const u = {};
   for (const [k, v] of Object.entries({
     uRes: new THREE.Vector2(), uCam: blank, uCamAspect: 1, uHasCam: 0, uMask: maskTex, uMaskExtent: MASK_EXTENT,
-    uScreenOn: 1, uScrMain: blank, uScrHasMain: 0, uScrOver: overTex, uScrAspect: 16 / 9, uScrSize: 1.6,
+    uScreenOn: 1, uScrMain: blank, uScrHasMain: 0, uScrOver: overTex, uScrAspect: 16 / 9, uScrSize: 1.6, uScrBg: new THREE.Vector3(),
     uK: 0, uZoom: 1, uIpd: 0.5, uVert: 0, uEye: 0.9, uRound: 1, uDiv: 0, uTest: 0, uNose: new THREE.Vector2(),
     uFxA0: new THREE.Vector4(), uFxB0: new THREE.Vector4(), uFxA1: new THREE.Vector4(), uFxB1: new THREE.Vector4(),
     uMaskBlur: new THREE.Vector2(), uEdge: new THREE.Vector2()
@@ -704,6 +706,7 @@ function loop() {
   U.uScrHasMain.value = main ? 1 : 0;
   U.uScrAspect.value = aspect;
   U.uScrSize.value = calib.screenSize || 1.6;
+  if (loading) U.uScrBg.value.set(0, 0, 0); else U.uScrBg.value.set(12 / 255, 24 / 255, 54 / 255);
 
   U.uRes.value.set(canvas.width, canvas.height);
   U.uCamAspect.value = hasCam ? video.videoWidth / video.videoHeight : 1;

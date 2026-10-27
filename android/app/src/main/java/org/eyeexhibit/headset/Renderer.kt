@@ -96,7 +96,7 @@ class Renderer(
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
         prog = buildProgram(VERT, FRAG)
         for (n in listOf("uRes", "uCam", "uCamM", "uCamR", "uCamAspect", "uHasCam", "uMask", "uMaskExtent",
-            "uScreenOn", "uScrKind", "uVid", "uVidM", "uStill", "uOver", "uOverAR", "uScrAspect", "uScrSize",
+            "uScreenOn", "uScrKind", "uVid", "uVidM", "uStill", "uOver", "uOverAR", "uScrAspect", "uScrSize", "uScrBg",
             "uK", "uZoom", "uIpd", "uVert", "uEye", "uRound", "uDiv", "uTest", "uNose",
             "uFxA0", "uFxB0", "uFxA1", "uFxB1", "uMaskBlur", "uEdge")) loc[n] = GLES20.glGetUniformLocation(prog, n)
         loc["aPos"] = GLES20.glGetAttribLocation(prog, "aPos")
@@ -223,6 +223,8 @@ class Renderer(
         GLES20.glUniform1f(loc["uScrKind"]!!, kind.toFloat())
         GLES20.glUniform1f(loc["uOverAR"]!!, if (arOn && (mode == "name" || err != null)) 1f else 0f)
         GLES20.glUniform1f(loc["uScrAspect"]!!, aspect)
+        if (loading) GLES20.glUniform3f(loc["uScrBg"]!!, 0f, 0f, 0f)
+        else GLES20.glUniform3f(loc["uScrBg"]!!, 12 / 255f, 24 / 255f, 54 / 255f)
         GLES20.glUniform1f(loc["uScrSize"]!!, cal.d("screenSize").toFloat().takeIf { it > 0 } ?: 1.6f)
         GLES20.glUniform1f(loc["uK"]!!, cal.d("distortion").toFloat())
         GLES20.glUniform1f(loc["uZoom"]!!, max(0.1, cal.d("zoom")).toFloat())
@@ -325,6 +327,7 @@ uniform float uScrKind;
 uniform samplerExternalOES uVid; uniform mat4 uVidM;
 uniform sampler2D uStill; uniform sampler2D uOver; uniform float uOverAR;
 uniform float uScrAspect; uniform float uScrSize;
+uniform vec3 uScrBg;
 uniform float uK; uniform float uZoom; uniform float uIpd; uniform float uVert; uniform float uEye;
 uniform float uRound; uniform float uDiv; uniform float uTest;
 uniform vec2 uNose;
@@ -380,7 +383,7 @@ void main() {
   // ---- SCREEN MODE
   if (uScreenOn > 0.5 && uTest < 0.5) {
     vec2 su = scrUV(m);
-    vec3 sc = vec3(0.0);
+    vec3 sc = uScrBg;                          // dark blue round "window" around the picture
     if (inside(su)) {
       if (uScrKind > 1.5) sc = texture2D(uStill, vec2(su.x, 1.0 - su.y)).rgb;
       else if (uScrKind > 0.5) sc = texture2D(uVid, (uVidM * vec4(su, 0.0, 1.0)).xy).rgb;
