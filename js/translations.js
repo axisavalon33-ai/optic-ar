@@ -291,7 +291,7 @@ export const ADMIN = {
   loadProfile: "Load profile",
   sliders: {
     distortion: "Distortion strength",
-    zoom: "Image size (zoom)",
+    zoom: "Image size (zoom) – camera view only",
     ipd: "Distance between eye centres",
     vertical: "Vertical position",
     eyeSize: "Eye circle size",
@@ -303,7 +303,7 @@ export const ADMIN = {
     modelDistance: "Model distance (metres)",
     modelSize: "Model size",
     cameraFov: "Camera field of view (degrees)",
-    screenSize: "Picture size in screen mode (always fits inside the circle)"
+    screenFit: "Picture size in screen mode (1 = as big as fits in the circle)"
   },
   durationTitle: "Effect length (seconds)",
   soundTitle: "Sound from",

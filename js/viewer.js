@@ -396,8 +396,8 @@ void main() {
 
   // ---- SCREEN MODE: the same picture / video in both eyes, centred in the round eye area
   if (uScreenOn > 0.5 && uTest < 0.5) {
-    vec2 halfSize = vec2(uScrSize * 0.5, uScrSize * 0.5 / uScrAspect);
-    halfSize *= min(1.0, 0.97 / length(halfSize));   // the whole picture stays inside the circle (corners too)
+    // uScrSize = 0.5 … 1: share of the largest size at which the whole picture (corners too) fits inside the circle
+    vec2 halfSize = normalize(vec2(1.0, 1.0 / uScrAspect)) * 0.97 * uScrSize;
     vec2 su = m / (2.0 * halfSize) + 0.5;
     vec3 sc = uScrBg;                          // the round eye area around the picture, in the picture's edge colour
     if (su.x >= 0.0 && su.x <= 1.0 && su.y >= 0.0 && su.y <= 1.0) {
@@ -724,7 +724,7 @@ function loop() {
   U.uScrMain.value = main || U.uCam.value;
   U.uScrHasMain.value = main ? 1 : 0;
   U.uScrAspect.value = aspect;
-  U.uScrSize.value = calib.screenSize || 1.6;
+  U.uScrSize.value = Math.min(1, Math.max(0.3, calib.screenFit || 0.95));
   if (loading) U.uScrBg.value.set(0, 0, 0); else U.uScrBg.value.set(bg[0], bg[1], bg[2]);
 
   U.uRes.value.set(canvas.width, canvas.height);

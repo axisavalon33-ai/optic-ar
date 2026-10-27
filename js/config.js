@@ -125,7 +125,8 @@ export const DEFAULT_CALIBRATION = {
   noseHeight: 0.22,  // nose cutout height, fraction of H
   divider: 0.006,    // black centre divider width, fraction of W
   testPattern: false,
-  screenSize: 1.6,       // width of the picture / video in each eye in screen mode (2 = full eye circle)
+  screenSize: 1.6,       // (old setting, still used by the Android app)
+  screenFit: 0.95,       // picture / video size in screen mode: 1 = the largest size that fits inside the eye circle
   soundFrom: "both"      // "both" | "phone" | "tablet": which device plays the sound
 };
 
@@ -140,5 +141,5 @@ export const CALIBRATION_SLIDERS = [
   { key: "noseWidth",  min: 0,    max: 0.4,  step: 0.002 },
   { key: "noseHeight", min: 0,    max: 0.6,  step: 0.002 },
   { key: "divider",    min: 0,    max: 0.06, step: 0.001 },
-  { key: "screenSize", min: 0.8,  max: 2.2,  step: 0.01 }
+  { key: "screenFit",  min: 0.5,  max: 1,    step: 0.01 }
 ];
