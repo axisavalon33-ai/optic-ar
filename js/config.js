@@ -33,6 +33,14 @@ function readStation() {
 }
 export const STATION = readStation();
 
+// Moves this device to another station (the number is remembered) and reloads the page.
+export function changeStation(n) {
+  const st = String(n || "").replace(/[^0-9A-Za-z_-]/g, "").slice(0, 20);
+  if (!st || st === STATION) return;
+  try { localStorage.setItem("station", st); } catch (e) {}
+  location.href = location.pathname + "?station=" + encodeURIComponent(st);
+}
+
 // Where things are stored inside the Realtime Database.
 export const DB = {
   command: `exhibit/stations/${STATION}/command`,     // {condition, language, timestamp}

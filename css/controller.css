@@ -309,6 +309,11 @@ input[type=range] { width: 100%; accent-color: var(--amber); height: 28px; }
 .intro-buttons { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
 .intro-buttons .big { min-width: 240px; font-size: clamp(20px, 2.6vw, 28px); padding: 22px 34px; }
 
+/* calibration: station number */
+.station-row { align-items: center; }
+.station-row span { flex: 0 0 auto; font-size: 14px; color: var(--muted); }
+.station-row input { flex: 0 0 80px; text-align: center; font-size: 18px; font-weight: 700; }
+
 /* calibration: effect length per condition */
 .dur-row { display: flex; align-items: center; gap: 10px; margin: 6px 0; font-size: 13px; }
 .dur-row span { flex: 0 0 46%; color: var(--muted); }

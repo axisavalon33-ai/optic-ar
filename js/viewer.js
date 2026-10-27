@@ -5,7 +5,7 @@
 //  The tablet operator controls everything; the visitor never needs to touch the phone.
 // =====================================================================
 import * as THREE from "three";
-import { DB, STATION, TIMING, MEDIA, DEFAULT_CALIBRATION, DEFAULT_HOTSPOTS } from "./config.js";
+import { DB, STATION, TIMING, MEDIA, DEFAULT_CALIBRATION, DEFAULT_HOTSPOTS, changeStation } from "./config.js";
 import { LANGUAGES, T, tr } from "./translations.js";
 import { paintField, filtersAt, ALL_CONDITIONS } from "./defects.js";
 import { isFullscreen, enterFullscreen, keepFullscreen, canFullscreen, IS_IPHONE } from "./fullscreen.js";
@@ -28,6 +28,8 @@ let show = { screen: "lang" };        // what the tablet asked us to show
 const serverNow = () => (fb ? fb.serverNow() : Date.now());
 
 document.querySelector("#startScreen h1").textContent = `Eye Exhibit – Headset · Station ${STATION}`;
+$("stationInput").value = STATION;                       // use the same number as this phone's tablet
+$("stationSet").onclick = () => changeStation($("stationInput").value);
 
 const ERR = {
   camera: "Camera not available.\nPlease allow camera access.",

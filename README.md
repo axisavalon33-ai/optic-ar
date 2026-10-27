@@ -216,7 +216,12 @@ The credits screen text is at `creditsBody`.
 
 ## Running several stations at once (for example 6 tablets + 6 phones)
 
-Give each tablet + phone pair the same **station number** by adding `?station=N` to both links once:
+Give each tablet + phone pair the same **station number**. The easy way:
+- **Tablet:** tap the **gear** (top right) → **Station number** → type the number → **Change**.
+- **Phone:** on the start screen, type the number next to **Station** → **Change** → **Start**.
+  (Android app: the "Station number" box on its start screen.)
+
+Each device remembers its number. Or add `?station=N` to both links once:
 
 | Station | Tablet link | Phone link |
 |---|---|---|

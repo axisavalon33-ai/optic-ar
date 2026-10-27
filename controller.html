@@ -130,6 +130,11 @@
   <!-- hidden calibration panel -->
   <div id="calibPanel" class="glass">
     <div class="calib-head"><strong id="calibTitle"></strong><button class="x" id="calibClose">×</button></div>
+    <div class="profile-row station-row">
+      <span>Station number</span>
+      <input id="stationInput" type="number" min="1" max="99" inputmode="numeric">
+      <button class="glass pill amber admin" id="stationSet">Change</button>
+    </div>
     <div id="camInfo" class="cam-info"></div>
     <div id="sliders"></div>
     <div id="segs"></div>

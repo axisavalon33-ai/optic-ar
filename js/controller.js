@@ -4,7 +4,7 @@
 //  also written to Firebase (DB.show), so the headset phone shows the same
 //  thing in "screen mode", or runs the AR effect.
 // =====================================================================
-import { DB, STATION, TIMING, MEDIA, DEFAULT_HOTSPOTS, DEFAULT_CALIBRATION, CALIBRATION_SLIDERS } from "./config.js";
+import { DB, STATION, TIMING, MEDIA, DEFAULT_HOTSPOTS, DEFAULT_CALIBRATION, CALIBRATION_SLIDERS, changeStation } from "./config.js";
 import { LANGUAGES, T, ADMIN, tr } from "./translations.js";
 import { paintField, PATHWAY_DEFECTS, ALL_CONDITIONS, effectLength } from "./defects.js";
 import { keepFullscreen } from "./fullscreen.js";
@@ -541,6 +541,9 @@ $("editDone").onclick = () => setEditing(false);
 let calibDirty = false, calibSendTimer = null;
 function buildCalibration() {
   $("calibTitle").textContent = `${ADMIN.calibTitle} – station ${STATION}`;
+  // which station this tablet controls (its phones must use the same number)
+  $("stationInput").value = STATION;
+  $("stationSet").onclick = () => changeStation($("stationInput").value);
   $("tpLabel").textContent = ADMIN.testPattern;
   $("calibReset").textContent = ADMIN.resetDefault;
   $("profileName").placeholder = ADMIN.profileName;
