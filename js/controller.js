@@ -595,7 +595,7 @@ function buildCalibration() {
     const name = $("profileName").value.trim().replace(/[.#$\[\]\/]/g, "-");
     if (!name) { toast(ADMIN.profileName + "?"); return; }
     if (!fb) { toast("Firebase not connected"); return; }
-    fb.set(fb.ref(fb.db, `${DB.calibProfiles}/${name}`), { ...S.calib, testPattern: false })
+    fb.set(fb.ref(fb.db, `${DB.calibProfiles}/${name}`), JSON.parse(JSON.stringify({ ...S.calib, testPattern: false })))
       .then(() => toast(ADMIN.saved + ": " + name)).catch(e => toast(e.message));
   };
   $("profileLoad").onclick = () => {
@@ -630,8 +630,14 @@ function pushCalib() {
   calibDirty = true;
   clearTimeout(calibSendTimer);
   calibSendTimer = setTimeout(() => {
-    if (fb) fb.set(fb.ref(fb.db, DB.calibLive), S.calib).finally(() => { calibDirty = false; });
-    else calibDirty = false;
+    if (!fb) { calibDirty = false; return; }
+    // Firebase refuses values that are "undefined" (e.g. no effect lengths set yet): leave those out
+    const data = JSON.parse(JSON.stringify(S.calib));
+    try {
+      fb.set(fb.ref(fb.db, DB.calibLive), data)
+        .catch(e => toast(/permission/i.test(e.code || e.message) ? "Settings not sent: this tablet is not signed in" : "Settings not sent: " + e.message))
+        .finally(() => { calibDirty = false; });
+    } catch (e) { calibDirty = false; toast("Settings not sent: " + e.message); }
   }, 60);
 }
 // What the headset phone actually got from its camera and screen
