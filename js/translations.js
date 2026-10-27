@@ -294,6 +294,7 @@ export const ADMIN = {
     zoom: "Image size (zoom) – camera view only",
     ipd: "Distance between eye centres",
     vertical: "Vertical position",
+    horizontal: "Horizontal position (phone not centred in the box)",
     eyeSize: "Eye circle size",
     roundness: "Roundness of eye shape",
     noseWidth: "Nose cutout width",

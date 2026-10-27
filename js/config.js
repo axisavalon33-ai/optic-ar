@@ -119,6 +119,7 @@ export const DEFAULT_CALIBRATION = {
   zoom: 1.0,         // image size inside each eye
   ipd: 0.50,         // distance between eye centres, fraction of W
   vertical: 0.0,     // vertical shift of both eyes, fraction of H
+  horizontal: 0.0,   // left/right shift of both eyes, the divider and the nose cutout, fraction of W (phone not centred in the box)
   eyeSize: 0.92,     // eye shape diameter, fraction of H
   roundness: 1.0,    // 1 = circle, 0 = square with soft corners
   noseWidth: 0.12,   // nose cutout width, fraction of W
@@ -136,6 +137,7 @@ export const CALIBRATION_SLIDERS = [
   { key: "zoom",       min: 0.4,  max: 2.5,  step: 0.01 },
   { key: "ipd",        min: 0.30, max: 0.70, step: 0.002 },
   { key: "vertical",   min: -0.25, max: 0.25, step: 0.002 },
+  { key: "horizontal", min: -0.15, max: 0.15, step: 0.002 },
   { key: "eyeSize",    min: 0.4,  max: 1.3,  step: 0.005 },
   { key: "roundness",  min: 0,    max: 1,    step: 0.01 },
   { key: "noseWidth",  min: 0,    max: 0.4,  step: 0.002 },

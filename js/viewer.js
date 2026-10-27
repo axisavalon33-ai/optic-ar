@@ -340,6 +340,7 @@ uniform sampler2D uScrMain; uniform float uScrHasMain; uniform sampler2D uScrOve
 uniform float uScrAspect, uScrSize;
 uniform vec3 uScrBg;                     // colour of the round eye area around the picture
 uniform float uK, uZoom, uIpd, uVert, uEye, uRound, uDiv, uTest;
+uniform float uHoriz;                    // left/right shift of the whole layout, fraction of W
 uniform vec2 uNose;
 uniform vec4 uFxA0, uFxB0, uFxA1, uFxB1; // A: blur, contrast, tint, glare   B: desat, redDesat, dim, warp
 uniform vec2 uMaskBlur;                  // extra blur inside the dark (affected) areas, per eye
@@ -366,12 +367,13 @@ float lum(vec3 c) { return dot(c, vec3(0.299, 0.587, 0.114)); }
 void main() {
   vec2 f = gl_FragCoord.xy;
   float W = uRes.x, H = uRes.y;
-  float eye = f.x < W * 0.5 ? 0.0 : 1.0;
+  float mid = W * (0.5 + uHoriz);           // middle of the layout (between the two lenses)
+  float eye = f.x < mid ? 0.0 : 1.0;
   vec4 A = eye < 0.5 ? uFxA0 : uFxA1;
   vec4 B = eye < 0.5 ? uFxB0 : uFxB1;
 
   // eye centre and size
-  vec2 c = vec2(W * 0.5 + (eye < 0.5 ? -1.0 : 1.0) * uIpd * W * 0.5, H * 0.5 + uVert * H);
+  vec2 c = vec2(mid + (eye < 0.5 ? -1.0 : 1.0) * uIpd * W * 0.5, H * 0.5 + uVert * H);
   float R = uEye * H * 0.5;
   vec2 p = (f - c) / R;
 
@@ -382,9 +384,9 @@ void main() {
   if (d > 0.0) { gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0); return; }
 
   // divider and nose cutout
-  float dv = abs(f.x - W * 0.5) - uDiv * W * 0.5;
+  float dv = abs(f.x - mid) - uDiv * W * 0.5;
   vec2 nr = vec2(max(uNose.x * W * 0.5, 1.0), max(uNose.y * H, 1.0));
-  vec2 nq = (f - vec2(W * 0.5, 0.0)) / nr;
+  vec2 nq = (f - vec2(mid, 0.0)) / nr;
   float nose = length(nq) - 1.0;
   float cut = min(smoothstep(-1.0, 1.0, dv), smoothstep(-0.02, 0.02, nose));
 
@@ -505,7 +507,7 @@ async function initRenderer() {
   for (const [k, v] of Object.entries({
     uRes: new THREE.Vector2(), uCam: blank, uCamAspect: 1, uHasCam: 0, uMask: maskTex, uMaskExtent: MASK_EXTENT,
     uScreenOn: 1, uScrMain: blank, uScrHasMain: 0, uScrOver: overTex, uScrAspect: 16 / 9, uScrSize: 1.6, uScrBg: new THREE.Vector3(),
-    uK: 0, uZoom: 1, uIpd: 0.5, uVert: 0, uEye: 0.9, uRound: 1, uDiv: 0, uTest: 0, uNose: new THREE.Vector2(),
+    uK: 0, uZoom: 1, uIpd: 0.5, uVert: 0, uHoriz: 0, uEye: 0.9, uRound: 1, uDiv: 0, uTest: 0, uNose: new THREE.Vector2(),
     uFxA0: new THREE.Vector4(), uFxB0: new THREE.Vector4(), uFxA1: new THREE.Vector4(), uFxB1: new THREE.Vector4(),
     uMaskBlur: new THREE.Vector2(), uEdge: new THREE.Vector2()
   })) u[k] = { value: v };
@@ -532,7 +534,7 @@ function layoutText() {
   const cy = H / 2 - calib.vertical * H;  // screen y grows downwards
   const R = calib.eyeSize * H / 2;
   [["L", -1], ["R", 1]].forEach(([e, s]) => {
-    const cx = W / 2 + s * calib.ipd * W / 2;
+    const cx = W * (0.5 + (calib.horizontal || 0)) + s * calib.ipd * W / 2;
     const put = (id, y) => { $(id).style.left = cx + "px"; $(id).style.top = y + "px"; };
     put("name" + e, cy - R * 0.5);
     put("err" + e, cy);
@@ -734,6 +736,7 @@ function loop() {
   U.uZoom.value = Math.max(0.1, calib.zoom);
   U.uIpd.value = calib.ipd;
   U.uVert.value = calib.vertical;
+  U.uHoriz.value = calib.horizontal || 0;
   U.uEye.value = calib.eyeSize;
   U.uRound.value = calib.roundness;
   U.uDiv.value = calib.divider;

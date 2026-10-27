@@ -154,6 +154,8 @@ Every time you change a file on `main`, the site updates by itself within a minu
    - Turn on **Test pattern** to see a grid with a red cross in each eye. Adjust until the two crosses
      merge into one and the grid lines look straight through the lenses.
    - **Distance between eye centres** and **Vertical position** move the two circles.
+   - **Horizontal position** moves both circles (and the divider and nose cutout) left or right –
+     use it when the phone sits off-centre in the box. (Web viewer only.)
    - **Distortion strength** fixes curved lines; **Image size** zooms the camera picture.
    - **Eye circle size**, **Roundness**, **Nose cutout** and **Divider** shape the black mask.
    - **Effect length (seconds)**: how long each condition runs in the headset, 10–40 seconds in steps of 5
