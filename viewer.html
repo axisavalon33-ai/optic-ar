@@ -45,6 +45,9 @@
   #fsPrompt.on { display: flex; }
   #iosTip { display: none; font-size: 3.2vmin; color: #f3f1ea; background: rgba(255,255,255,.08); border: 1px solid rgba(255,181,71,.6);
     border-radius: 2vmin; padding: 2vmin 3vmin; max-width: 86vw; line-height: 1.5; }
+  #checkRow { font-size: 3vmin; color: #a9b3c9; line-height: 1.6; }
+  #checkRow b.ok { color: #30d158; } #checkRow b.no { color: #ff6b6b; }
+  #checkRow button { font: inherit; font-size: 3vmin; border-radius: 99px; border: 0; background: #ffb547; color: #08122a; font-weight: 700; padding: .6vmin 3vmin; margin-left: 1vmin; }
   #startStatus.bad { color: #ff6b6b; font-weight: 700; font-size: 4vmin; }
 </style>
 </head>
@@ -64,6 +67,7 @@
     <button id="stationSet">Change</button></div>
   <button id="startBtn" disabled>Start</button>
   <div id="startStatus">Connecting…</div>
+  <div id="checkRow"></div>
   <div id="iosTip"><b style="color:#ffb547">iPhone: for full screen</b><br>
     Tap the Share button <b>⬆</b> → <b>Add to Home Screen</b> → <b>Add</b>.<br>
     Then close Safari and open <b>Headset</b> from the new icon on the home screen.</div>

@@ -47,12 +47,28 @@ function showError(kind) {
   if (!started && kind) { $("startStatus").textContent = ERR[kind].replace("\n", " "); $("startStatus").className = "bad"; }
 }
 
+// ---------------------------------------------------------------- start-screen checks
+// Shows whether this phone is signed in and receives the tablet's settings (on iPhone, the
+// home-screen icon has its own memory: set the station and sign in again inside it).
+let signedIn = null, settingsOk = false;
+function updateChecks() {
+  const box = $("checkRow"); if (!box) return;
+  const who = signedIn
+    ? `Signed in: <b class="ok">yes</b>`
+    : `Signed in: <b class="no">no</b> – the tablet may not reach this phone <button id="signInNow">Sign in</button>`;
+  box.innerHTML = `${who}<br>Settings from the tablet (station ${STATION}): ` +
+    (settingsOk ? `<b class="ok">received</b>` : `<b class="no">not yet</b>`);
+  const b = $("signInNow"); if (b) b.onclick = () => showSignIn(fb);
+}
+
 // ---------------------------------------------------------------- Firebase
 const hotspots = JSON.parse(JSON.stringify(DEFAULT_HOTSPOTS));
 (async () => {
   try {
     fb = await import("./fb.js");
-    if (!(await fb.authReady)) showSignIn(fb);   // wait for the saved sign-in before connecting
+    signedIn = await fb.authReady;                 // wait for the saved sign-in before connecting
+    if (!signedIn) showSignIn(fb);
+    updateChecks();
   } catch (e) {
     console.error(e);
     showError("firebase");
@@ -88,6 +104,7 @@ const hotspots = JSON.parse(JSON.stringify(DEFAULT_HOTSPOTS));
 
   fb.onValue(fb.ref(fb.db, DB.calibLive), s => {
     const v = s.val();
+    settingsOk = true; updateChecks();
     if (v) { calib = { ...DEFAULT_CALIBRATION, ...v }; try { localStorage.setItem("calib-" + STATION, JSON.stringify(calib)); } catch (e) {} }
     layoutText(); applySound();
   });
