@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#000000">
 <meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Headset">
 <link rel="manifest" href="manifest-viewer.webmanifest">
 <link rel="icon" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
@@ -16,7 +19,7 @@
   html, body { margin: 0; height: 100%; background: #000; overflow: hidden; color: #fff;
     font-family: "Noto Sans", "Noto Sans Tamil", "Noto Sans Sinhala", sans-serif;
     user-select: none; -webkit-user-select: none; touch-action: none; }
-  #gl { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+  #gl { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
   .eyeText { position: fixed; transform: translate(-50%, -50%); text-align: center; pointer-events: none;
     text-shadow: 0 0 6px #000, 0 0 12px #000; transition: opacity .6s; white-space: nowrap; }
   .name { font-size: 4.6vh; font-weight: 700; color: #ffcf7a; opacity: 0; white-space: normal; width: 34vw; }
@@ -37,6 +40,8 @@
   #fsPrompt { position: fixed; inset: 0; z-index: 20; display: none; align-items: center; justify-content: center;
     background: rgba(5, 12, 31, .92); color: #ffb547; font-size: 7vmin; font-weight: 700; text-align: center; padding: 5vmin; }
   #fsPrompt.on { display: flex; }
+  #iosTip { display: none; font-size: 3.2vmin; color: #f3f1ea; background: rgba(255,255,255,.08); border: 1px solid rgba(255,181,71,.6);
+    border-radius: 2vmin; padding: 2vmin 3vmin; max-width: 86vw; line-height: 1.5; }
   #startStatus.bad { color: #ff6b6b; font-weight: 700; font-size: 4vmin; }
 </style>
 </head>
@@ -54,6 +59,9 @@
   <p>Tap Start, allow the camera, then place the phone in the headset. No more touching is needed.</p>
   <button id="startBtn" disabled>Start</button>
   <div id="startStatus">Connecting…</div>
+  <div id="iosTip"><b style="color:#ffb547">iPhone: for full screen</b><br>
+    Tap the Share button <b>⬆</b> → <b>Add to Home Screen</b> → <b>Add</b>.<br>
+    Then close Safari and open <b>Headset</b> from the new icon on the home screen.</div>
 </div>
 <script type="importmap">
 { "imports": { "three": "./js/vendor/three.module.min.js", "three/addons/": "./js/vendor/addons/" } }

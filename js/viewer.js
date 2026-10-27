@@ -8,7 +8,7 @@ import * as THREE from "three";
 import { DB, STATION, TIMING, MEDIA, DEFAULT_CALIBRATION, DEFAULT_HOTSPOTS } from "./config.js";
 import { LANGUAGES, T, tr } from "./translations.js";
 import { paintField, filtersAt, ALL_CONDITIONS } from "./defects.js";
-import { isFullscreen, enterFullscreen, keepFullscreen } from "./fullscreen.js";
+import { isFullscreen, enterFullscreen, keepFullscreen, canFullscreen, IS_IPHONE } from "./fullscreen.js";
 import { Synced } from "./sync.js";
 import { showSignIn } from "./signin.js";
 
@@ -193,10 +193,13 @@ $("startBtn").addEventListener("click", async () => {
   requestAnimationFrame(loop);
 });
 
+// iPhone in Safari: explain how to get full screen (open it from a home-screen icon).
+if (IS_IPHONE && !isFullscreen()) $("iosTip").style.display = "block";
+
 // If full screen was lost (e.g. by the camera question), ask for one more tap.
 keepFullscreen();
 function updateFsPrompt() {
-  $("fsPrompt").classList.toggle("on", started && !isFullscreen());
+  $("fsPrompt").classList.toggle("on", started && canFullscreen && !isFullscreen());
 }
 for (const ev of ["fullscreenchange", "webkitfullscreenchange", "resize"]) {
   document.addEventListener(ev, () => { updateFsPrompt(); if (isFullscreen()) requestWakeLock(); });
