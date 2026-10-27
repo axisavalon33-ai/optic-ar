@@ -397,12 +397,17 @@ void main() {
   // ---- SCREEN MODE: the same picture / video in both eyes, centred in the round eye area
   if (uScreenOn > 0.5 && uTest < 0.5) {
     vec2 halfSize = vec2(uScrSize * 0.5, uScrSize * 0.5 / uScrAspect);
+    halfSize *= min(1.0, 0.97 / length(halfSize));   // the whole picture stays inside the circle (corners too)
     vec2 su = m / (2.0 * halfSize) + 0.5;
-    vec3 sc = uScrBg;                          // dark blue round "window" around the picture
+    vec3 sc = uScrBg;                          // the round eye area around the picture, in the picture's edge colour
     if (su.x >= 0.0 && su.x <= 1.0 && su.y >= 0.0 && su.y <= 1.0) {
-      if (uScrHasMain > 0.5) sc = texture2D(uScrMain, su).rgb;
+      vec3 pic = uScrBg;
+      if (uScrHasMain > 0.5) pic = texture2D(uScrMain, su).rgb;
       vec4 o = texture2D(uScrOver, su);
-      sc = o.rgb + sc * (1.0 - o.a);              // highlights / names / "Loading…" (premultiplied)
+      pic = o.rgb + pic * (1.0 - o.a);            // highlights / names / "Loading…" (premultiplied)
+      vec2 fw = 0.07 / (2.0 * halfSize);          // soft edge: the picture fades into the circle
+      vec2 ee = smoothstep(vec2(0.0), fw, su) * smoothstep(vec2(0.0), fw, 1.0 - su);
+      sc = mix(uScrBg, pic, ee.x * ee.y);
     }
     gl_FragColor = vec4(clamp(sc, 0.0, 1.0) * vign * cut, 1.0);
     return;
@@ -564,12 +569,26 @@ function setFx(eyeIdx, fx) {
 const stillCache = {};
 function stillTexture(src) {
   if (!stillCache[src]) {
-    const t = new THREE.TextureLoader().load(src);
+    const t = new THREE.TextureLoader().load(src, tex => { tex.userData.edge = edgeColour(tex.image); });
     t.minFilter = THREE.LinearMipmapLinearFilter; t.magFilter = THREE.LinearFilter;
     stillCache[src] = t;
   }
   return stillCache[src];
 }
+// average colour of a picture's border (0–1), used to fill the round eye area around it
+function edgeColour(img) {
+  try {
+    const cv = document.createElement("canvas"); cv.width = 32; cv.height = 18;
+    const c = cv.getContext("2d"); c.drawImage(img, 0, 0, 32, 18);
+    const d = c.getImageData(0, 0, 32, 18).data; const sum = [0, 0, 0]; let n = 0;
+    for (let y = 0; y < 18; y++) for (let x = 0; x < 32; x++) {
+      if (x > 1 && x < 30 && y > 1 && y < 16) continue;
+      const i = (y * 32 + x) * 4; sum[0] += d[i]; sum[1] += d[i + 1]; sum[2] += d[i + 2]; n++;
+    }
+    return sum.map(v => v / n / 255);
+  } catch (e) { return null; }
+}
+const NAVY = [8 / 255, 18 / 255, 42 / 255];        // same blue as the "Please wait" / question screens
 const videoTex = new Map();
 function videoTexture(el) {
   if (!videoTex.has(el)) {
@@ -688,14 +707,14 @@ function loop() {
   updateMask(t);
 
   // screen-mode content
-  let main = null, aspect = 16 / 9, mode = "lang";
+  let main = null, aspect = 16 / 9, mode = "lang", bg = NAVY;
   if (loading) mode = "loading";
   else if (show.screen === "introChoice") mode = "choice";
   else if (show.screen === "intro") { main = introEl.readyState >= 2 ? videoTexture(introEl) : null; mode = "video";
     if (introEl.videoWidth) aspect = introEl.videoWidth / introEl.videoHeight; }
   else if (show.screen === "eyeStill" || show.screen === "pathStill") {
     const tex = stillTexture(show.still || (show.screen === "eyeStill" ? MEDIA.eyeStill : MEDIA.pathStill));
-    if (tex.image && tex.image.width) { main = tex; aspect = tex.image.width / tex.image.height; }
+    if (tex.image && tex.image.width) { main = tex; aspect = tex.image.width / tex.image.height; bg = tex.userData.edge || NAVY; }
     mode = "still";
   } else if (homeOk && homeEl.readyState >= 2) {
     main = videoTexture(homeEl); aspect = homeEl.videoWidth ? homeEl.videoWidth / homeEl.videoHeight : aspect;
@@ -706,7 +725,7 @@ function loop() {
   U.uScrHasMain.value = main ? 1 : 0;
   U.uScrAspect.value = aspect;
   U.uScrSize.value = calib.screenSize || 1.6;
-  if (loading) U.uScrBg.value.set(0, 0, 0); else U.uScrBg.value.set(12 / 255, 24 / 255, 54 / 255);
+  if (loading) U.uScrBg.value.set(0, 0, 0); else U.uScrBg.value.set(bg[0], bg[1], bg[2]);
 
   U.uRes.value.set(canvas.width, canvas.height);
   U.uCamAspect.value = hasCam ? video.videoWidth / video.videoHeight : 1;

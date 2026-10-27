@@ -303,7 +303,7 @@ export const ADMIN = {
     modelDistance: "Model distance (metres)",
     modelSize: "Model size",
     cameraFov: "Camera field of view (degrees)",
-    screenSize: "Picture size in screen mode"
+    screenSize: "Picture size in screen mode (always fits inside the circle)"
   },
   durationTitle: "Effect length (seconds)",
   soundTitle: "Sound from",

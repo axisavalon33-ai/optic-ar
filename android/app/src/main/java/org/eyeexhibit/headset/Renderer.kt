@@ -62,7 +62,8 @@ class Renderer(
     private val camM = FloatArray(16); private val introM = FloatArray(16); private val homeM = FloatArray(16)
     private lateinit var quad: FloatBuffer
 
-    private class Still(val tex: Int, val w: Int, val h: Int)
+    /** a picture on the GPU; edge = average colour of its border, used to fill the round eye area */
+    private class Still(val tex: Int, val w: Int, val h: Int, val edge: FloatArray)
     private val stills = HashMap<String, Still>()
     private val pending = ConcurrentHashMap<String, Bitmap>()
     private val requested = HashSet<String>()
@@ -223,8 +224,9 @@ class Renderer(
         GLES20.glUniform1f(loc["uScrKind"]!!, kind.toFloat())
         GLES20.glUniform1f(loc["uOverAR"]!!, if (arOn && (mode == "name" || err != null)) 1f else 0f)
         GLES20.glUniform1f(loc["uScrAspect"]!!, aspect)
-        if (loading) GLES20.glUniform3f(loc["uScrBg"]!!, 0f, 0f, 0f)
-        else GLES20.glUniform3f(loc["uScrBg"]!!, 12 / 255f, 24 / 255f, 54 / 255f)
+        // round eye area around the picture: the picture's edge colour (else the blue of the question screens)
+        val bg = if (loading) floatArrayOf(0f, 0f, 0f) else if (kind == 2 && still != null) still.edge else floatArrayOf(8 / 255f, 18 / 255f, 42 / 255f)
+        GLES20.glUniform3f(loc["uScrBg"]!!, bg[0], bg[1], bg[2])
         GLES20.glUniform1f(loc["uScrSize"]!!, cal.d("screenSize").toFloat().takeIf { it > 0 } ?: 1.6f)
         GLES20.glUniform1f(loc["uK"]!!, cal.d("distortion").toFloat())
         GLES20.glUniform1f(loc["uZoom"]!!, max(0.1, cal.d("zoom")).toFloat())
@@ -276,9 +278,21 @@ class Renderer(
         GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bmp, 0)
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR_MIPMAP_LINEAR)
         GLES20.glGenerateMipmap(GLES20.GL_TEXTURE_2D)
-        val st = Still(tex, bmp.width, bmp.height)
+        val st = Still(tex, bmp.width, bmp.height, edgeColour(bmp))
         bmp.recycle()
         return st
+    }
+
+    private fun edgeColour(bmp: Bitmap): FloatArray {
+        val small = Bitmap.createScaledBitmap(bmp, 32, 18, true)
+        var r = 0f; var g = 0f; var b = 0f; var n = 0
+        for (y in 0 until 18) for (x in 0 until 32) {
+            if (x in 2..29 && y in 2..15) continue
+            val c = small.getPixel(x, y)
+            r += Color.red(c); g += Color.green(c); b += Color.blue(c); n++
+        }
+        if (small !== bmp) small.recycle()
+        return floatArrayOf(r / n / 255f, g / n / 255f, b / n / 255f)
     }
 
     private fun genTex(target: Int): Int {
@@ -352,10 +366,11 @@ vec3 testPattern(vec2 m) {
   return col;
 }
 float lum(vec3 c) { return dot(c, vec3(0.299, 0.587, 0.114)); }
-vec2 scrUV(vec2 m) {
+vec2 scrHalf() {
   vec2 halfSize = vec2(uScrSize * 0.5, uScrSize * 0.5 / uScrAspect);
-  return m / (2.0 * halfSize) + 0.5;
+  return halfSize * min(1.0, 0.97 / length(halfSize));   // the whole picture stays inside the circle (corners too)
 }
+vec2 scrUV(vec2 m) { return m / (2.0 * scrHalf()) + 0.5; }
 bool inside(vec2 su) { return su.x >= 0.0 && su.x <= 1.0 && su.y >= 0.0 && su.y <= 1.0; }
 
 void main() {
@@ -385,10 +400,14 @@ void main() {
     vec2 su = scrUV(m);
     vec3 sc = uScrBg;                          // dark blue round "window" around the picture
     if (inside(su)) {
-      if (uScrKind > 1.5) sc = texture2D(uStill, vec2(su.x, 1.0 - su.y)).rgb;
-      else if (uScrKind > 0.5) sc = texture2D(uVid, (uVidM * vec4(su, 0.0, 1.0)).xy).rgb;
+      vec3 pic = uScrBg;
+      if (uScrKind > 1.5) pic = texture2D(uStill, vec2(su.x, 1.0 - su.y)).rgb;
+      else if (uScrKind > 0.5) pic = texture2D(uVid, (uVidM * vec4(su, 0.0, 1.0)).xy).rgb;
       vec4 o = texture2D(uOver, vec2(su.x, 1.0 - su.y));
-      sc = o.rgb + sc * (1.0 - o.a);
+      pic = o.rgb + pic * (1.0 - o.a);
+      vec2 fw = 0.07 / (2.0 * scrHalf());          // soft edge: the picture fades into the circle
+      vec2 ee = smoothstep(vec2(0.0), fw, su) * smoothstep(vec2(0.0), fw, 1.0 - su);
+      sc = mix(uScrBg, pic, ee.x * ee.y);
     }
     gl_FragColor = vec4(clamp(sc, 0.0, 1.0) * vign * cut, 1.0);
     return;
